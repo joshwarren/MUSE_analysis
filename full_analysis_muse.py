@@ -25,7 +25,7 @@ def full_analysis(galaxy=None, opt='kin'):
 	
 	targetSN = None
 
-	binning_spaxels(galaxy, targetSN=targetSN, opt=opt, auto_override=True, debug=True)
+	binning_spaxels(galaxy, targetSN=targetSN, opt=opt, auto_override=True)#, debug=True)
 
 	find_template(galaxy)
 
@@ -37,4 +37,4 @@ if __name__=="__main__":
 		'ngc1399'
 		]
 	# for g in galaxies: full_analysis(galaxy=g, opt='pop')
-	full_analysis(galaxy='ic1459', opt='kin')
+	full_analysis(galaxy='ic4296', opt='kin')

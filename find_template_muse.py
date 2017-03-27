@@ -26,7 +26,6 @@ def setup(galaxy, use_all_temp=False):
 	dir = '%s/Data/muse'  %(cc.base_dir)
 	templatesDirectory = '%s/models/miles_library' % (cc.home_dir)
 
-	FWHM_gal = 2.3/(1+z) # MUSE documentation (R=2000 @ 4600A)
 	moments = 4 # number of componants to calc with ppxf (see 
 				# keyword moments in ppxf.pro for more details)
 	degree = 4 # order of addative Legendre polynomial used to 
@@ -47,6 +46,7 @@ def setup(galaxy, use_all_temp=False):
 	sig = sig_gals[i_gal]
 	z = z_gals[i_gal]
 
+	FWHM_gal = 2.3/(1+z) # MUSE documentation (R=2000 @ 4600A)
 
 ## ----------=============== Miles library =================---------
 	stellar_templates = get_stellar_templates(galaxy, FWHM_gal, use_all_temp=True)
@@ -66,14 +66,18 @@ def setup(galaxy, use_all_temp=False):
 	s = galaxy_data.shape
 
 	# Collapse to single spectrum
-	gal_spec = np.nansum(galaxy_data, axis=(1,2))
-	gal_noise = np.sqrt(np.nansum(galaxy_noise**2, axis=(1,2)))
+	# gal_spec = np.nansum(galaxy_data[:,int(s[1]/2.0-50):int(s[1]/2.0+50),
+	# 	int(s[2]/2.0-50):int(s[2]/2.0+50)], axis=(1,2))
+	# gal_noise = np.sqrt(np.nansum(galaxy_noise[:,int(s[1]/2.0-50):int(s[1]/2.0+50),
+	# 	int(s[2]/2.0-50):int(s[2]/2.0+50)]**2, axis=(1,2)))
+	
+	gal_spec = galaxy_data[:,int(s[1]/2.0),int(s[2]/2.0)]
+	gal_noise = galaxy_noise[:,int(s[1]/2.0),int(s[2]/2.0)]
+
 ## ----------========= Calibrating the spectrum  ===========---------
 	lam = np.arange(s[0])*CDELT_spec + CRVAL_spec
-	gal_spec, lam, cut = remove_anomalies(gal_spec, window=201, repeats=3, lam=lam, 
-		set_range=set_range, return_cuts=True)
+	gal_spec, lam = remove_anomalies(gal_spec, window=201, repeats=3, lam=lam)
 	lamRange = np.array([lam[0],lam[-1]])/(1+z)
-	gal_noise = gal_noise[cut]
 
 
 	## smooth spectrum to fit with templates resolution
@@ -93,7 +97,8 @@ def setup(galaxy, use_all_temp=False):
 	dv = (stellar_templates.logLam_template[0]-logLam_bin[0])*c # km/s
 	# Find the pixels to ignore to avoid being distracted by gas emission
 	#; lines or atmospheric absorbsion line.  
-	goodpixels = determine_goodpixels(logLam_bin,lamRange_template,vel, z) 
+	goodpixels = determine_goodpixels(logLam_bin,stellar_templates.lamRange_template,
+		vel, z) 
 	lambdaq = np.exp(logLam_bin)
 	start = [vel, sig] # starting guess
 
@@ -114,7 +119,8 @@ def find_template(galaxy):
 
 	pp = ppxf(templates, bin_log, noise, velscale, start, 
 			goodpixels=goodpixels, moments=moments, degree=degree, vsyst=dv, 
-			lam=lambdaq, plot=not quiet, quiet=quiet)
+			lam=lambdaq, plot=not quiet, quiet=quiet, 
+			save='%s/Data/muse/analysis/%s/find_temp.png'% (cc.base_dir, galaxy))
 
 	with open('%s/Data/muse/analysis/%s/templates.txt' % (cc.base_dir, galaxy), 'w') as f:
 		for i in range(templates.shape[1]):

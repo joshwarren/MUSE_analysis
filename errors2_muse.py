@@ -434,15 +434,33 @@ def remove_anomalies(spec, window=201, repeats=3, lam=None, set_range=None,
 
 #-----------------------------------------------------------------------------
 def get_dataCubeDirectory(galaxy):
-	dir = "%s/Data/muse" % (cc.base_dir)
+	# str Subclass to add 'original' attribute.
+	class mystring(str):
+		def __init__(self, s):
+			str.__init__(s)
+			self.original = ''
+
+	if cc.device == 'uni':
+		dir = '%s/Data/muse' % (cc.base_dir)
+	elif cc.device == 'glamdring':
+		dir = '%s/muse_cubes' % (cc.base_dir)
+	elif 'home' in cc.device:
+		dir = '%s/cygdrive/x/Data/muse' % (cc.base_dir)
+
+
 	if galaxy == 'ic1459':
-		dataCubeDirectory = '%s/%s/ADP.2016-06-21T08:30:08.251.fits' %  (dir, galaxy)
+		dataCubeDirectory = mystring('%s/%s/%s.clipped.fits' %  (dir, galaxy, galaxy))
+		dataCubeDirectory.original = '%s/%s/ADP.2016-06-21T08:30:08.251.fits' % (
+			dir, galaxy)
 	elif galaxy == 'ic4296':
-		pass
+		dataCubeDirectory = mystring('%s/%s/%s.clipped.fits' %  (dir, galaxy, galaxy))
+		dataCubeDirectory.original = '%s/%s/ADP.2016-06-14T14:10:28.175.fits' % (
+			dir, galaxy)
 	elif galaxy == 'ngc1316':
 		pass
 	elif galaxy == 'ngc1399':
 		pass
+
 	return dataCubeDirectory
 #-----------------------------------------------------------------------------
 

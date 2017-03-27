@@ -6,13 +6,16 @@
 # sigma, and 40-50 for h3 and h4. 
 # warrenj 20160913 Ported to python
 
+from checkcomp import checkcomp
+cc=checkcomp()
+if cc.remote:
+	import matplotlib # 20160202 JP to stop lack-of X-windows error
+	matplotlib.use('Agg') # 20160202 JP to stop lack-of X-windows error
 import numpy as np
 import glob
 from astropy.io import fits
 import ppxf_util as util
 from voronoi_2d_binning import voronoi_2d_binning
-from checkcomp import checkcomp
-cc=checkcomp()
 from errors2_muse import remove_anomalies, get_dataCubeDirectory
 import os
 
@@ -113,11 +116,36 @@ def binning_spaxels(galaxy, targetSN=None, opt='kin', auto_override=False, debug
 
 # collapsing the spectrum for each spaxel. 
 	if debug:
-		signal = galaxy_data[s[0]/2,:,:].flatten()
-		noise = galaxy_noise[s[0]/2,:,:].flatten()
+		signal = np.array(galaxy_data[s[0]/2,:,:].flatten())
+		# noise = np.array(galaxy_noise[s[0]/2,:,:])#.flatten())
+		noise = np.array(np.sqrt(np.abs(galaxy_data[s[0]/2,:,:])).flatten())
 	else:
-		signal = np.nanmedian(galaxy_data, axis=0).flatten()
-		noise = np.nanmedian(galaxy_noise, axis=0).flatten()
+		signal = np.zeros((s[1],s[2]))
+		noise = np.zeros((s[1],s[2]))
+		blocks = 10
+		bl_delt1 = int(np.ceil(s[1]/float(blocks)))
+		bl_delt2 = int(np.ceil(s[2]/float(blocks)))
+		for i in xrange(blocks):
+			for j in xrange(blocks):
+				signal[bl_delt1*i:bl_delt1*(i+1),bl_delt2*j:bl_delt2*(j+1)] = \
+					np.nanmedian(galaxy_data[:, bl_delt1*i:bl_delt1*(i+1),
+					bl_delt2*j:bl_delt2*(j+1)], axis=0)
+
+				# Error array seems to a little excessive.
+				# noise[bl_delt1*i:bl_delt1*(i+1),bl_delt2*j:bl_delt2*(j+1)] = \
+				# 	np.nanmedian(np.abs(galaxy_noise[:, bl_delt1*i:bl_delt1*(i+1),
+				# 	bl_delt2*j:bl_delt2*(j+1)]), axis=0)
+
+		signal = signal.flatten()
+		signal[signal < 0] = np.nan
+		# noise = noise.flatten()
+		noise = np.sqrt(signal)
+
+	galaxy_data = []
+	del galaxy_data
+	galaxy_noise = []
+	del galaxy_noise
+
 
 	for i in range(s[1]):
 		for j in range(s[2]):
@@ -126,19 +154,36 @@ def binning_spaxels(galaxy, targetSN=None, opt='kin', auto_override=False, debug
 			y[i*s[2]+j] = j
 
 	mask = (np.isfinite(signal)) * (np.isfinite(noise))
-	signal = signal[mask]
-	noise = noise[mask]
-	x = x[mask]
-	y = y[mask]
-	n_spaxels = np.sum(mask)
 
+	nobin = signal/noise > targetSN*2
+
+	signal = signal[mask + ~nobin]
+	noise = noise[mask + ~nobin]
+	x = x[mask + ~nobin]
+	y = y[mask + ~nobin]
+	n_spaxels = np.sum(mask + ~nobin)
+
+	# signal = signal[mask]
+	# noise = noise[mask]
+	# x = x[mask]
+	# y = y[mask]
+	# n_spaxels = np.sum(mask)
 
 	if not os.path.exists("%s/analysis/%s" % (dir,galaxy)):
 		os.makedirs("%s/analysis/%s" % (dir, galaxy))
 
+	# if not debug:
 	binNum, xNode, yNode, xBar, yBar, sn, nPixels, scale = voronoi_2d_binning(
-        x, y, signal, noise, targetSN, quiet=True, plot=False,
-        saveTo='%s/analysis/%s/binning_%s.png' %(dir,galaxy, opt))
+		x, y, signal, noise, targetSN, quiet=True, plot=False,
+		saveTo='%s/analysis/%s/binning_%s.png' %(dir,galaxy, opt))
+	# else:
+	# 	binNum = np.arange(len(x))
+	# 	xBar = x
+	# 	yBar = y
+
+	xBar = np.append(xBar, x[nobin])
+	yBar = np.append(yBar, y[nobin])
+	binNum = np.append(binNum, np.arange(np.sum(nobin))+max(binNum)+1)
 
 	order = sorted(binNum)
 	xBin = np.zeros(n_spaxels)
