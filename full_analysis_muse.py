@@ -27,7 +27,7 @@ def full_analysis(galaxy=None, opt='kin'):
 
 	binning_spaxels(galaxy, targetSN=targetSN, opt=opt, auto_override=True)#, debug=True)
 
-	find_template(galaxy)
+	# find_template(galaxy)
 
 if __name__=="__main__":
 	galaxies = [

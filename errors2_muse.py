@@ -427,9 +427,15 @@ def remove_anomalies(spec, window=201, repeats=3, lam=None, set_range=None,
 		raise ValueError('lam keyword must be supplied if set_range keyword'+\
 			' is supplied')
 	elif set_range is None and lam is not None:
-		return spec, lam
+		if return_cuts:
+			return spec, lam, np.ones(len(spec)).astype(bool)
+		else:
+			return spec, lam
 	else:
-		return spec
+		if return_cuts:
+			return spec, np.ones(len(spec)).astype(bool)
+		else:
+			return spec
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
@@ -481,14 +487,15 @@ def errors2(i_gal=None, bin=None):
 
 	if cc.device == 'glamdring':
 		dir = cc.base_dir
-		templatesDirectory = '%s/ppxf/MILES_library' % (cc.base_dir)	
+		data_file = "%s/analysis/galaxies.txt" % (dir)
+		tessellation_File = "%s/analysis_muse/%s/" % (dir, galaxy) + \
+			"voronoi_2d_binning_output_kin.txt"
 	else:
 		dir = '%s/Data/muse' % (cc.base_dir)
-		templatesDirectory = '%s/models/miles_library' % (cc.home_dir)
+		data_file = "%s/Data/vimos/analysis/galaxies.txt" % (cc.base_dir)
+		tessellation_File = "%s/analysis/%s/" % (dir, galaxy) + \
+			"voronoi_2d_binning_output_kin.txt"
 
-
-
-	data_file = "%s/Data/vimos/analysis/galaxies.txt" % (cc.base_dir)
 	# different data types need to be read separetly
 	z_gals, vel_gals, sig_gals = np.loadtxt(data_file, unpack=True, skiprows=1, 
 		usecols=(1,2,3))
@@ -497,13 +504,6 @@ def errors2(i_gal=None, bin=None):
 	vel = vel_gals[i_gal]
 	sig = sig_gals[i_gal]
 	z = z_gals[i_gal]
-
-
-
-	tessellation_File = "%s/analysis/%s/" % (dir, galaxy) + \
-		"voronoi_2d_binning_output_kin.txt"
-	tessellation_File2 = "%s/analysis/%s/" % (dir, galaxy) + \
-		"voronoi_2d_binning_output2_kin.txt"
 
 
 	FWHM_gal = FWHM_gal/(1+z) # Adjust resolution in Angstrom
@@ -547,7 +547,7 @@ def errors2(i_gal=None, bin=None):
 ## ----------========= Calibrating the spectrum  ===========---------
 	lam = np.arange(s[0])*CDELT_spec + CRVAL_spec
 	bin_lin, lam, cut = remove_anomalies(bin_lin, window=201, repeats=3, 
-		lam=lam, set_range=set_range, return_cuts=True)
+		lam=lam, return_cuts=True)
 	lamRange = np.array([lam[0],lam[-1]])/(1+z)
 	bin_lin_noise = bin_lin_noise[cut]
 

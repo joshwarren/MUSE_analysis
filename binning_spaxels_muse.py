@@ -161,7 +161,7 @@ def binning_spaxels(galaxy, targetSN=None, opt='kin', auto_override=False, debug
 	noise = noise[mask + ~nobin]
 	x = x[mask + ~nobin]
 	y = y[mask + ~nobin]
-	n_spaxels = np.sum(mask + ~nobin)
+	n_spaxels = np.sum(mask) # include the not-for-binning-bins
 
 	# signal = signal[mask]
 	# noise = noise[mask]
@@ -176,6 +176,7 @@ def binning_spaxels(galaxy, targetSN=None, opt='kin', auto_override=False, debug
 	binNum, xNode, yNode, xBar, yBar, sn, nPixels, scale = voronoi_2d_binning(
 		x, y, signal, noise, targetSN, quiet=True, plot=False,
 		saveTo='%s/analysis/%s/binning_%s.png' %(dir,galaxy, opt))
+	matplotlib.pyplot.close('all')
 	# else:
 	# 	binNum = np.arange(len(x))
 	# 	xBar = x
@@ -185,7 +186,7 @@ def binning_spaxels(galaxy, targetSN=None, opt='kin', auto_override=False, debug
 	yBar = np.append(yBar, y[nobin])
 	binNum = np.append(binNum, np.arange(np.sum(nobin))+max(binNum)+1)
 
-	order = sorted(binNum)
+	order = np.argsort(binNum)
 	xBin = np.zeros(n_spaxels)
 	yBin = np.zeros(n_spaxels)
 
@@ -200,8 +201,8 @@ def binning_spaxels(galaxy, targetSN=None, opt='kin', auto_override=False, debug
 
 # ------------================ Saving Results ===============---------------			
 
-	temp = "{0:3}{1:3}{2:8}{3:9}{4:9}\n"
-	temp2 = "{0:9}{1:9}\n"
+	temp = "{0:5}{1:5}{2:8}{3:9}{4:9}\n"
+	temp2 = "{0:12}{1:12}\n"
 
 	with open("%s/analysis/%s/voronoi_2d_binning_output_%s.txt" % (dir,galaxy,opt), 
 		'w') as f:

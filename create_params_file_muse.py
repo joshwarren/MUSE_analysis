@@ -5,12 +5,12 @@ cc = checkcomp()
 opt = 'kin' 		# kin or pop
 
 galaxies = ['ic1459', 'ic4296', 'ngc1316', 'ngc1399']
-gals=[2]
+gals=[1]
 
 output_file = "params.txt"
 f = open(output_file, 'w')
-# for gal in gals:
-for gal in range(4):
+for gal in gals:
+# for gal in range(4):
 	galaxy = galaxies[gal]
 
 	tessellation_File = '%s/Data/muse/analysis/%s/voronoi_2d_binning_output_%s.txt' % (
