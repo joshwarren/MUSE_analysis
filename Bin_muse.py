@@ -334,15 +334,15 @@ class _data(object):
 
 	# __getattr__ only called when attribute is not found by other means. 
 	def __getattr__(self, attr):
-		if attr in ['vel','sigma','h3','h4']:
+		if attr in dynamics:
 			m = self.mask_dynamics
 			# Normalise to rest frame of stars
 			if attr == 'vel':
-				kinematics = np.array([bin.components[self.name].__dict__[attr] 
+				kinematics = np.array([bin.components[self.name].__getattr__(attr) 
 					- self.__parent__.vel_norm if not m[i] else np.nan 
 					for i, bin in enumerate(self.__parent__.bin)])
 			else:
-				kinematics = np.array([bin.components[self.name].__dict__[attr] 
+				kinematics = np.array([bin.components[self.name].__getattr__(attr) 
 					if not m[i] else np.nan 
 					for i, bin in enumerate(self.__parent__.bin)])
 			# kinematics.uncert = myArray(
@@ -598,9 +598,9 @@ class Bin(object):
 	@property
 	def temp_weight(self):
 		temp_name, temp_weight = np.loadtxt("%s/temp_weights/%d.dat" % (
-			self.__parent__.vin_dir_gasMC, self.__parent__.bin_number), unpack=True, 
+			self.__parent__.vin_dir_gasMC, self.bin_number), unpack=True, 
 			dtype='str')
-		weight = weight.astype(float)
+		temp_weight = temp_weight.astype(float)
 		return {temp_name[i]:temp_weight for i in xrange(len(temp_name))}
 
 	@property
@@ -706,18 +706,26 @@ class _bin_data(object):
 
 
 	def __getattr__(self, attr):
-		t = np.loadtxt(glamdring_file, unpack=True, usecols=(0,), dtype=str)
-		i = np.where(t == self.name)[0]
-		j = np.where(dynamics == attr)[0] + 1
+		if attr in dynamics:
+			glamdring_file = '%s/%s.dat' % (self.__parent__.__parent__.vin_dir_gasMC,
+				self.__parent__.bin_number)
+			t = np.loadtxt(glamdring_file, unpack=True, usecols=(0,), dtype=str)
+			i = np.where(t == self.name)[0][0]
+			j = np.where(dynamics == attr)[0][0] + 1
+			print 'i ', i
+			print 'j ', j
 
-		with open(glamdring_file, 'r') as g:
-			rows = g.read().splitlines()
-			row = np.array(rows[i].split('   '))
 
-		try:
-			return float(row[j])
-		except IndexError:
-			pass
+			with open(glamdring_file, 'r') as g:
+				rows = g.read().splitlines()
+				row = np.array(rows[i].split('   '))
+
+			try:
+				return float(row[j])
+			except IndexError:
+				pass
+		else:
+			return object.__getattribute__(self,attr)
 
 
 
