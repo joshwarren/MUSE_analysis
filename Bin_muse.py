@@ -19,7 +19,7 @@ out_dir = '%s/Data/muse/analysis' % (cc.base_dir)
 lines = {'Hdelta':4101.76, 'Hgamma':4340.47, 'Hbeta':4861.33, '[OIII]5007d':5004.0,
 	'[NI]d':5200.0, 'Halpha':6562.8, '[SII]6716':6716.0, '[SII]6731':6731.0, 
 	'[OI]6300d':6300.0, '[NII]6583d':6583.0}
-dynamics = ['vel', 'sigma', 'h3', 'h4']
+dynamics = np.array(['vel', 'sigma', 'h3', 'h4'])
 
 class Data(object):
 # Attributes:
@@ -711,7 +711,9 @@ class _bin_data(object):
 				self.__parent__.bin_number)
 			t = np.loadtxt(glamdring_file, unpack=True, usecols=(0,), dtype=str)
 			i = np.where(t == self.name)[0][0]
-			j = np.where(dynamics == attr)[0][0] + 1
+			print 'attr ', attr
+			print 'dynamics ', dynamics
+			j = np.where(dynamics == attr)[0] + 1
 			print 'i ', i
 			print 'j ', j
 

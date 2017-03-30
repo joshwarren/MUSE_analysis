@@ -632,35 +632,35 @@ def plot_results(galaxy, discard=0, wav_range="", vLimit=2, norm="lwv",
 		if CO:
 			add_CO(a, galaxy, header)
 
-		f.delaxes(a)
-		f.delaxes(a.cax)
-		if hasattr(a,'ax2'): f.delaxes(a.ax2)
-		if hasattr(a,'ax3'): f.delaxes(a.ax3)
-		a.change_geometry(n_rows, 3, a.figy*3+a.figx+1)
+	# 	f.delaxes(a)
+	# 	f.delaxes(a.cax)
+	# 	if hasattr(a,'ax2'): f.delaxes(a.ax2)
+	# 	if hasattr(a,'ax3'): f.delaxes(a.ax3)
+	# 	a.change_geometry(n_rows, 3, a.figy*3+a.figx+1)
 
-	for a in ax_array:
-		if not np.isnan(a.figy):
-			a2 = f.add_axes(a)
-			p = a2.get_position()
-			c = f.add_axes([p.x1,p.y0*1.06-0.004,0.005, p.height*1.05])
-			plt.colorbar(a.images[0], cax=c)
+	# for a in ax_array:
+	# 	if not np.isnan(a.figy):
+	# 		a2 = f.add_axes(a)
+	# 		p = a2.get_position()
+	# 		c = f.add_axes([p.x1,p.y0*1.06-0.004,0.005, p.height*1.05])
+	# 		plt.colorbar(a.images[0], cax=c)
 				
 
-			a.xaxis.set_visible(False)
-			a.yaxis.set_visible(False)
-			a.axis('off')
-			a.autoscale(False)
-			c.autoscale(False)
-			if hasattr(a,'gal_name'): a.gal_name.remove()
-			if hasattr(a, 'gal_z'): a.gal_z.remove()
+	# 		a.xaxis.set_visible(False)
+	# 		a.yaxis.set_visible(False)
+	# 		a.axis('off')
+	# 		a.autoscale(False)
+	# 		c.autoscale(False)
+	# 		if hasattr(a,'gal_name'): a.gal_name.remove()
+	# 		if hasattr(a, 'gal_z'): a.gal_z.remove()
 
-	f.set_size_inches(8.5,n_rows*1.8)
-	# f.tight_layout(h_pad=0.5)#pad=0.4, w_pad=0.5, h_pad=1.0)
-	f.subplots_adjust(top=0.94)
-	f.suptitle(galaxy.upper())
+	# f.set_size_inches(8.5,n_rows*1.8)
+	# # f.tight_layout(h_pad=0.5)#pad=0.4, w_pad=0.5, h_pad=1.0)
+	# f.subplots_adjust(top=0.94)
+	# f.suptitle(galaxy.upper())
 
-	saveTo = "%s/grid_%s.pdf" % (out_plots, wav_range)
-	f.savefig(saveTo, bbox_inches="tight",format='pdf')
+	# saveTo = "%s/grid_%s.pdf" % (out_plots, wav_range)
+	# f.savefig(saveTo, bbox_inches="tight",format='pdf')
 
 	return D
 
