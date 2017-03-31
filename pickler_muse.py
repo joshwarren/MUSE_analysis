@@ -93,7 +93,7 @@ def pickler(galaxy, discard=0, wav_range="", norm="lwv", opt="kin",	**kwargs):
 				D.bin[i].components[matrix[j,0]] = emission_line(D.bin[i],
 					matrix[j,0],lines[matrix[j,0]],matrix[j,1:].astype(float))
 				D.add_e_line(matrix[j,0],lines[matrix[j,0]])
-		
+
 		#Setting the weighting given to the gas templates 
 		temp_name, temp_weight = np.loadtxt("%s/temp_weights/%d.dat" % (
 			vin_dir_gasMC, i), unpack=True, dtype='str')
@@ -109,6 +109,9 @@ def pickler(galaxy, discard=0, wav_range="", norm="lwv", opt="kin",	**kwargs):
 			D.bin[i].mpweight = np.loadtxt("%s/mpweights/%d.dat" %(vin_dir_gasMC,i), 
 				unpack=True)
 	D.xBar, D.yBar = np.loadtxt(tessellation_File2, unpack=True, skiprows = 1)
+	for c in D._components.keys():
+		print c, np.sum(D._components[c].mask), '(', np.sum(D._components[c].mask_dynamics),')/', D.number_of_bins
+	jasdl
 # ------------=========== Read kinematics results ==============----------
 	componants = [d for d in os.listdir(vin_dir_gasMC + "/gas") if \
 		os.path.isdir(os.path.join(vin_dir_gasMC + "/gas", d))]

@@ -14,7 +14,7 @@ from plot_results_muse import plot_results
 # from kinematics import kinematics
 # from GH_plots import GH_plots
 # from plot_absorption import plot_absorption
-# import matplotlib.pyplot as plt # used for plotting
+import matplotlib.pyplot as plt # used for plotting
 # from stellar_pop import stellar_pop
 # from use_kinemetry import use_kinemetry
 # from classify import classify
@@ -44,10 +44,10 @@ for galaxy in galaxies:
 	D = None
 	print galaxy
 	try:
-		# D = pickler(galaxy, discard=discard, norm=norm)
-		D = plot_results(galaxy, discard=discard, vLimit=vLimit, CO = False, 
-			residual="median", norm=norm, D=D)
-		plt.close("all")
+		D = pickler(galaxy, discard=discard, norm=norm)
+		# D = plot_results(galaxy, discard=discard, vLimit=vLimit, CO = False, 
+		# 	residual="median", norm=norm, D=D)
+		# plt.close("all")
 		# GH_plots(galaxy, wav_range=wav_range)
 		# plt.close("all")
 		# kinematics(galaxy, discard=discard, wav_range=wav_range, D=D)
