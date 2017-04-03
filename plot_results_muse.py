@@ -632,10 +632,10 @@ def plot_results(galaxy, discard=0, wav_range="", vLimit=2, norm="lwv",
 		if CO:
 			add_CO(a, galaxy, header)
 
-	# 	f.delaxes(a)
-	# 	f.delaxes(a.cax)
-	# 	if hasattr(a,'ax2'): f.delaxes(a.ax2)
-	# 	if hasattr(a,'ax3'): f.delaxes(a.ax3)
+		f.delaxes(a)
+		f.delaxes(a.cax)
+		if hasattr(a,'ax2'): f.delaxes(a.ax2)
+		if hasattr(a,'ax3'): f.delaxes(a.ax3)
 	# 	a.change_geometry(n_rows, 3, a.figy*3+a.figx+1)
 
 	# for a in ax_array:

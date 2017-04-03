@@ -453,19 +453,18 @@ def get_dataCubeDirectory(galaxy):
 	elif 'home' in cc.device:
 		dir = '%s/cygdrive/x/Data/muse' % (cc.base_dir)
 
-
+	dataCubeDirectory = mystring('%s/%s/%s.clipped.fits' %  (dir, galaxy, galaxy))
 	if galaxy == 'ic1459':
-		dataCubeDirectory = mystring('%s/%s/%s.clipped.fits' %  (dir, galaxy, galaxy))
 		dataCubeDirectory.original = '%s/%s/ADP.2016-06-21T08:30:08.251.fits' % (
 			dir, galaxy)
 	elif galaxy == 'ic4296':
-		dataCubeDirectory = mystring('%s/%s/%s.clipped.fits' %  (dir, galaxy, galaxy))
 		dataCubeDirectory.original = '%s/%s/ADP.2016-06-14T14:10:28.175.fits' % (
 			dir, galaxy)
 	elif galaxy == 'ngc1316':
 		pass
 	elif galaxy == 'ngc1399':
-		pass
+		dataCubeDirectory.original = '%s/%s/ADP.2016-06-21T08:50:02.757.fits' % (
+			dir, galaxy)
 
 	return dataCubeDirectory
 #-----------------------------------------------------------------------------

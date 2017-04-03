@@ -109,9 +109,6 @@ def pickler(galaxy, discard=0, wav_range="", norm="lwv", opt="kin",	**kwargs):
 			D.bin[i].mpweight = np.loadtxt("%s/mpweights/%d.dat" %(vin_dir_gasMC,i), 
 				unpack=True)
 	D.xBar, D.yBar = np.loadtxt(tessellation_File2, unpack=True, skiprows = 1)
-	for c in D._components.keys():
-		print c, np.sum(D._components[c].mask), '(', np.sum(D._components[c].mask_dynamics),')/', D.number_of_bins
-	jasdl
 # ------------=========== Read kinematics results ==============----------
 	componants = [d for d in os.listdir(vin_dir_gasMC + "/gas") if \
 		os.path.isdir(os.path.join(vin_dir_gasMC + "/gas", d))]
@@ -122,14 +119,21 @@ def pickler(galaxy, discard=0, wav_range="", norm="lwv", opt="kin",	**kwargs):
 	else: gas = 3
 	D.gas = gas
 
+	print 'gas option: ', D.gas
+	for c in D._components.keys():
+		print c, np.sum(D._components[c].mask), '(', np.sum(D._components[c].mask_dynamics),')/', D.number_of_bins
 	
 
 	for c in D.list_components:
+		print ''
+		print c
 		dynamics = {'vel':np.zeros(D.number_of_bins)*np.nan, 
-			'sigma':np.zeros(D.number_of_bins)*np.nan, 'h3':np.zeros(D.number_of_bins)*np.nan, 
+			'sigma':np.zeros(D.number_of_bins)*np.nan, 
+			'h3':np.zeros(D.number_of_bins)*np.nan, 
 			'h4':np.zeros(D.number_of_bins)*np.nan}
 		dynamics_uncert = {'vel':np.zeros(D.number_of_bins)*np.nan, 
-			'sigma':np.zeros(D.number_of_bins)*np.nan, 'h3':np.zeros(D.number_of_bins)*np.nan, 
+			'sigma':np.zeros(D.number_of_bins)*np.nan, 
+			'h3':np.zeros(D.number_of_bins)*np.nan, 
 			'h4':np.zeros(D.number_of_bins)*np.nan}
 
 		for bin in range(D.number_of_bins):
@@ -159,8 +163,10 @@ def pickler(galaxy, discard=0, wav_range="", norm="lwv", opt="kin",	**kwargs):
 				for j, d in enumerate(['vel', 'sigma', 'h3', 'h4']):
 					try:
 						dynamics[d][bin] = float(row[j+1])
+						print 'found: bin:', bin, ' attr:',d
 					except IndexError:
-						pass
+						print 'NOT found: bin:', bin, ' attr:',d
+						# pass
 					# 	dynamics[d][bin] = 0
 				# dynamics['vel'][bin] = vel[i]				
 				# dynamics['sigma'][bin] = sig[i]
