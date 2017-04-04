@@ -27,7 +27,7 @@ def full_analysis(galaxy=None, opt='kin'):
 
 	binning_spaxels(galaxy, targetSN=targetSN, opt=opt, auto_override=True)#, debug=True)
 
-	# find_template(galaxy)
+	find_template(galaxy)
 
 if __name__=="__main__":
 	galaxies = [
@@ -37,4 +37,7 @@ if __name__=="__main__":
 		'ngc1399'
 		]
 	# for g in galaxies: full_analysis(galaxy=g, opt='pop')
-	full_analysis(galaxy='ic4296', opt='kin')
+	try:
+		full_analysis(galaxy='ngc1399', opt='kin')
+	except:
+		print 'ngc1399 failed'

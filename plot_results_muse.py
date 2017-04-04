@@ -197,13 +197,18 @@ def plot_results(galaxy, discard=0, wav_range="", vLimit=2, norm="lwv",
 	plots=False, residual=False, CO=False, show_bin_num=False,
 	D=None, **kwargs):	
 
+	pa = {'ic1459':45, 'ic4296':45, 'ngc1316':45, 'ngc1399':0}
+
+	res = 0.2 # arcsec (spatial MUSE resolution)
+	pa = pa[galaxy] # PA from reduction
+
 	data_file =  "%s/galaxies.txt" % (vin_dir)
 	# different data types need to be read separetly
 	SN_target_gals = np.loadtxt(data_file, unpack=True, skiprows=1, 
 		usecols=(3))
 	galaxy_gals = np.loadtxt(data_file, skiprows=1, usecols=(0,),dtype=str)
 	i_gal = np.where(galaxy_gals==galaxy)[0][0]
-	SN_target=SN_target_gals[i_gal]
+	SN_target=SN_target_gals[i_gal]-10
 
 	data_file =  "%s/Data/vimos/analysis/galaxies.txt" % (cc.base_dir)
 	z_gals = np.loadtxt(data_file, unpack=True, skiprows=1, 
@@ -271,7 +276,8 @@ def plot_results(galaxy, discard=0, wav_range="", vLimit=2, norm="lwv",
 
 	ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, D.flux, vmin=fmin, 
 		vmax=fmax, nodots=True, show_bin_num=show_bin_num, colorbar=True, 
-		label=CBLabel, title=title, cmap='gist_yarg', ax=ax)#, header=header)
+		label=CBLabel, title=title, cmap='gist_yarg', ax=ax, pa=pa, res=res)
+		#, header=header)
 	ax_array.append(ax)
 	f.delaxes(ax)
 	f.delaxes(ax.cax)
@@ -315,7 +321,7 @@ def plot_results(galaxy, discard=0, wav_range="", vLimit=2, norm="lwv",
 		
 		ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, D.e_line[c].flux, 
 			vmin=f_min, vmax=f_max, colorbar=True, nodots=True, label=fCBtitle, 
-			  title=f_title, cmap = 'gist_yarg', ax=ax)#, header=header)
+			  title=f_title, cmap = 'gist_yarg', ax=ax, pa=pa, res=res)#, header=header)
 		ax_array.append(ax)
 		f.delaxes(ax)
 		f.delaxes(ax.cax)
@@ -344,7 +350,8 @@ def plot_results(galaxy, discard=0, wav_range="", vLimit=2, norm="lwv",
 
 		ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, 
 			D.e_line[c].equiv_width, vmin=eq_min, vmax=eq_max, colorbar=True, 
-			nodots=True, label=eqCBtitle, title=eq_title, ax=ax)#, header=header)
+			nodots=True, label=eqCBtitle, title=eq_title, ax=ax, pa=pa, res=res)
+			#, header=header)
 		ax_array.append(ax)
 		f.delaxes(ax)
 		f.delaxes(ax.cax)
@@ -357,7 +364,8 @@ def plot_results(galaxy, discard=0, wav_range="", vLimit=2, norm="lwv",
 
 		ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, 
 			D.e_line[c].amp_noise, vmin=amp_min, vmax=amp_max, colorbar=True, 
-			nodots=True, title=amp_title, save=saveTo, close=not CO)#, header=header)
+			nodots=True, title=amp_title, save=saveTo, close=not CO, pa=pa, res=res)
+			#, header=header)
 		if CO:
 			ax1.saveTo = saveTo
 			add_CO(ax1, galaxy, header, close=True)
@@ -465,7 +473,7 @@ def plot_results(galaxy, discard=0, wav_range="", vLimit=2, norm="lwv",
 				D.yBar, D.components[pl].plot[k], vmin=vmin, vmax=vmax, #flux_type='notmag',
 				nodots=True, show_bin_num=show_bin_num, colorbar=True, 
 				label=CBLabel,galaxy = galaxy.upper(), redshift = z,
-				title=title, ax=ax, signal_noise=D.SNRatio,
+				title=title, ax=ax, pa=pa, res=res, signal_noise=D.SNRatio,
 				signal_noise_target=SN_target, show_vel=False)#header=header, 
 			#plots=True
 			if plots:
@@ -482,7 +490,8 @@ def plot_results(galaxy, discard=0, wav_range="", vLimit=2, norm="lwv",
 				D.components[pl].plot[k].uncert, vmin=v_uncert_min, vmax=v_uncert_max,
 				flux_type='notmag', nodots=True, show_bin_num=show_bin_num,
 				colorbar=True, label=CBLabel, galaxy = galaxy.upper(),
-				redshift = z, title=utitle, save=saveTo, close=not CO)#, header=header)
+				redshift = z, title=utitle, save=saveTo, close=not CO, pa=pa, res=res)
+				#, header=header)
 			if CO:
 				ax1.saveTo = saveTo
 				add_CO(ax1, galaxy, header, close=True)
@@ -524,7 +533,7 @@ def plot_results(galaxy, discard=0, wav_range="", vLimit=2, norm="lwv",
 			nodots=True, show_bin_num=show_bin_num, colorbar=True, 
 			label=CBLabel, #flux_unbinned=D.unbinned_flux, 
 			galaxy = galaxy.upper(), redshift = z, title=title, 
-			save=saveTo, close=not CO)#, header=header)
+			save=saveTo, close=not CO, pa=pa, res=res)#, header=header)
 		if plots:
 			plt.show()
 		if CO:
@@ -608,7 +617,8 @@ def plot_results(galaxy, discard=0, wav_range="", vLimit=2, norm="lwv",
 			ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar,
 				line_ratio, vmin=lr_min, vmax=lr_max, colorbar=True,
 				nodots=True, title=lr_title, label=lrCBtitle, ax=ax,
-				show_bin_num=show_bin_num, galaxy = galaxy.upper(), redshift = z)#,	header=header)
+				show_bin_num=show_bin_num, galaxy = galaxy.upper(), redshift = z, 
+				pa=pa, res=res)#,	header=header)
 
 			ax_array.append(ax)
 			f.delaxes(ax)

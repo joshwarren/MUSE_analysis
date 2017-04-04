@@ -137,9 +137,11 @@ def binning_spaxels(galaxy, targetSN=None, opt='kin', auto_override=False, debug
 				# 	bl_delt2*j:bl_delt2*(j+1)]), axis=0)
 
 		signal = signal.flatten()
-		signal[signal < 0] = np.nan
+		signal[~(signal > 0)] = 0#np.nan
+		signal[signal == np.nan] = 0 
 		# noise = noise.flatten()
 		noise = np.sqrt(signal)
+		noise +=0.000001
 
 	galaxy_data = []
 	del galaxy_data
