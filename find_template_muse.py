@@ -57,22 +57,27 @@ def setup(galaxy, use_all_temp=False):
 	dataCubeDirectory = get_dataCubeDirectory(galaxy)
 
 	f = fits.open(dataCubeDirectory)
-	galaxy_data, header = f[1].data, f[1].header
-	galaxy_noise = f[2].data
 
 	## write key parameters from header - can then be altered in future	
-	CRVAL_spec = header['CRVAL3']
-	CDELT_spec = header['CD3_3']
-	s = galaxy_data.shape
+	CRVAL_spec = f[1].header['CRVAL3']
+	CDELT_spec = f[1].header['CD3_3']
+	s = f[1].data.shape
 
 	# Collapse to single spectrum
-	# gal_spec = np.nansum(galaxy_data[:,int(s[1]/2.0-50):int(s[1]/2.0+50),
-	# 	int(s[2]/2.0-50):int(s[2]/2.0+50)], axis=(1,2))
-	# gal_noise = np.sqrt(np.nansum(galaxy_noise[:,int(s[1]/2.0-50):int(s[1]/2.0+50),
-	# 	int(s[2]/2.0-50):int(s[2]/2.0+50)]**2, axis=(1,2)))
+	gal_spec = np.zeros(s[0])
+	gal_noise = np.zeros(s[0])
+
+	for i in xrange(s[0]):
+		gal_spec[i] = np.nansum(f[1].data[i,int(s[1]/2.0-50):int(s[1]/2.0+50),
+			int(s[2]/2.0-50):int(s[2]/2.0+50)])
+		gal_noise[i] = np.sqrt(np.nansum(f[2].data[i,
+			int(s[1]/2.0-50):int(s[1]/2.0+50), int(s[2]/2.0-50):int(s[2]/2.0+50
+			)])**2)
+
+	del f
 	
-	gal_spec = galaxy_data[:,int(s[1]/2.0),int(s[2]/2.0)]
-	gal_noise = galaxy_noise[:,int(s[1]/2.0),int(s[2]/2.0)]
+	# gal_spec = galaxy_data[:,int(s[1]/2.0),int(s[2]/2.0)]
+	# gal_noise = galaxy_noise[:,int(s[1]/2.0),int(s[2]/2.0)]
 
 ## ----------========= Calibrating the spectrum  ===========---------
 	lam = np.arange(s[0])*CDELT_spec + CRVAL_spec

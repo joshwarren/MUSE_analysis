@@ -117,8 +117,8 @@ def binning_spaxels(galaxy, targetSN=None, opt='kin', auto_override=False, debug
 # collapsing the spectrum for each spaxel. 
 	if debug:
 		signal = np.array(galaxy_data[s[0]/2,:,:].flatten())
-		# noise = np.array(galaxy_noise[s[0]/2,:,:])#.flatten())
-		noise = np.array(np.sqrt(np.abs(galaxy_data[s[0]/2,:,:])).flatten())
+		# noise = np.sqrt(galaxy_noise[s[0]/2,:,:])#.flatten())
+		noise = np.sqrt(np.abs(galaxy_data[s[0]/2,:,:])).flatten()
 	else:
 		signal = np.zeros((s[1],s[2]))
 		noise = np.zeros((s[1],s[2]))
@@ -130,17 +130,16 @@ def binning_spaxels(galaxy, targetSN=None, opt='kin', auto_override=False, debug
 				signal[bl_delt1*i:bl_delt1*(i+1),bl_delt2*j:bl_delt2*(j+1)] = \
 					np.nanmedian(galaxy_data[:, bl_delt1*i:bl_delt1*(i+1),
 					bl_delt2*j:bl_delt2*(j+1)], axis=0)
-
-				# Error array seems to a little excessive.
-				# noise[bl_delt1*i:bl_delt1*(i+1),bl_delt2*j:bl_delt2*(j+1)] = \
-				# 	np.nanmedian(np.abs(galaxy_noise[:, bl_delt1*i:bl_delt1*(i+1),
-				# 	bl_delt2*j:bl_delt2*(j+1)]), axis=0)
+				noise[bl_delt1*i:bl_delt1*(i+1),bl_delt2*j:bl_delt2*(j+1)] = \
+					np.nanmedian(np.abs(galaxy_noise[:, bl_delt1*i:bl_delt1*(i+1),
+					bl_delt2*j:bl_delt2*(j+1)]), axis=0)
 
 		signal = signal.flatten()
-		signal[~(signal > 0)] = 0#np.nan
-		signal[signal == np.nan] = 0 
-		# noise = noise.flatten()
-		noise = np.sqrt(signal)
+		noise = noise.flatten()
+
+		bad_pix = ~(signal > 0) + ~(noise > 0)
+		signal[bad_pix] = 0
+		noise[bad_pix] = 0
 		noise +=0.000001
 
 	galaxy_data = []

@@ -260,6 +260,13 @@ def plot_results(galaxy, discard=0, wav_range="", vLimit=2, norm="lwv",
 		(len(D.e_components)-1)/6.0))
 	f = plt.figure(frameon=False)
 	ax_array = []
+
+	
+	saveTo = "%s/SNR_%s.png" % (out_nointerp, wav_range)
+	ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, 
+		D.SNRatio, colorbar=True, 
+		nodots=True, title='SNR', save=saveTo, close=not CO, pa=pa, res=res)
+	kldaslkd
 # ------------=============== Plot image ================----------
 	
 	print "    Image"

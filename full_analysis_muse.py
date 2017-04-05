@@ -9,6 +9,8 @@
 import numpy as np
 from binning_spaxels_muse import binning_spaxels
 from find_template_muse import find_template
+import traceback, sys
+
 
 def full_analysis(galaxy=None, opt='kin'):
 
@@ -38,6 +40,16 @@ if __name__=="__main__":
 		]
 	# for g in galaxies: full_analysis(galaxy=g, opt='pop')
 	try:
-		full_analysis(galaxy='ngc1399', opt='kin')
-	except:
+		full_analysis(galaxy='ic4296', opt='kin')
+	except Exception as e:
 		print 'ngc1399 failed'
+		print e
+		traceback.print_exc()
+		print ''
+
+	try:
+		full_analysis(galaxy='ic1459', opt='kin')
+	except Exception as e:
+		print 'ngc1399 failed'
+		print e
+		traceback.print_exc()
