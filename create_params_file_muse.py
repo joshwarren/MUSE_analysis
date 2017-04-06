@@ -2,10 +2,10 @@ import numpy as np
 from checkcomp import checkcomp
 cc = checkcomp()
 
-opt = 'kin' 		# kin or pop
+opt = 'kin' 		# kin or abs
 
 galaxies = ['ic1459', 'ic4296', 'ngc1316', 'ngc1399']
-gals=[1]
+gals=[0, 1]
 
 output_file = "params.txt"
 f = open(output_file, 'w')
@@ -23,7 +23,7 @@ for gal in gals:
 	for i in range(n_bins):
 		if opt == "kin":
 			f.write("python errors2_muse.py " + str(gal) + " " + str(i) + "\n")
-		elif opt == "pop":
+		elif opt == "abs":
 			f.write("python errors3_muse.py " + str(gal) + " " + str(i) + "\n")
 f.write("push 'Glamdring MUSE run finished'")
 
