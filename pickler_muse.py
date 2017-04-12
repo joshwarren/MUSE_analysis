@@ -119,14 +119,7 @@ def pickler(galaxy, discard=0, wav_range="", norm="lwv", opt="kin",	**kwargs):
 	else: gas = 3
 	D.gas = gas
 
-	print 'gas option: ', D.gas
-	for c in D._components.keys():
-		print c, np.sum(D._components[c].mask), '(', np.sum(D._components[c].mask_dynamics),')/', D.number_of_bins
-	
-
 	for c in D.list_components:
-		print ''
-		print c
 		dynamics = {'vel':np.zeros(D.number_of_bins)*np.nan, 
 			'sigma':np.zeros(D.number_of_bins)*np.nan, 
 			'h3':np.zeros(D.number_of_bins)*np.nan, 
@@ -163,10 +156,8 @@ def pickler(galaxy, discard=0, wav_range="", norm="lwv", opt="kin",	**kwargs):
 				for j, d in enumerate(['vel', 'sigma', 'h3', 'h4']):
 					try:
 						dynamics[d][bin] = float(row[j+1])
-						print 'found: bin:', bin, ' attr:',d
 					except IndexError:
-						print 'NOT found: bin:', bin, ' attr:',d
-						# pass
+						pass
 					# 	dynamics[d][bin] = 0
 				# dynamics['vel'][bin] = vel[i]				
 				# dynamics['sigma'][bin] = sig[i]
@@ -193,13 +184,10 @@ def pickler(galaxy, discard=0, wav_range="", norm="lwv", opt="kin",	**kwargs):
 					dynamics_uncert = dynamics
 
 		for kine in dynamics.keys():
-			print c, kine
 			if np.isnan(dynamics[kine]).all():
-				print 'unset'
 				D.components[c].unset(kine)
 			else:
 				# if c in D.list_components:
-				print 'set'
 				D.components[c].setkin(kine, dynamics[kine])
 				D.components[c].setkin_uncert(kine, dynamics_uncert[kine])
 

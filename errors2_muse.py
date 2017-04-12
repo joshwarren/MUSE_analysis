@@ -595,7 +595,11 @@ def errors2(i_gal=None, bin=None):
 	noise = np.abs(noise)
 	bin_log_sav = bin_log
 	noise_sav = noise
-	saveTo="%s/analysis/%s/gas_MC/bestfit/plots/%s.png" % (dir, galaxy, str(bin))
+
+	if cc.device == 'glamdring':
+		saveTo="%s/analysis_muse/%s/gas_MC/bestfit/plots/%s.png" % (dir, galaxy, str(bin))	
+	else:
+		saveTo="%s/analysis/%s/gas_MC/bestfit/plots/%s.png" % (dir, galaxy, str(bin))
 
 	pp = ppxf(templates, bin_log, noise, velscale, start, 
 			  goodpixels=goodPixels, moments=moments, degree=degree, vsyst=dv, 

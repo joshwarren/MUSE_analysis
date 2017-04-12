@@ -23,18 +23,17 @@ import traceback, sys
 galaxies = [
 			'ic1459', 
 			'ic4296',
-			'ngc1316',
-			'ngc1399',
+			# 'ngc1316',
+			# 'ngc1399',
 			]
 # galaxies = ['ic1459']
-galaxies = ['ic4296']
+# galaxies = ['ic4296']
 # galaxies = ['ngc1316']
 # galaxies = ['ngc1399']
 
 
 discard = 0
-vLimit = 2
-norm='lwv'
+norm = 'lws' #'lwv'
 
 # Arrays for error catching
 gal_err=[]
@@ -45,8 +44,8 @@ for galaxy in galaxies:
 	print galaxy
 	try:
 		# D = pickler(galaxy, discard=discard, norm=norm)
-		D = plot_results(galaxy, discard=discard, vLimit=vLimit, CO = False, 
-			residual="median", norm=norm, D=D)
+		D = plot_results(galaxy, discard=discard, CO = False, residual="median", 
+			norm=norm, D=D, show_bin_num=True)
 		# plt.close("all")
 		# GH_plots(galaxy, wav_range=wav_range)
 		# plt.close("all")

@@ -20,16 +20,15 @@
 #				effects.
 # wav_range 	null	Imposed wavelength range on top of the automated 
 #				limits.	
-# vLimit 	2 	Integer giving the number of lowest and highest 
-#				results in the plot to be discarded. Defualt 
-#				ignores 2 highest and 2 lowest bins.
 # norm		"lwv"	Normalisation methods for velocity fields:
 #				lwv: luminosity weighted mean of the whole 
 #				field is set to 0.
 #				lum: velocity of the brightest spaxel is set 
 #				to 0.
 #				sig: Noralised to the mean velocity of 5 bins with the
-#				highest LOSVD.
+#				highest velocity dispersion.
+#				lws: Normalised to the mean velocity of 5 bins with the highest
+#				luminosity (flux) weighted velocity dispersion
 # plots 	False   Boolean to show plots as routine runs.
 # nointerp 	False 	Boolean to use interpolation between bins in 
 #				plots or not.
@@ -53,7 +52,7 @@ from astropy import units as u
 from astropy.coordinates import SkyCoord
 from matplotlib.collections import LineCollection
 import matplotlib.pyplot as plt # used for plotting
-from plot_velfield_nointerp import plot_velfield_nointerp # for plotting with no interpolations. 
+from plot_velfield_nointerp import plot_velfield_nointerp
 from plot_histogram import plot_histogram
 import os
 from sauron_colormap2 import sauron2 as sauron
@@ -76,6 +75,14 @@ vin_dir = '%s/Data/muse/analysis' % (cc.base_dir)
 vin_dir_cube = '%s/Data/muse' % (cc.base_dir)
 ain_dir = '%s/Data/alma' % (cc.base_dir)
 out_dir = '%s/Data/muse/analysis' % (cc.base_dir)
+
+SNR = False
+image = False
+equivalent_width = False
+amp_noise = False
+kinematics = True
+plot_resid = False
+line_ratios = False
 
 #-----------------------------------------------------------------------------
 def set_lims(v, positive=False, symmetric=False):
@@ -131,8 +138,6 @@ def add_CO(ax, galaxy, header, close=False):
 	CO_image_dir="%s/%s-mom0.fits" % (ain_dir, galaxy)
 	# Arcsec coords
 	if os.path.exists(CO_image_dir) and not ax.RaDec:
-		## *** This option doesn't seem to be working correctly and I don't understand 
-		##	why... *******************************************************************
 		alma = fits.open(CO_image_dir)[0]
 
 		CO_x = np.arange(alma.header['NAXIS1'])*alma.header['CDELT1']*60*60
@@ -193,7 +198,7 @@ def add_CO(ax, galaxy, header, close=False):
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
-def plot_results(galaxy, discard=0, wav_range="", vLimit=2, norm="lwv", 
+def plot_results(galaxy, discard=0, wav_range="", norm="lwv", 
 	plots=False, residual=False, CO=False, show_bin_num=False,
 	D=None, **kwargs):	
 
@@ -250,7 +255,7 @@ def plot_results(galaxy, discard=0, wav_range="", vLimit=2, norm="lwv",
 	for bin in D.bin:
 		for e in bin.e_line.itervalues():
 			e.__threshold__ = 0
-	
+
 	if D.norm_method != norm:
 		D.norm_method = norm
 		D.find_restFrame()
@@ -261,265 +266,267 @@ def plot_results(galaxy, discard=0, wav_range="", vLimit=2, norm="lwv",
 	f = plt.figure(frameon=False)
 	ax_array = []
 
-	
-	saveTo = "%s/SNR_%s.png" % (out_nointerp, wav_range)
-	ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, 
-		D.SNRatio, colorbar=True, 
-		nodots=True, title='SNR', save=saveTo, close=not CO, pa=pa, res=res)
-	kldaslkd
-# ------------=============== Plot image ================----------
-	
-	print "    Image"
-	
-	title = "Total Flux"
-	CBLabel = r"Flux (erg s$^{-1}$ cm$^{-2}$)"
 
-	ax = f.add_subplot(111, aspect='equal')
-	saveTo = "%s/total_image_%s.png" % (out_nointerp, wav_range)
-	ax.saveTo = saveTo
-	ax.figx, ax.figy = 0, 0
-
-	fmin, fmax = set_lims(D.flux, positive=True)
-
-	ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, D.flux, vmin=fmin, 
-		vmax=fmax, nodots=True, show_bin_num=show_bin_num, colorbar=True, 
-		label=CBLabel, title=title, cmap='gist_yarg', ax=ax, pa=pa, res=res)
-		#, header=header)
-	ax_array.append(ax)
-	f.delaxes(ax)
-	f.delaxes(ax.cax)
-	if hasattr(ax,'ax2'): f.delaxes(ax.ax2)
-	if hasattr(ax,'ax3'): f.delaxes(ax.ax3)
-	
-	if plots:
-		plt.show()
-# ------------========= Plot intensity (& EW) ===========----------
-	print "    gas map(s) and equivalent widths"
-
-	for c in D.e_components:
-		print "        " + c
-
-		if 'OIII' in c:
-			c_title = '[OIII]'
-		elif 'Hbeta' in c:
-			c_title = r'H$_\beta$'
-		elif 'Hgamma' in c:
-			c_title = r'H$_\gamma$'
-		else:
-			c_title = c
-
-		f_title = "%s Flux" % (c_title)
-		fh_title = "%s Flux Histogram" % (c_title)
-		# from header
-		fCBtitle = r"Flux (erg s$^{-1}$ cm$^{-2}$)"
-		f_min, f_max = set_lims(D.e_line[c].flux, positive=True)
-
-		saveTo = "%s/%s_flux_hist_%s.png" % (out_plots, c, wav_range)
-		plot_histogram(D.e_line[c].flux, galaxy=galaxy.upper(), redshift=z,
-			vmin=f_min,vmax=f_max, weights=D.n_spaxels_in_bin, title=fh_title,
-			xaxis=fCBtitle, save=saveTo)
-		
-		ax_y = set_ax_y(c)
-
-		ax = f.add_subplot(111, aspect='equal')
-		saveTo = "%s/%s_img_%s.png" % (out_nointerp, c, wav_range)
-		ax.saveTo = saveTo
-		ax.figx, ax.figy = 0, ax_y
-		
-		ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, D.e_line[c].flux, 
-			vmin=f_min, vmax=f_max, colorbar=True, nodots=True, label=fCBtitle, 
-			  title=f_title, cmap = 'gist_yarg', ax=ax, pa=pa, res=res)#, header=header)
-		ax_array.append(ax)
-		f.delaxes(ax)
-		f.delaxes(ax.cax)
-		if hasattr(ax,'ax2'): f.delaxes(ax.ax2)
-		if hasattr(ax,'ax3'): f.delaxes(ax.ax3)
-			
-		if plots: plt.show()
-		
-
-		eq_title = "%s Equivalent Width" % (c_title)
-		eqh_title = "%s Equivalent Width Histogram" % (c_title)
-		eqCBtitle = r"Equivalent Width ($\AA$)"
-
-		eq_min, eq_max = set_lims(D.e_line[c].equiv_width, positive=True)
-
-		saveTo = "%s/%s_eqWidth_hist_%s.png" % (out_plots, c, wav_range)
-		plot_histogram(D.e_line[c].equiv_width, galaxy=galaxy.upper(), redshift=z,
-			vmin=eq_min,vmax=eq_max, weights=D.n_spaxels_in_bin, title=eqh_title,
-			xaxis=eqCBtitle, save=saveTo)
-		
-		ax = f.add_subplot(111, aspect='equal')
-		saveTo = "%s/%s_equiv_width_%s.png" % (out_nointerp, c, wav_range)
-		ax.saveTo = saveTo
-		ax.figx, ax.figy = 0, ax_y+1
-
-
-		ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, 
-			D.e_line[c].equiv_width, vmin=eq_min, vmax=eq_max, colorbar=True, 
-			nodots=True, label=eqCBtitle, title=eq_title, ax=ax, pa=pa, res=res)
-			#, header=header)
-		ax_array.append(ax)
-		f.delaxes(ax)
-		f.delaxes(ax.cax)
-		if hasattr(ax,'ax2'): f.delaxes(ax.ax2)
-		if hasattr(ax,'ax3'): f.delaxes(ax.ax3)
-# ------------============ Amplitude/Noise ==============----------
-		amp_title = '%s Amplitude to Noise ratio' % (c_title)
-		amp_min, amp_max = set_lims(D.e_line[c].amp_noise, positive=True)
-		saveTo = "%s/%s_amp_nosie_%s.png" % (out_nointerp, c, wav_range)
-
+	if SNR:	
+		saveTo = "%s/SNR_%s.png" % (out_nointerp, wav_range)
 		ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, 
-			D.e_line[c].amp_noise, vmin=amp_min, vmax=amp_max, colorbar=True, 
-			nodots=True, title=amp_title, save=saveTo, close=not CO, pa=pa, res=res)
+			D.SNRatio, colorbar=True, 
+			nodots=True, title='SNR', save=saveTo, close=not CO, pa=pa, res=res)
+# ------------=============== Plot image ================----------
+	if image:
+		print "    Image"
+		
+		title = "Total Flux"
+		CBLabel = r"Flux (erg s$^{-1}$ cm$^{-2}$)"
+
+		ax = f.add_subplot(111, aspect='equal')
+		saveTo = "%s/total_image_%s.png" % (out_nointerp, wav_range)
+		ax.saveTo = saveTo
+		ax.figx, ax.figy = 0, 0
+
+		fmin, fmax = set_lims(D.flux, positive=True)
+
+		ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, D.flux, 
+			vmin=fmin, vmax=fmax, nodots=True, show_bin_num=show_bin_num, colorbar=True, 
+			label=CBLabel, title=title, cmap='gist_yarg', ax=ax, pa=pa, res=res)
 			#, header=header)
-		if CO:
-			ax1.saveTo = saveTo
-			add_CO(ax1, galaxy, header, close=True)
-# ------------=========== Setting titles etc ============----------
-	print '    Kinematics'
-	# for c in ['stellar']: # For debugging
-	for c in D.independent_components:
-		print '        %s' % (c)
+		ax_array.append(ax)
+		f.delaxes(ax)
+		f.delaxes(ax.cax)
+		if hasattr(ax,'ax2'): f.delaxes(ax.ax2)
+		if hasattr(ax,'ax3'): f.delaxes(ax.ax3)
+		
+		if plots:
+			plt.show()
+# ------------========= Plot intensity (& EW) ===========----------
+	if equivalent_width:
+		print "    gas map(s) and equivalent widths"
 
-		im_type = c
-		pl = c
-		if im_type == "gas":
-			im_type=""
-			ax_y=set_ax_y(c)
-			pl = 'Hbeta'
-		elif im_type == "SF":
-			im_type=" (Star Forming)"
-			ax_y=set_ax_y(c)
-			pl = '[OIII]5007d'
-		elif im_type == "Shocks":
-			im_type=" (Shocking)"
-			ax_y=set_ax_y(c)
-			pl = 'Hbeta'
-		elif 'Hbeta' in im_type:
-			im_type=" ("+r'H$_\beta$'+")"
-			ax_y=set_ax_y(c)
-		elif 'Hgamma' in im_type:
-			im_type=" ("+r'H$_\gamma$'+")"
-			ax_y=set_ax_y(c)
-		elif 'OIII' in im_type:
-			im_type=" (OIII)"
-			ax_y=set_ax_y(c)
-		else:
-			im_type=" (" + im_type + ")"
-			ax_y=set_ax_y(c)
+		for c in D.e_components:
+			print "        " + c
 
-		for k in D.components[pl].plot.keys():
-
-
-			symmetric=False
-			positive=False
-				
-			CBLabel = None
-			if k == "vel":
-				ax_x=1
-				title = 'Velocity'
-				CBLabel = "V (km s$^{-1}$)"
-				symmetric=True
-
-			if  k == "sigma":
-				ax_x=2
-				title = 'Velocity Dispersion'
-				CBLabel = r'$\mathrm{\sigma}$ (km s$^{-1}$)'
-				positive = True
-
-			if k == "h3":
-				ax_x=1
-				ax_y+=1
-				title = 'h3'
-				symmetric = True
-
-			if k == "h4":
-				ax_x=2
-				ax_y+=1
-				title = 'h4'
-
-
-			if c == "stellar":
-				utitle = "Stellar Uncertainty " + title + " Map"
-				htitle = "Stellar " + title + " Histogram"
-				uhtitle = "Stellar Uncertainty " + title + " Histogram"
-				title = "Stellar " + title + " Map"
+			if 'OIII' in c:
+				c_title = '[OIII]'
+			elif 'Hbeta' in c:
+				c_title = r'H$_\beta$'
+			elif 'Hgamma' in c:
+				c_title = r'H$_\gamma$'
 			else:
-				utitle = "Ionised" + im_type + " Gas Uncertainty " + title + " Map"
-				htitle = "Ionised" + im_type + " Gas " + title + " Histogram"
-				uhtitle = "Ionised" + im_type + " Gas Uncertainty " + title + \
-					" Histogram"
-				title = "Ionised" + im_type + " Gas\n" + title + " Map"
-# ------------============ Setting v range ==============----------
-			vmin, vmax = set_lims(D.components[pl].plot[k], positive=positive, 
-				symmetric=symmetric)
-			v_uncert_min, v_uncert_max = set_lims(D.components[pl].plot[k].uncert, 
-				positive=True)
-# # ------------============== Plot Histogram =============----------
-			# Field histogram
-			# saveTo = "%s/%s_hist_%s.png" % (out_plots, plot_title, wav_range)
-			# plot_histogram(D.components[c].plot[k], galaxy=galaxy.upper(), redshift=z,
-			# 	vmin=vmin,vmax=vmax, weights=D.n_spaxels_in_bin, title=htitle,
-			# 	xaxis=CBLabel, save=saveTo)
-			# # Uncertainty histogram
-			# saveTo = "%s/%s_hist_%s.png" % (out_plots, plot_title+'_uncert', wav_range)
-			# plot_histogram(D.components[c].plot[k].uncert, galaxy=galaxy.upper(), redshift=z,
-			# 	vmin=v_uncert_min,vmax=v_uncert_max, weights=D.n_spaxels_in_bin,
-			# 	title=uhtitle, xaxis=CBLabel, save=saveTo)
+				c_title = c
 
-			# if plots:
-			# 	plt.show()
-# ------------==== Plot velfield - no interperlation ====----------
-			# Field plot
+			f_title = "%s Flux" % (c_title)
+			fh_title = "%s Flux Histogram" % (c_title)
+			# from header
+			fCBtitle = r"Flux (erg s$^{-1}$ cm$^{-2}$)"
+			f_min, f_max = set_lims(D.e_line[c].flux, positive=True)
+
+			saveTo = "%s/%s_flux_hist_%s.png" % (out_plots, c, wav_range)
+			plot_histogram(D.e_line[c].flux, galaxy=galaxy.upper(), redshift=z,
+				vmin=f_min,vmax=f_max, weights=D.n_spaxels_in_bin, title=fh_title,
+				xaxis=fCBtitle, save=saveTo)
+			
+			ax_y = set_ax_y(c)
+
 			ax = f.add_subplot(111, aspect='equal')
-			saveTo = ("%s/%s_%s_field_%s.png" % (out_nointerp, c, k, wav_range))
+			saveTo = "%s/%s_img_%s.png" % (out_nointerp, c, wav_range)
 			ax.saveTo = saveTo
-			ax.figx, ax.figy = ax_x, ax_y
-			ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar,
-				D.yBar, D.components[pl].plot[k], vmin=vmin, vmax=vmax, #flux_type='notmag',
-				nodots=True, show_bin_num=show_bin_num, colorbar=True, 
-				label=CBLabel,galaxy = galaxy.upper(), redshift = z,
-				title=title, ax=ax, pa=pa, res=res, signal_noise=D.SNRatio,
-				signal_noise_target=SN_target, show_vel=False)#header=header, 
-			#plots=True
-			if plots:
-				plt.show()
+			ax.figx, ax.figy = 0, ax_y
+			
+			ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, 
+				D.e_line[c].flux, vmin=f_min, vmax=f_max, colorbar=True, nodots=True, 
+				label=fCBtitle, title=f_title, cmap = 'gist_yarg', ax=ax, pa=pa, 
+				res=res)#, header=header)
 			ax_array.append(ax)
 			f.delaxes(ax)
 			f.delaxes(ax.cax)
 			if hasattr(ax,'ax2'): f.delaxes(ax.ax2)
 			if hasattr(ax,'ax3'): f.delaxes(ax.ax3)
+				
+			if plots: plt.show()
 			
-			# Uncertainty plot
-			saveTo = "%s/%s_%s_uncert_field_%s.png" % (out_nointerp, c, k, wav_range)
-			ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar,
-				D.components[pl].plot[k].uncert, vmin=v_uncert_min, vmax=v_uncert_max,
-				flux_type='notmag', nodots=True, show_bin_num=show_bin_num,
-				colorbar=True, label=CBLabel, galaxy = galaxy.upper(),
-				redshift = z, title=utitle, save=saveTo, close=not CO, pa=pa, res=res)
+
+			eq_title = "%s Equivalent Width" % (c_title)
+			eqh_title = "%s Equivalent Width Histogram" % (c_title)
+			eqCBtitle = r"Equivalent Width ($\AA$)"
+
+			eq_min, eq_max = set_lims(D.e_line[c].equiv_width, positive=True)
+
+			saveTo = "%s/%s_eqWidth_hist_%s.png" % (out_plots, c, wav_range)
+			plot_histogram(D.e_line[c].equiv_width, galaxy=galaxy.upper(), redshift=z,
+				vmin=eq_min,vmax=eq_max, weights=D.n_spaxels_in_bin, title=eqh_title,
+				xaxis=eqCBtitle, save=saveTo)
+			
+			ax = f.add_subplot(111, aspect='equal')
+			saveTo = "%s/%s_equiv_width_%s.png" % (out_nointerp, c, wav_range)
+			ax.saveTo = saveTo
+			ax.figx, ax.figy = 0, ax_y+1
+
+
+			ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, 
+				D.e_line[c].equiv_width, vmin=eq_min, vmax=eq_max, colorbar=True, 
+				nodots=True, label=eqCBtitle, title=eq_title, ax=ax, pa=pa, res=res)
+				#, header=header)
+			ax_array.append(ax)
+			f.delaxes(ax)
+			f.delaxes(ax.cax)
+			if hasattr(ax,'ax2'): f.delaxes(ax.ax2)
+			if hasattr(ax,'ax3'): f.delaxes(ax.ax3)
+# ------------============ Amplitude/Noise ==============----------
+		if amp_noise:
+			amp_title = '%s Amplitude to Noise ratio' % (c_title)
+			amp_min, amp_max = set_lims(D.e_line[c].amp_noise, positive=True)
+			saveTo = "%s/%s_amp_nosie_%s.png" % (out_nointerp, c, wav_range)
+
+			ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, 
+				D.e_line[c].amp_noise, vmin=amp_min, vmax=amp_max, colorbar=True, 
+				nodots=True, title=amp_title, save=saveTo, close=not CO, pa=pa, res=res)
 				#, header=header)
 			if CO:
 				ax1.saveTo = saveTo
 				add_CO(ax1, galaxy, header, close=True)
+# ------------=========== Setting titles etc ============----------
+	if kinematics:
+		print '    Kinematics'
+		# for c in ['stellar']: # For debugging
+		for c in D.independent_components:
+			print '        %s' % (c)
+
+			im_type = c
+			pl = c
+			if im_type == "gas":
+				im_type=""
+				ax_y=set_ax_y(c)
+				pl = 'Hbeta'
+			elif im_type == "SF":
+				im_type=" (Star Forming)"
+				ax_y=set_ax_y(c)
+				pl = '[OIII]5007d'
+			elif im_type == "Shocks":
+				im_type=" (Shocking)"
+				ax_y=set_ax_y(c)
+				pl = 'Hbeta'
+			elif 'Hbeta' in im_type:
+				im_type=" ("+r'H$_\beta$'+")"
+				ax_y=set_ax_y(c)
+			elif 'Hgamma' in im_type:
+				im_type=" ("+r'H$_\gamma$'+")"
+				ax_y=set_ax_y(c)
+			elif 'OIII' in im_type:
+				im_type=" (OIII)"
+				ax_y=set_ax_y(c)
+			else:
+				im_type=" (" + im_type + ")"
+				ax_y=set_ax_y(c)
+
+			for k in D.components[pl].plot.keys():
+
+
+				symmetric=False
+				positive=False
+					
+				CBLabel = None
+				if k == "vel":
+					ax_x=1
+					title = 'Velocity'
+					CBLabel = "V (km s$^{-1}$)"
+					symmetric=True
+
+				if  k == "sigma":
+					ax_x=2
+					title = 'Velocity Dispersion'
+					CBLabel = r'$\mathrm{\sigma}$ (km s$^{-1}$)'
+					positive = True
+
+				if k == "h3":
+					ax_x=1
+					ax_y+=1
+					title = 'h3'
+					symmetric = True
+
+				if k == "h4":
+					ax_x=2
+					ax_y+=1
+					title = 'h4'
+
+
+				if c == "stellar":
+					utitle = "Stellar Uncertainty " + title + " Map"
+					htitle = "Stellar " + title + " Histogram"
+					uhtitle = "Stellar Uncertainty " + title + " Histogram"
+					title = "Stellar " + title + " Map"
+				else:
+					utitle = "Ionised" + im_type + " Gas Uncertainty " + title + " Map"
+					htitle = "Ionised" + im_type + " Gas " + title + " Histogram"
+					uhtitle = "Ionised" + im_type + " Gas Uncertainty " + title + \
+						" Histogram"
+					title = "Ionised" + im_type + " Gas\n" + title + " Map"
+# ------------============ Setting v range ==============----------
+				vmin, vmax = set_lims(D.components[pl].plot[k], positive=positive, 
+					symmetric=symmetric)
+				v_uncert_min, v_uncert_max = set_lims(D.components[pl].plot[k].uncert, 
+					positive=True)
+# # ------------============== Plot Histogram =============----------
+				# Field histogram
+				# saveTo = "%s/%s_hist_%s.png" % (out_plots, plot_title, wav_range)
+				# plot_histogram(D.components[c].plot[k], galaxy=galaxy.upper(), 
+				# 	redshift=z, vmin=vmin,vmax=vmax, weights=D.n_spaxels_in_bin, 
+				# 	title=htitle, xaxis=CBLabel, save=saveTo)
+				# # Uncertainty histogram
+				# saveTo = "%s/%s_hist_%s.png" % (out_plots, plot_title+'_uncert', 
+				# 	wav_range)
+				# plot_histogram(D.components[c].plot[k].uncert, galaxy=galaxy.upper(), 
+				# 	redshift=z, vmin=v_uncert_min,vmax=v_uncert_max, 
+				# 	weights=D.n_spaxels_in_bin, title=uhtitle, xaxis=CBLabel, save=saveTo)
+
+				# if plots:
+				# 	plt.show()
+# ------------==== Plot velfield - no interperlation ====----------
+				# Field plot
+				ax = f.add_subplot(111, aspect='equal')
+				saveTo = ("%s/%s_%s_field_%s.png" % (out_nointerp, c, k, wav_range))
+				ax.saveTo = saveTo
+				ax.figx, ax.figy = ax_x, ax_y
+				ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar,
+					D.yBar, D.components[pl].plot[k], vmin=vmin, vmax=vmax, 
+					#flux_type='notmag',
+					nodots=True, show_bin_num=show_bin_num, colorbar=True, 
+					label=CBLabel,galaxy = galaxy.upper(), redshift = z,
+					title=title, ax=ax, pa=pa, res=res, signal_noise=D.SNRatio,
+					signal_noise_target=SN_target, show_vel=False)#header=header, 
+				#plots=True
+				if plots:
+					plt.show()
+				ax_array.append(ax)
+				f.delaxes(ax)
+				f.delaxes(ax.cax)
+				if hasattr(ax,'ax2'): f.delaxes(ax.ax2)
+				if hasattr(ax,'ax3'): f.delaxes(ax.ax3)
 				
-			#plots=False
-			if plots:
-				plt.show()
-			#if CO:
-			#	D.unbinned_flux = D.unbinned_flux_sav
+				# Uncertainty plot
+				# saveTo = "%s/%s_%s_uncert_field_%s.png" % (out_nointerp, c, k, wav_range)
+				# ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar,
+				# 	D.components[pl].plot[k].uncert, vmin=v_uncert_min, vmax=v_uncert_max,
+				# 	flux_type='notmag', nodots=True, show_bin_num=show_bin_num,
+				# 	colorbar=True, label=CBLabel, galaxy = galaxy.upper(),
+				# 	redshift = z, title=utitle, save=saveTo, close=not CO, pa=pa, res=res)
+				# 	#, header=header)
+				# if CO:
+				# 	ax1.saveTo = saveTo
+				# 	add_CO(ax1, galaxy, header, close=True)
+					
+				# #plots=False
+				# if plots:
+				# 	plt.show()
 # ------------============= Plot residuals ==============----------
-	if residual:
+	if residual and plot_resid:
 		print "    " + residual + " residuals"
 
 		average_residuals = np.zeros(D.number_of_bins)
-		for i in range(D.number_of_bins):
-			bestfit = np.loadtxt('%s/bestfit/%d.dat' % (vin_dir_gasMC, i))
-			spectrum = np.loadtxt('%s/input/%d.dat' % (vin_dir_gasMC, i))
-			residuals = np.abs(spectrum - bestfit)
+		for i, bin in enumerate(D.bin):
+			residuals = np.abs(bin.spectrum - bin.bestfit)
 			# remove edge pixels
 			residuals = np.delete(residuals, [np.arange(5), 
-			len(residuals)+np.arange(-5,0)], axis=0)
+				len(residuals)+np.arange(-5,0)], axis=0)
 
 			if residual=="mean":
 				average_residuals[i] = np.mean(residuals)
@@ -571,7 +578,7 @@ def plot_results(galaxy, discard=0, wav_range="", vLimit=2, norm="lwv",
 	# 	ax1.saveTo = saveTo
 	# 	add_CO(ax1, galaxy, header, close=True)
 # ------------============ Line ratio maps ==============----------
-	if any('OIII' in o for o in D.list_components):
+	if any('OIII' in o for o in D.list_components) and line_ratios:
 		print "    line ratios"
 
 		t_num = (len(D.e_components)-1)*len(D.e_components)/2
@@ -633,6 +640,7 @@ def plot_results(galaxy, discard=0, wav_range="", vLimit=2, norm="lwv",
 			if hasattr(ax,'ax2'): f.delaxes(ax.ax2)
 			if hasattr(ax,'ax3'): f.delaxes(ax.ax3)
 # ------------============= Plot and save ===============----------
+	del D
 
 	print "    Plotting and saving"
 
@@ -644,7 +652,8 @@ def plot_results(galaxy, discard=0, wav_range="", vLimit=2, norm="lwv",
 		if hasattr(a,'ax3'): f.add_axes(a.ax3)
 		if not os.path.exists(os.path.dirname(a.saveTo)):
 			os.makedirs(os.path.dirname(a.saveTo))  
-		f.savefig(a.saveTo, bbox_inches="tight")
+		print a.get_title()
+		plt.savefig(a.saveTo, bbox_inches="tight")
 
 		if CO:
 			add_CO(a, galaxy, header)
@@ -679,7 +688,7 @@ def plot_results(galaxy, discard=0, wav_range="", vLimit=2, norm="lwv",
 	# saveTo = "%s/grid_%s.pdf" % (out_plots, wav_range)
 	# f.savefig(saveTo, bbox_inches="tight",format='pdf')
 
-	return D
+	# return D
 
 
 
@@ -689,15 +698,9 @@ def plot_results(galaxy, discard=0, wav_range="", vLimit=2, norm="lwv",
 
 if __name__ == '__main__':
 
-	galaxies = ['ngc3557', 'ic1459', 'ic1531', 'ic4296', 'ngc0612', 
-		'ngc1399', 'ngc3100', 'ngc7075', 'pks0718-34', 'eso443-g024']
-	galaxy = galaxies[5]
+	galaxies = ['ic1459', 'ic4296', 'ngc1316', 'ngc1399']
+	galaxy = galaxies[0]
 
-	wav_range="4200-"
-	discard = 2 # rows of pixels to discard- must have been the same 
-			#	for all routines 
-	vLimit = 2 #
 	print galaxy
 
-	plot_results(galaxy, discard=discard, vLimit=vLimit, 
-		wav_range=wav_range, plots=False, residual = "median")
+	plot_results(galaxy, plots=False, residual = "median")
