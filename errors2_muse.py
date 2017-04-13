@@ -34,12 +34,13 @@ def set_params():
 			# 3   All gas seperate.
 	reps = 0 ## number of monte carlo reps per bin.
 	FWHM_gal = 2.3 # MUSE documentation
+	set_range = np.array([2000,7350])
 	stellar_moments = 4 # number of componants to calc with ppxf (see 
 						# keyword moments in ppxf.pro for more details)
 	gas_moments = 2
 	degree = 4  # order of addative Legendre polynomial used to 
 				#; correct the template continuum shape during the fit
-	return quiet, gas, reps, FWHM_gal, stellar_moments, gas_moments, degree
+	return quiet, gas, reps, FWHM_gal, stellar_moments, gas_moments, degree, set_range
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
@@ -405,35 +406,36 @@ def saveAll(galaxy, bin, pp, lambdaq, stellar_output, stellar_errors, bin_log_sa
 
 #-----------------------------------------------------------------------------
 def remove_anomalies(spec, window=201, repeats=3, lam=None, set_range=None, 
-	return_cuts=False):
+	return_cuts=False, n_sigma=3):
+	if set_range is not None and lam is None:
+		raise ValueError('lam keyword must be supplied if set_range keyword'+\
+			' is supplied')
+	elif set_range is not None and lam is not None:
+		r = (lam > set_range[0]) * (lam < set_range[1])
+	else:
+		r = np.ones(len(spec)).astype(bool)
+	spec = np.array(spec[r])
+	lam = np.array(lam[r])
+
 	x=np.arange(len(spec))
 	mask = np.zeros(len(spec)).astype(bool)
-
-	for r in range(repeats):
+	for rep in range(repeats):
 		med = rollmed(spec,window)
 		std = rollstd(spec,window)
 		for i in range(len(mask)):
-			mask[i] += spec[i] > med[i]+3*std[i]
-			mask[i] += spec[i] < med[i]-3*std[i]
+			mask[i] += spec[i] > med[i]+n_sigma*std[i]
+			mask[i] += spec[i] < med[i]-n_sigma*std[i]
 
 		spec[mask] = np.interp(x[mask],x[~mask],spec[~mask])
-	if set_range is not None and lam is not None:
-		r = (lam > set_range[0]) * (lam < set_range[1])
+
+	if lam is not None:
 		if return_cuts:
-			return spec[r], lam[r], r
-		else:
-			return spec[r], lam[r]
-	elif set_range is not None and lam is None:
-		raise ValueError('lam keyword must be supplied if set_range keyword'+\
-			' is supplied')
-	elif set_range is None and lam is not None:
-		if return_cuts:
-			return spec, lam, np.ones(len(spec)).astype(bool)
+			return spec, lam, r
 		else:
 			return spec, lam
 	else:
 		if return_cuts:
-			return spec, np.ones(len(spec)).astype(bool)
+			return spec, r
 		else:
 			return spec
 #-----------------------------------------------------------------------------
@@ -477,7 +479,8 @@ def errors2(i_gal=None, bin=None):
 ## ----------===============================================---------
 ## ----------============= Input parameters  ===============---------
 ## ----------===============================================---------
-	quiet, gas, reps, FWHM_gal, stellar_moments, gas_moments, degree = set_params()
+	quiet, gas, reps, FWHM_gal, stellar_moments, gas_moments, degree, set_range = \
+		set_params()
 	
 	galaxies = ['ic1459', 'ic4296', 'ngc1316', 'ngc1399']
 	galaxy = galaxies[i_gal]
@@ -546,7 +549,7 @@ def errors2(i_gal=None, bin=None):
 ## ----------========= Calibrating the spectrum  ===========---------
 	lam = np.arange(s[0])*CDELT_spec + CRVAL_spec
 	bin_lin, lam, cut = remove_anomalies(bin_lin, window=201, repeats=3, 
-		lam=lam, return_cuts=True)
+		lam=lam, return_cuts=True, set_range=set_range, n_sigma=2)
 	lamRange = np.array([lam[0],lam[-1]])/(1+z)
 	bin_lin_noise = bin_lin_noise[cut]
 
@@ -625,11 +628,11 @@ def errors2(i_gal=None, bin=None):
 			lam=lambdaq, plot=not quiet, quiet=quiet, bias=0.1, 
 			component=component)
 
-		stellar_output[rep,:] = ppMC.sol[0:stellar_moments][0]
-		stellar_errors[rep,:] = ppMC.error[0:stellar_moments][0]
-		for g in range(gas):
-			gas_output[g,rep,:] = ppMC.sol[0:gas_moments][g]
-			gas_errors[g,rep,:] = ppMC.error[0:gas_moments][g]
+		stellar_output[rep,:] = ppMC.sol[0][0:stellar_moments]
+		stellar_errors[rep,:] = ppMC.error[0][0:stellar_moments]
+		for g in range(len(element)-1):
+			gas_output[g,rep,:] = ppMC.sol[g+1][0:gas_moments]
+			gas_errors[g,rep,:] = ppMC.error[g+1][0:gas_moments]
 
 
 ## ----------============ Write ouputs to file =============---------

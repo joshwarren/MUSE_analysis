@@ -5,7 +5,7 @@ cc = checkcomp()
 opt = 'kin' 		# kin or abs
 
 galaxies = ['ic1459', 'ic4296', 'ngc1316', 'ngc1399']
-gals=[1]
+gals=[0]
 
 output_file = "params.txt"
 f = open(output_file, 'w')
