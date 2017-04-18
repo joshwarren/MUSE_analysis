@@ -27,7 +27,8 @@ out_dir = '%s/Data/muse/analysis' % (cc.base_dir)
 
 
 #-----------------------------------------------------------------------------
-def pickler(galaxy, discard=0, wav_range="", norm="lwv", opt="kin",	**kwargs):
+def pickler(galaxy, discard=0, wav_range="", norm="lwv", opt="kin",	kinemetry=True,
+	**kwargs):
 	print "    Loading D"
 	vin_dir_cube = '%s/Data/muse/%s' % (cc.base_dir,galaxy)
 
@@ -204,7 +205,7 @@ def pickler(galaxy, discard=0, wav_range="", norm="lwv", opt="kin",	**kwargs):
 	pickle.dump(D,pickleFile)
 	pickleFile.close()
 # ------------======== Save flux for KINEMTRY (IDL) =====----------
-	if opt == 'kin':
+	if opt == 'kin' and kinemetry:
 		print "    Saving flux for KINEMETRY (IDL)"
 		with open('%s/flux.dat' % (output), 'wb') as f:
 			for i in range(D.number_of_bins):

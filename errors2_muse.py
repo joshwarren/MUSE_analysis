@@ -34,8 +34,8 @@ def set_params():
 			# 3   All gas seperate.
 	reps = 0 ## number of monte carlo reps per bin.
 	FWHM_gal = 2.3 # MUSE documentation
-	set_range = np.array([2000,7350])
-	stellar_moments = 4 # number of componants to calc with ppxf (see 
+	set_range = np.array([2000,5500])#7350])
+	stellar_moments = 2 # number of componants to calc with ppxf (see 
 						# keyword moments in ppxf.pro for more details)
 	gas_moments = 2
 	degree = 4  # order of addative Legendre polynomial used to 

@@ -27,7 +27,7 @@ galaxies = [
 			# 'ngc1399',
 			]
 galaxies = ['ic1459']
-# galaxies = ['ic4296']
+galaxies = ['ic4296']
 # galaxies = ['ngc1316']
 # galaxies = ['ngc1399']
 
@@ -43,7 +43,7 @@ for galaxy in galaxies:
 	D = None
 	print galaxy
 	try:
-		D = pickler(galaxy, discard=discard, norm=norm)
+		D = pickler(galaxy, discard=discard, norm=norm, kinemetry=False)
 		D = plot_results(galaxy, discard=discard, CO = False, residual="median", 
 			norm=norm, D=D, show_bin_num=True)
 		# plt.close("all")
