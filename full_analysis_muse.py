@@ -42,8 +42,8 @@ if __name__=="__main__":
 		]
 	# for g in galaxies: full_analysis(galaxy=g, opt='pop')
 	try:
-		full_analysis(galaxy='ngc1399', opt='kin')
+		full_analysis(galaxy='ngc1316', opt='kin')
 	except Exception as e:
-		print 'ngc1399 failed'
+		print 'ngc1316 failed'
 		print e
 		traceback.print_exc()
