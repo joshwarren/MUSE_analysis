@@ -19,7 +19,7 @@ quiet = True
 c = 299792.458
 
 
-def setup(galaxy, use_all_temp=False):
+def setup(galaxy, set_range=None, use_all_temp=False):
 # ----------===============================================---------
 # ----------============= Input parameters  ===============---------
 # ----------===============================================---------
@@ -62,15 +62,24 @@ def setup(galaxy, use_all_temp=False):
 	CRVAL_spec = f[1].header['CRVAL3']
 	CDELT_spec = f[1].header['CD3_3']
 	s = f[1].data.shape
+	
+	if set_range is not None:
+		set_range[0] = max(set_range[0], CRVAL_spec)
+		set_range[1] = min(set_range[1], CDELT_spec*s[0]+CRVAL_spec)
+		set_range_pix = (set_range - CRVAL_spec)/CDELT_spec
+	else:
+		set_range = np.array([0, CDELT_spec*s[0]]) + CRVAL_spec
+		set_range_pix = np.array([0,s[0]])
+	set_range_pix = set_range_pix.astype(int)
 
 	# Collapse to single spectrum
-	gal_spec = np.zeros(s[0])
-	gal_noise = np.zeros(s[0])
+	gal_spec = np.zeros(set_range_pix[1] - set_range_pix[0])
+	gal_noise = np.zeros(set_range_pix[1] - set_range_pix[0])
 
-	for i in xrange(s[0]):
-		gal_spec[i] = np.nansum(f[1].data[i,int(s[1]/2.0-50):int(s[1]/2.0+50),
-			int(s[2]/2.0-50):int(s[2]/2.0+50)])
-		gal_noise[i] = np.sqrt(np.nansum(f[2].data[i,
+	for i in xrange(len(gal_spec)):
+		gal_spec[i] = np.nansum(f[1].data[i+set_range_pix[0],
+			int(s[1]/2.0-50):int(s[1]/2.0+50), int(s[2]/2.0-50):int(s[2]/2.0+50)])
+		gal_noise[i] = np.sqrt(np.nansum(f[2].data[i+set_range_pix[0],
 			int(s[1]/2.0-50):int(s[1]/2.0+50), int(s[2]/2.0-50):int(s[2]/2.0+50
 			)])**2)
 
@@ -80,8 +89,9 @@ def setup(galaxy, use_all_temp=False):
 	# gal_noise = galaxy_noise[:,int(s[1]/2.0),int(s[2]/2.0)]
 
 ## ----------========= Calibrating the spectrum  ===========---------
-	lam = np.arange(s[0])*CDELT_spec + CRVAL_spec
-	gal_spec, lam = remove_anomalies(gal_spec, window=201, repeats=3, lam=lam)
+	lam = np.arange(len(gal_spec))*CDELT_spec + set_range[0]
+	gal_spec, lam = remove_anomalies(gal_spec, window=201, repeats=3, lam=lam, 
+		set_range=set_range)
 	lamRange = np.array([lam[0],lam[-1]])/(1+z)
 
 
@@ -115,11 +125,11 @@ def setup(galaxy, use_all_temp=False):
 ## ----------===============================================---------
 ## ----------============== The bestfit part ===============---------
 ## ----------===============================================---------
-def find_template(galaxy):
+def find_template(galaxy, set_range=None):
 	print '     Finding templates to use'
 
 	templates, bin_log, noise, velscale, start, goodpixels,	moments, degree, dv, \
-		lambdaq, plot, quiet = setup(galaxy, use_all_temp=True)
+		lambdaq, plot, quiet = setup(galaxy, set_range=set_range, use_all_temp=True)
 
 
 	pp = ppxf(templates, bin_log, noise, velscale, start, 

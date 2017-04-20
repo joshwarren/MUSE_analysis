@@ -25,11 +25,13 @@ def full_analysis(galaxy=None, opt='kin'):
 		galaxy = galaxies[gal]
 	print galaxy
 
-	targetSN = 200
+	targetSN = 60
+	set_range = np.array([2000,5500])#7350])
 
-	binning_spaxels(galaxy, targetSN=targetSN, opt=opt, auto_override=True)#, debug=True)
+	binning_spaxels(galaxy, targetSN=targetSN, opt=opt, auto_override=True, 
+		set_range=set_range) #, debug=True)
 
-	# find_template(galaxy)
+	find_template(galaxy, set_range=set_range)
 
 if __name__=="__main__":
 	galaxies = [
@@ -40,8 +42,8 @@ if __name__=="__main__":
 		]
 	# for g in galaxies: full_analysis(galaxy=g, opt='pop')
 	try:
-		full_analysis(galaxy='ic1459', opt='kin')
+		full_analysis(galaxy='ngc1399', opt='kin')
 	except Exception as e:
-		print 'ic1459 failed'
+		print 'ngc1399 failed'
 		print e
 		traceback.print_exc()

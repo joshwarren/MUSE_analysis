@@ -463,7 +463,8 @@ def get_dataCubeDirectory(galaxy):
 		dataCubeDirectory.original = '%s/%s/ADP.2016-06-14T14:10:28.175.fits' % (
 			dir, galaxy)
 	elif galaxy == 'ngc1316':
-		pass
+		dataCubeDirectory.original = '%s/%s/ADP.2016-06-20T15:14:47.831.fits' % (
+			dir, galaxy)
 	elif galaxy == 'ngc1399':
 		dataCubeDirectory.original = '%s/%s/ADP.2016-06-21T08:50:02.757.fits' % (
 			dir, galaxy)

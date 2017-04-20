@@ -32,7 +32,8 @@ def check_overwrite(new, old, auto_override=False):
 
 
 
-def binning_spaxels(galaxy, targetSN=None, opt='kin', auto_override=False, debug=False):
+def binning_spaxels(galaxy, targetSN=None, opt='kin', auto_override=False, debug=False,
+	set_range=None):
 	print '     Voronoi Binning'
 # ----------===============================================---------
 # ----------============ Default parameters ===============---------
@@ -112,13 +113,18 @@ def binning_spaxels(galaxy, targetSN=None, opt='kin', auto_override=False, debug
 	x = np.zeros(s[1]*s[2])
 	y = np.zeros(s[1]*s[2])
 
-	from time import time
+	if set_range is not None:
+		set_range[0] = max(set_range[0], CRVAL_spec)
+		set_range_pix = (set_range - CRVAL_spec)/CDELT_spec
+	else:
+		set_range_pix = np.array([0,s[0]])
+	set_range_pix = set_range_pix.astype(int)
 
 # collapsing the spectrum for each spaxel. 
 	if debug:
-		signal = np.array(galaxy_data[s[0]/2,:,:].flatten())
+		signal = np.array(galaxy_data[int(np.mean(set_range_pix)),:,:].flatten())
 		# noise = np.sqrt(galaxy_noise[s[0]/2,:,:])#.flatten())
-		noise = np.sqrt(np.abs(galaxy_data[s[0]/2,:,:])).flatten()
+		noise = np.sqrt(np.abs(galaxy_data[int(np.mean(set_range_pix)),:,:])).flatten()
 	else:
 		signal = np.zeros((s[1],s[2]))
 		noise = np.zeros((s[1],s[2]))
@@ -128,11 +134,11 @@ def binning_spaxels(galaxy, targetSN=None, opt='kin', auto_override=False, debug
 		for i in xrange(blocks):
 			for j in xrange(blocks):
 				signal[bl_delt1*i:bl_delt1*(i+1),bl_delt2*j:bl_delt2*(j+1)] = \
-					np.nanmedian(galaxy_data[:, bl_delt1*i:bl_delt1*(i+1),
-					bl_delt2*j:bl_delt2*(j+1)], axis=0)
+					np.nanmedian(galaxy_data[set_range_pix[0]:set_range_pix[1], 
+					bl_delt1*i:bl_delt1*(i+1), bl_delt2*j:bl_delt2*(j+1)], axis=0)
 				noise[bl_delt1*i:bl_delt1*(i+1),bl_delt2*j:bl_delt2*(j+1)] = \
-					np.nanmedian(np.abs(galaxy_noise[:, bl_delt1*i:bl_delt1*(i+1),
-					bl_delt2*j:bl_delt2*(j+1)]), axis=0)
+					np.nanmedian(np.abs(galaxy_noise[set_range_pix[0]:set_range_pix[1], 
+					bl_delt1*i:bl_delt1*(i+1), bl_delt2*j:bl_delt2*(j+1)]), axis=0)
 
 		signal = signal.flatten()
 		noise = noise.flatten()

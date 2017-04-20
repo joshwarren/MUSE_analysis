@@ -11,7 +11,7 @@ if 'home' not in cc.device:
 	matplotlib.use('Agg') # 20160202 JP to stop lack-of X-windows error
 from pickler_muse import pickler
 from plot_results_muse import plot_results
-# from kinematics import kinematics
+from kinematics_muse import kinematics
 # from GH_plots import GH_plots
 # from plot_absorption import plot_absorption
 import matplotlib.pyplot as plt # used for plotting
@@ -29,7 +29,7 @@ galaxies = [
 galaxies = ['ic1459']
 galaxies = ['ic4296']
 # galaxies = ['ngc1316']
-# galaxies = ['ngc1399']
+galaxies = ['ngc1399']
 
 
 discard = 0
@@ -49,7 +49,7 @@ for galaxy in galaxies:
 		# plt.close("all")
 		# GH_plots(galaxy, wav_range=wav_range)
 		# plt.close("all")
-		# kinematics(galaxy, discard=discard, wav_range=wav_range, D=D)
+		kinematics(galaxy, discard=discard, D=D)
 		# plt.close("all")
 
 		# Requires the IDL kinemetry routine to have been run. 
