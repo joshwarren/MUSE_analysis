@@ -27,9 +27,9 @@ galaxies = [
 			# 'ngc1399',
 			]
 galaxies = ['ic1459']
-galaxies = ['ic4296']
+# galaxies = ['ic4296']
 # galaxies = ['ngc1316']
-galaxies = ['ngc1399']
+# galaxies = ['ngc1399']
 
 
 discard = 0

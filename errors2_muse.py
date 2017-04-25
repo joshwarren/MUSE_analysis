@@ -34,7 +34,7 @@ def set_params():
 			# 3   All gas seperate.
 	reps = 0 ## number of monte carlo reps per bin.
 	FWHM_gal = 2.3 # MUSE documentation
-	set_range = np.array([2000,5500])#7350])
+	set_range = np.array([2000,7350])#5500])
 	stellar_moments = 2 # number of componants to calc with ppxf (see 
 						# keyword moments in ppxf.pro for more details)
 	gas_moments = 2
@@ -189,7 +189,7 @@ class get_emission_templates(object):
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
-def determine_goodpixels(logLam, lamRangeTemp, vel, z, gas=False):
+def determine_goodpixels(logLam, lamRangeTemp, vel, z, gas=False, mask=False):
 	"""
 	warrenj 20150905 Copied from ppxf_determine_goodPixels.pro
 	
@@ -227,6 +227,10 @@ def determine_goodpixels(logLam, lamRangeTemp, vel, z, gas=False):
 	tell = 5199
 	flag |= (logLam > np.log(tell) - z - dv/c) \
 		& (logLam < np.log(tell) - z + dv/c) 
+
+	if mask:
+		flag |= (logLam > np.log(5500)) \
+			& (logLam < np.log(6500)) 
 
 	if not gas:
 		#                 -----[OII]-----   Hdelta    Hgamma   Hbeta;

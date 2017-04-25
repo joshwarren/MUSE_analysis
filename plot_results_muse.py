@@ -530,8 +530,9 @@ def plot_results(galaxy, discard=0, wav_range="", norm="lwv",
 					flux_unbinned=D.unbinned_flux, #flux_type='notmag',
 					nodots=True, show_bin_num=show_bin_num, colorbar=True, 
 					label=CBLabel,galaxy = galaxy.upper(), redshift = z,
-					title=title, ax=ax, pa=pa, res=res, signal_noise=D.SNRatio,
-					signal_noise_target=SN_target, show_vel=False)#header=header, 
+					title=title, ax=ax, pa=pa, res=res, #signal_noise=D.SNRatio,
+					#signal_noise_target=SN_target, 
+					show_vel=False) #header=header, 
 				# add_R_e(ax, galaxy, pa=pa)
 				#plots=True
 				if plots:
