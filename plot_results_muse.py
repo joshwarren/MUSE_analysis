@@ -134,42 +134,42 @@ def set_ax_y(plt_title):
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
-# def add_R_e(ax, galaxy, discard=0, pa=0):
-# 	from classify import get_R_e
-# 	from  matplotlib.patches import Ellipse
-# 	R_e = get_R_e(galaxy)
+def add_R_e(ax, galaxy, discard=0, pa=0):
+	from classify import get_R_e
+	from  matplotlib.patches import Ellipse
+	R_e = get_R_e(galaxy)
 	
-# 	data_file =  "%s/galaxies.txt" % (vin_dir)
-# 	x_cent_gals, y_cent_gals = np.loadtxt(data_file, unpack=True, skiprows=1, 
-# 		usecols=(1,2), dtype=int)
-# 	galaxy_gals = np.loadtxt(data_file, skiprows=1, usecols=(0,),dtype=str, unpack=True)
-# 	i_gal = np.where(galaxy_gals==galaxy)[0][0]
-# 	x_cent_pix = x_cent_gals[i_gal]
-# 	y_cent_pix = y_cent_gals[i_gal]
+	data_file =  "%s/galaxies.txt" % (vin_dir)
+	x_cent_gals, y_cent_gals = np.loadtxt(data_file, unpack=True, skiprows=1, 
+		usecols=(1,2), dtype=int)
+	galaxy_gals = np.loadtxt(data_file, skiprows=1, usecols=(0,),dtype=str, unpack=True)
+	i_gal = np.where(galaxy_gals==galaxy)[0][0]
+	x_cent_pix = x_cent_gals[i_gal]
+	y_cent_pix = y_cent_gals[i_gal]
 
-# 	xlims = ax.get_xlim()
-# 	ylims = ax.get_ylim()
+	xlims = ax.get_xlim()
+	ylims = ax.get_ylim()
 
-# 	x_cent = xlims[0] + (xlims[1] - xlims[0])/(40-discard*2)*x_cent_pix
-# 	y_cent = ylims[0] + (ylims[1] - ylims[0])/(40-discard*2)*y_cent_pix
+	x_cent = xlims[0] + (xlims[1] - xlims[0])/(40-discard*2)*x_cent_pix
+	y_cent = ylims[0] + (ylims[1] - ylims[0])/(40-discard*2)*y_cent_pix
 
 
 
-# 	# data_file =  '%s/galaxies2.txt' % (vin_dir)
-# 	data_file =  '%s/Data/vimos/analysis/galaxies2.txt' % (cc.base_dir)
-# 	ellip_gals, pa_gals = np.loadtxt(data_file, unpack=True, skiprows=1, 
-# 		usecols=(2,3), dtype=float)
-# 	galaxy_gals = np.loadtxt(data_file, skiprows=1, usecols=(0,),dtype=str, unpack=True)
-# 	i_gal = np.where(galaxy_gals==galaxy)[0][0]
-# 	ellip = ellip_gals[i_gal]
-# 	pa += pa_gals[i_gal]
+	# data_file =  '%s/galaxies2.txt' % (vin_dir)
+	data_file =  '%s/Data/vimos/analysis/galaxies2.txt' % (cc.base_dir)
+	ellip_gals, pa_gals = np.loadtxt(data_file, unpack=True, skiprows=1, 
+		usecols=(2,3), dtype=float)
+	galaxy_gals = np.loadtxt(data_file, skiprows=1, usecols=(0,),dtype=str, unpack=True)
+	i_gal = np.where(galaxy_gals==galaxy)[0][0]
+	ellip = ellip_gals[i_gal]
+	pa += pa_gals[i_gal]
 
-# 	if ax.RaDec:
-# 		patch = Ellipse([x_cent, y_cent], R_e*(1-ellip)/60/60, R_e/60/60, angle=pa, 
-# 			fill=False)
-# 	else:
-# 		patch = Ellipse([x_cent, y_cent], R_e*(1-ellip), R_e, angle=pa, fill=False)
-# 	ax.add_patch(patch)
+	if ax.RaDec:
+		patch = Ellipse([x_cent, y_cent], R_e*(1-ellip)/60/60, R_e/60/60, angle=pa, 
+			fill=False)
+	else:
+		patch = Ellipse([x_cent, y_cent], R_e*(1-ellip), R_e, angle=pa, fill=False)
+	ax.add_patch(patch)
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
@@ -298,6 +298,10 @@ def plot_results(galaxy, discard=0, wav_range="", norm="lwv",
 	if D.norm_method != norm:
 		D.norm_method = norm
 		D.find_restFrame()
+
+	# Adjust by hand
+	if galaxy == 'ic1459' and norm == 'lws':
+		D.vel_norm -= 15
 
 	# Create figure and array for axes
 	n_rows = 2+2*len(D.e_components) + int(np.ceil(len(D.e_components)*

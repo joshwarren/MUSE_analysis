@@ -229,8 +229,10 @@ def determine_goodpixels(logLam, lamRangeTemp, vel, z, gas=False, mask=False):
 		& (logLam < np.log(tell) - z + dv/c) 
 
 	if mask:
-		flag |= (logLam > np.log(5500)) \
-			& (logLam < np.log(6500)) 
+		flag |= (logLam > np.log(5500)) & (logLam < np.log(5650)) 
+		flag |= (logLam > np.log(5800)) & (logLam < np.log(6700)) 
+		flag |= (logLam > np.log(6780)) & (logLam < np.log(7050)) 
+		flag |= (logLam > np.log(7150)) & (logLam < np.log(lamRangeTemp[1])) 
 
 	if not gas:
 		#                 -----[OII]-----   Hdelta    Hgamma   Hbeta;
@@ -256,7 +258,7 @@ def determine_goodpixels(logLam, lamRangeTemp, vel, z, gas=False, mask=False):
 
 #-----------------------------------------------------------------------------
 def saveAll(galaxy, bin, pp, lambdaq, stellar_output, stellar_errors, bin_log_sav, 
-	noise_sav, element, templatesToUse, gas_output=None, gas_errors=None, opt='kin'):
+	noise_sav, element, templatesToUse, gas_output=None, gas_errors=None, opt='gas'):
 	# stellar MC results
 	if cc.device == 'glamdring':
 		dir = '%s/analysis_muse/%s/%s_MC' % (cc.base_dir, galaxy, opt)
@@ -596,7 +598,7 @@ def errors2(i_gal=None, bin=None):
 
 
 	goodPixels = determine_goodpixels(logLam_bin,stellar_templates.lamRange_template, 
-		vel, z, gas=gas!=0)
+		vel, z, gas=gas!=0, mask=galaxy=='ic1459')
 ## ----------===============================================---------
 ## ----------============== The bestfit part ===============---------
 ## ----------===============================================---------
