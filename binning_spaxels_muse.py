@@ -139,7 +139,7 @@ def binning_spaxels(galaxy, targetSN=None, opt='kin', auto_override=False, debug
 				noise[bl_delt1*i:bl_delt1*(i+1),bl_delt2*j:bl_delt2*(j+1)] = \
 					np.nanmedian(np.abs(galaxy_noise[set_range_pix[0]:set_range_pix[1], 
 					bl_delt1*i:bl_delt1*(i+1), bl_delt2*j:bl_delt2*(j+1)]), axis=0)
-
+		
 		signal = signal.flatten()
 		noise = noise.flatten()
 
@@ -160,6 +160,7 @@ def binning_spaxels(galaxy, targetSN=None, opt='kin', auto_override=False, debug
 			# Assign x and y
 			x[i*s[2]+j] = i
 			y[i*s[2]+j] = j
+	x = max(x)-x
 
 	mask = (np.isfinite(signal)) * (np.isfinite(noise))
 
@@ -176,6 +177,9 @@ def binning_spaxels(galaxy, targetSN=None, opt='kin', auto_override=False, debug
 	# x = x[mask]
 	# y = y[mask]
 	# n_spaxels = np.sum(mask)
+	
+
+
 
 	if not os.path.exists("%s/analysis/%s" % (dir,galaxy)):
 		os.makedirs("%s/analysis/%s" % (dir, galaxy))

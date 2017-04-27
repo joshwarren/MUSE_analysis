@@ -25,7 +25,7 @@ def full_analysis(galaxy=None, opt='kin'):
 		galaxy = galaxies[gal]
 	print galaxy
 
-	targetSN = 60
+	targetSN = 200
 	set_range = np.array([2000,5500])#7350])
 
 	binning_spaxels(galaxy, targetSN=targetSN, opt=opt, auto_override=True, 
@@ -42,8 +42,8 @@ if __name__=="__main__":
 		]
 	# for g in galaxies: full_analysis(galaxy=g, opt='pop')
 	try:
-		full_analysis(galaxy='ngc1316', opt='kin')
+		full_analysis(galaxy='ic1459', opt='kin')
 	except Exception as e:
-		print 'ngc1316 failed'
+		print 'ic1459 failed'
 		print e
 		traceback.print_exc()

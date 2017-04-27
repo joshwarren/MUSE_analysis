@@ -28,7 +28,7 @@ out_dir = '%s/Data/muse/analysis' % (cc.base_dir)
 
 #-----------------------------------------------------------------------------
 def pickler(galaxy, discard=0, wav_range="", norm="lwv", opt="kin",	kinemetry=True,
-	**kwargs):
+	override=False,	**kwargs):
 	print "    Loading D"
 	vin_dir_cube = '%s/Data/muse/%s' % (cc.base_dir,galaxy)
 
@@ -43,19 +43,20 @@ def pickler(galaxy, discard=0, wav_range="", norm="lwv", opt="kin",	kinemetry=Tr
 	out_pickle = '%s/pickled' % (output)
 
 	# Check tessellation file is older than pPXF outputs (checks vin_dir_gasMC/0.dat only).
-	if os.path.getmtime(tessellation_File) > os.path.getmtime('%s/0.dat' % (vin_dir_gasMC)
-		): 
-		bin_num = np.loadtxt(tessellation_File, unpack=True, skiprows = 1, usecols=(2,), 
-			dtype=int)
-		if os.path.exists('%s/%i.dat' % (vin_dir_gasMC,max(bin_num))) and not \
-			os.path.exists('%s/%i.dat' % (vin_dir_gasMC, max(bin_num)+1)):
-			# Issue warning, but do not stop.
-			warnings.warn('WANING: The tesselation file '+\
-				'voronoi_2d_binning_output_%s.txt may to have been changed.' % (opt))
-		else:
-			# Stop and raise exception
-			raise UserWarning('WANING: The tesselation file '+\
-				'voronoi_2d_binning_output_%s.txt has been overwritten.' % (opt))
+	if not override:
+		if os.path.getmtime(tessellation_File) > os.path.getmtime('%s/0.dat' % (
+			vin_dir_gasMC)): 
+			bin_num = np.loadtxt(tessellation_File, unpack=True, skiprows = 1, usecols=(2,), 
+				dtype=int)
+			if os.path.exists('%s/%i.dat' % (vin_dir_gasMC,max(bin_num))) and not \
+				os.path.exists('%s/%i.dat' % (vin_dir_gasMC, max(bin_num)+1)):
+				# Issue warning, but do not stop.
+				warnings.warn('WANING: The tesselation file '+\
+					'voronoi_2d_binning_output_%s.txt may to have been changed.' % (opt))
+			else:
+				# Stop and raise exception
+				raise UserWarning('WANING: The tesselation file '+\
+					'voronoi_2d_binning_output_%s.txt has been overwritten.' % (opt))
 # ------------======== Reading the spectrum  ============----------
 	D = Data(np.loadtxt(tessellation_File, unpack=True, skiprows = 1, 
 			usecols=(0,1,2)))

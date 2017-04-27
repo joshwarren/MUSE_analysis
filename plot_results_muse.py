@@ -76,13 +76,20 @@ vin_dir_cube = '%s/Data/muse' % (cc.base_dir)
 ain_dir = '%s/Data/alma' % (cc.base_dir)
 out_dir = '%s/Data/muse/analysis' % (cc.base_dir)
 
-SNR = True#False
-image = True#False
-equivalent_width = True#False
-amp_noise = True#False
+# SNR = True
+SNR = False
+# image = True
+image = False
+# equivalent_width = True
+equivalent_width = False
+# amp_noise = True
+amp_noise = False
 kinematics = True
-plot_resid = True#False
-line_ratios = True#False
+# kinematics = False
+# plot_resid = True
+plot_resid = False
+# line_ratios = True
+line_ratios = False
 
 #-----------------------------------------------------------------------------
 def set_lims(v, positive=False, symmetric=False):
@@ -529,12 +536,13 @@ def plot_results(galaxy, discard=0, wav_range="", norm="lwv",
 				saveTo = ("%s/%s_%s_field_%s.png" % (out_nointerp, c, k, wav_range))
 				ax.saveTo = saveTo
 				ax.figx, ax.figy = ax_x, ax_y
-				ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar,
-					D.yBar, D.components[pl].plot[k], vmin=vmin, vmax=vmax, 
+				ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar,
+					# max(D.y)-D.y,D.x,D.bin_num,max(D.y)-D.yBar,D.xBar,
+					D.components[pl].plot[k], vmin=vmin, vmax=vmax, 
 					flux_unbinned=D.unbinned_flux, #flux_type='notmag',
 					nodots=True, show_bin_num=show_bin_num, colorbar=True, 
 					label=CBLabel,galaxy = galaxy.upper(), redshift = z,
-					title=title, ax=ax, pa=pa, res=res, #signal_noise=D.SNRatio,
+					title=title, ax=ax, res=res, pa=0, #signal_noise=D.SNRatio,
 					#signal_noise_target=SN_target, 
 					show_vel=False) #header=header, 
 				# add_R_e(ax, galaxy, pa=pa)
