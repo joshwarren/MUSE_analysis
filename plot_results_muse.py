@@ -51,14 +51,20 @@ from astropy.io import fits # reads fits files (is from astropy)
 from astropy import units as u
 from astropy.coordinates import SkyCoord
 from matplotlib.collections import LineCollection
+from checkcomp import checkcomp
+cc = checkcomp()
+if 'home' not in cc.device:
+	import matplotlib # 20160202 JP to stop lack-of X-windows error
+	matplotlib.use('Agg') # 20160202 JP to stop lack-of X-windows error
 import matplotlib.pyplot as plt # used for plotting
 from plot_velfield_nointerp import plot_velfield_nointerp
 from plot_histogram import plot_histogram
 import os
 from sauron_colormap2 import sauron2 as sauron
 import cPickle as pickle
-from checkcomp import checkcomp
-cc = checkcomp()
+from errors2_muse import get_dataCubeDirectory
+
+
 
 # Give axes a saveTo property
 plt.axes.saveTo = property(lambda self:str())
@@ -76,20 +82,23 @@ vin_dir_cube = '%s/Data/muse' % (cc.base_dir)
 ain_dir = '%s/Data/alma' % (cc.base_dir)
 out_dir = '%s/Data/muse/analysis' % (cc.base_dir)
 
-# SNR = True
 SNR = False
-# image = True
 image = False
-# equivalent_width = True
 equivalent_width = False
-# amp_noise = True
 amp_noise = False
-kinematics = True
-# kinematics = False
-# plot_resid = True
+kinematics = False
 plot_resid = False
-# line_ratios = True
 line_ratios = False
+
+# SNR = True
+image = True
+# equivalent_width = True
+# amp_noise = True
+kinematics = True
+# plot_resid = True
+# line_ratios = True
+
+
 
 #-----------------------------------------------------------------------------
 def set_lims(v, positive=False, symmetric=False):
@@ -248,7 +257,7 @@ def plot_results(galaxy, discard=0, wav_range="", norm="lwv",
 	plots=False, residual=False, CO=False, show_bin_num=False,
 	D=None, **kwargs):	
 
-	pa = {'ic1459':45, 'ic4296':45, 'ngc1316':45, 'ngc1399':0}
+	pa = {'ic1459':0, 'ic4296':0, 'ngc1316':0, 'ngc1399':0}
 
 	res = 0.2 # arcsec (spatial MUSE resolution)
 	pa = pa[galaxy] # PA from reduction
@@ -279,11 +288,11 @@ def plot_results(galaxy, discard=0, wav_range="", norm="lwv",
 		CO_image_dir="%s/%s-mom0.fits" % (ain_dir, galaxy)
 		if not os.path.exists(CO_image_dir): CO = False
 
-	dataCubeDirectory = "%s/%s/%s.clipped.fits" % (vin_dir_cube, galaxy, galaxy)
+	dataCubeDirectory = get_dataCubeDirectory(galaxy)
 	output = "%s/%s/results/%s" % (out_dir, galaxy, wav_range_dir)
 	out_plots = "%s/plots" % (output)
 	out_nointerp = "%s/notinterpolated" % (out_plots)
-	vin_dir_gasMC = "%s/%s/gas_MC" % (vin_dir, galaxy)
+	vin_dir_gasMC = "%s/%s/gas_MC" % (vin_dir, galaxy) # for chi2
 	out_pickle = '%s/pickled' % (output)
 
 	# Used for CO plotting
@@ -300,7 +309,7 @@ def plot_results(galaxy, discard=0, wav_range="", norm="lwv",
 
 	for bin in D.bin:
 		for e in bin.e_line.itervalues():
-			e.__threshold__ = 0
+			e.__threshold__ = 3
 
 	if D.norm_method != norm:
 		D.norm_method = norm
@@ -309,6 +318,9 @@ def plot_results(galaxy, discard=0, wav_range="", norm="lwv",
 	# Adjust by hand
 	if galaxy == 'ic1459' and norm == 'lws':
 		D.vel_norm -= 15
+	if galaxy == 'ic4296' and norm == 'lws':
+		D.vel_norm += 20
+	print D.bin[300]._xBar, D.bin[300]._yBar
 
 	# Create figure and array for axes
 	n_rows = 2+2*len(D.e_components) + int(np.ceil(len(D.e_components)*
@@ -336,9 +348,13 @@ def plot_results(galaxy, discard=0, wav_range="", norm="lwv",
 
 		fmin, fmax = set_lims(D.flux, positive=True)
 
-		ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, D.flux, 
+		ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar,
+			# max(D.x)-D.x,D.y,D.bin_num,max(D.x)-D.xBar,D.yBar,
+			# max(D.y)-D.y,max(D.x)-D.x,D.bin_num,max(D.y)-D.yBar,max(D.xBar)-D.xBar,
+			D.flux, 
 			vmin=fmin, vmax=fmax, nodots=True, show_bin_num=show_bin_num, colorbar=True, 
-			label=CBLabel, title=title, cmap='gist_yarg', ax=ax, pa=pa, res=res)
+			label=CBLabel, title=title, cmap='gist_yarg', ax=ax, pa=pa, res=res,
+			flux_unbinned=D.unbinned_flux)
 			#, header=header)
 		ax_array.append(ax)
 		f.delaxes(ax)
@@ -537,13 +553,15 @@ def plot_results(galaxy, discard=0, wav_range="", norm="lwv",
 				ax.saveTo = saveTo
 				ax.figx, ax.figy = ax_x, ax_y
 				ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar,
+					# max(D.x)-D.x,D.y,D.bin_num,max(D.x)-D.xBar,D.yBar,
 					# max(D.y)-D.y,D.x,D.bin_num,max(D.y)-D.yBar,D.xBar,
+					# max(D.y)-D.y,max(D.x)-D.x,D.bin_num,max(D.y)-D.yBar,max(D.xBar)-D.xBar,
 					D.components[pl].plot[k], vmin=vmin, vmax=vmax, 
 					flux_unbinned=D.unbinned_flux, #flux_type='notmag',
 					nodots=True, show_bin_num=show_bin_num, colorbar=True, 
 					label=CBLabel,galaxy = galaxy.upper(), redshift = z,
-					title=title, ax=ax, res=res, pa=0, #signal_noise=D.SNRatio,
-					#signal_noise_target=SN_target, 
+					title=title, ax=ax, res=res, signal_noise=D.SNRatio,
+					signal_noise_target=SN_target, 
 					show_vel=False) #header=header, 
 				# add_R_e(ax, galaxy, pa=pa)
 				#plots=True
@@ -752,8 +770,8 @@ def plot_results(galaxy, discard=0, wav_range="", norm="lwv",
 if __name__ == '__main__':
 
 	galaxies = ['ic1459', 'ic4296', 'ngc1316', 'ngc1399']
-	galaxy = galaxies[0]
+	galaxy = galaxies[3]
 
 	print galaxy
 
-	plot_results(galaxy, plots=False, residual = "median")
+	plot_results(galaxy, plots=False, residual = "median", show_bin_num=True)

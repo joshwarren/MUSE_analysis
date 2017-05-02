@@ -19,6 +19,8 @@ import warnings
 from Bin import Data, emission_line
 from checkcomp import checkcomp
 cc = checkcomp()
+from errors2_muse import get_dataCubeDirectory
+
 
 
 vin_dir = '%s/Data/muse/analysis' % (cc.base_dir)
@@ -34,7 +36,7 @@ def pickler(galaxy, discard=0, wav_range="", norm="lwv", opt="kin",	kinemetry=Tr
 
 	tessellation_File = "%s/%s/voronoi_2d_binning_output_%s.txt" % (vin_dir, galaxy, opt)
 	tessellation_File2 = "%s/%s/voronoi_2d_binning_output2_%s.txt" %(vin_dir, galaxy, opt)
-	dataCubeDirectory = "%s/%s.clipped.fits" % (vin_dir_cube, galaxy)
+	dataCubeDirectory = get_dataCubeDirectory(galaxy)
 	output = "%s/%s/results/%s" % (out_dir, galaxy, wav_range)
 	if opt == "kin":
 		vin_dir_gasMC = "%s/%s/gas_MC" % (vin_dir, galaxy)
@@ -56,7 +58,8 @@ def pickler(galaxy, discard=0, wav_range="", norm="lwv", opt="kin",	kinemetry=Tr
 			else:
 				# Stop and raise exception
 				raise UserWarning('WANING: The tesselation file '+\
-					'voronoi_2d_binning_output_%s.txt has been overwritten.' % (opt))
+					'voronoi_2d_binning_output_%s.txt has been overwritten. ' % (opt) +\
+					"Use the 'override' keyword to run this routine anyway.")
 # ------------======== Reading the spectrum  ============----------
 	D = Data(np.loadtxt(tessellation_File, unpack=True, skiprows = 1, 
 			usecols=(0,1,2)))

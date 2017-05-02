@@ -472,6 +472,7 @@ def get_dataCubeDirectory(galaxy):
 		dataCubeDirectory.original = '%s/%s/ADP.2016-06-20T15:14:47.831.fits' % (
 			dir, galaxy)
 	elif galaxy == 'ngc1399':
+		dataCubeDirectory = mystring('%s/%s/%s.clipped2.fits' %  (dir, galaxy, galaxy))
 		dataCubeDirectory.original = '%s/%s/ADP.2016-06-21T08:50:02.757.fits' % (
 			dir, galaxy)
 

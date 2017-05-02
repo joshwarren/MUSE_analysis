@@ -5,7 +5,7 @@ cc = checkcomp()
 opt = 'kin' 		# kin or abs
 
 galaxies = ['ic1459', 'ic4296', 'ngc1316', 'ngc1399']
-gals=[0]
+gals=[3]
 
 output_file = "%s/MUSE/analysis/params.txt" % (cc.home_dir)
 f = open(output_file, 'w')
@@ -25,7 +25,7 @@ for gal in gals:
 			f.write("python errors2_muse.py " + str(gal) + " " + str(i) + "\n")
 		elif opt == "abs":
 			f.write("python errors3_muse.py " + str(gal) + " " + str(i) + "\n")
-f.write("push 'Glamdring MUSE run finished'")
+f.write("push.sh 'Glamdring MUSE run finished'")
 
 f.close()
 print "Done"

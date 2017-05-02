@@ -21,15 +21,15 @@ import matplotlib.pyplot as plt # used for plotting
 import traceback, sys
 
 galaxies = [
-			'ic1459', 
+			#'ic1459', 
 			'ic4296',
-			# 'ngc1316',
-			# 'ngc1399',
+			'ngc1316',
+			'ngc1399'
 			]
-galaxies = ['ic1459']
-# galaxies = ['ic4296']
+# galaxies = ['ic1459']
+galaxies = ['ic4296']
 # galaxies = ['ngc1316']
-# galaxies = ['ngc1399']
+galaxies = ['ngc1399']
 
 
 discard = 0
@@ -43,13 +43,13 @@ for galaxy in galaxies:
 	D = None
 	print galaxy
 	try:
-		D = pickler(galaxy, discard=discard, norm=norm, kinemetry=False)
+		D = pickler(galaxy, discard=discard, norm=norm, kinemetry=False)#, override=True)
 		D = plot_results(galaxy, discard=discard, CO = False, residual="median", 
 			norm=norm, D=D, show_bin_num=True)
 		# plt.close("all")
 		# GH_plots(galaxy, wav_range=wav_range)
 		# plt.close("all")
-		kinematics(galaxy, discard=discard, D=D)
+		# kinematics(galaxy, discard=discard, D=D)
 		# plt.close("all")
 
 		# Requires the IDL kinemetry routine to have been run. 

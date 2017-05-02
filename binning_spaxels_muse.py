@@ -160,7 +160,7 @@ def binning_spaxels(galaxy, targetSN=None, opt='kin', auto_override=False, debug
 			# Assign x and y
 			x[i*s[2]+j] = i
 			y[i*s[2]+j] = j
-	x = max(x)-x
+	# x = max(x)-x
 
 	mask = (np.isfinite(signal)) * (np.isfinite(noise))
 

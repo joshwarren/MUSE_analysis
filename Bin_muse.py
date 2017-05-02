@@ -10,6 +10,8 @@ from glob import glob
 import os
 from checkcomp import checkcomp
 cc = checkcomp()
+from errors2_muse import get_dataCubeDirectory
+
 
 c = 299792.458 # speed of light in km/s
 
@@ -70,8 +72,7 @@ class Data(object):
 			galaxy, opt)
 		self.tessellation_File2 = "%s/%s/voronoi_2d_binning_output2_%s.txt" %(vin_dir, 
 			galaxy, opt)
-		self.dataCubeDirectory = "%s/Data/muse/%s/%s.clipped.fits" % (cc.base_dir, 
-			galaxy, galaxy)
+		self.dataCubeDirectory = get_dataCubeDirectory(galaxy)
 		if self.opt == 'kin':
 			self.vin_dir_gasMC = '%s/%s/gas_MC' % (vin_dir, galaxy)
 		else:
