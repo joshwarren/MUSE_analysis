@@ -229,8 +229,13 @@ def determine_goodpixels(logLam, lamRangeTemp, vel, z, gas=False, mask=False):
 		& (logLam < np.log(tell) - z + dv/c) 
 
 	if mask:
+		# flag |= (logLam > np.log(5500)) & (logLam < np.log(5650)) 
+		# flag |= (logLam > np.log(5800)) & (logLam < np.log(6650)) 
+		# flag |= (logLam > np.log(6780)) & (logLam < np.log(7050)) 
+		# flag |= (logLam > np.log(7150)) & (logLam < np.log(lamRangeTemp[1])) 
+
 		flag |= (logLam > np.log(5500)) & (logLam < np.log(5650)) 
-		flag |= (logLam > np.log(5800)) & (logLam < np.log(6700)) 
+		flag |= (logLam > np.log(5800)) & (logLam < np.log(6500)) 
 		flag |= (logLam > np.log(6780)) & (logLam < np.log(7050)) 
 		flag |= (logLam > np.log(7150)) & (logLam < np.log(lamRangeTemp[1])) 
 
@@ -472,7 +477,6 @@ def get_dataCubeDirectory(galaxy):
 		dataCubeDirectory.original = '%s/%s/ADP.2016-06-20T15:14:47.831.fits' % (
 			dir, galaxy)
 	elif galaxy == 'ngc1399':
-		dataCubeDirectory = mystring('%s/%s/%s.clipped2.fits' %  (dir, galaxy, galaxy))
 		dataCubeDirectory.original = '%s/%s/ADP.2016-06-21T08:50:02.757.fits' % (
 			dir, galaxy)
 
@@ -613,9 +617,11 @@ def errors2(i_gal=None, bin=None):
 		saveTo="%s/analysis/%s/gas_MC/bestfit/plots/%s.png" % (dir, galaxy, str(bin))
 
 	pp = ppxf(templates, bin_log, noise, velscale, start, 
-			  goodpixels=goodPixels, moments=moments, degree=degree, vsyst=dv, 
-			  component=component, lam=lambdaq, plot=not quiet, 
-			  quiet=quiet, save=saveTo)
+			  goodpixels=goodPixels, 
+			  moments=moments, degree=degree, vsyst=dv, 
+			  component=component, lam=lambdaq, 
+			  plot=not quiet, 
+			  quiet=False, save=saveTo)
 ## ----------===============================================---------
 ## ----------================= The MC part =================---------
 ## ----------===============================================---------

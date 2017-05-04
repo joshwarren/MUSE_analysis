@@ -91,7 +91,7 @@ plot_resid = False
 line_ratios = False
 
 # SNR = True
-image = True
+# image = True
 # equivalent_width = True
 # amp_noise = True
 kinematics = True
@@ -320,7 +320,8 @@ def plot_results(galaxy, discard=0, wav_range="", norm="lwv",
 		D.vel_norm -= 15
 	if galaxy == 'ic4296' and norm == 'lws':
 		D.vel_norm += 20
-	print D.bin[300]._xBar, D.bin[300]._yBar
+	if galaxy == 'ngc1399' and norm =='lws':
+		D.vel_norm += 35
 
 	# Create figure and array for axes
 	n_rows = 2+2*len(D.e_components) + int(np.ceil(len(D.e_components)*
@@ -649,7 +650,8 @@ def plot_results(galaxy, discard=0, wav_range="", norm="lwv",
 	# 	ax1.saveTo = saveTo
 	# 	add_CO(ax1, galaxy, header, close=True)
 # ------------============ Line ratio maps ==============----------
-	if any('OIII' in o for o in D.list_components) and line_ratios:
+	# if any('OIII' in o for o in D.list_components) and line_ratios:
+	if len(D.list_components) > 2 and line_ratios:
 		print "    line ratios"
 
 		t_num = (len(D.e_components)-1)*len(D.e_components)/2

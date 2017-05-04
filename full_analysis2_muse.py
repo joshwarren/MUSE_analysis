@@ -22,14 +22,14 @@ import traceback, sys
 
 galaxies = [
 			#'ic1459', 
-			'ic4296',
+			# 'ic4296',
 			'ngc1316',
 			'ngc1399'
 			]
-# galaxies = ['ic1459']
-galaxies = ['ic4296']
+galaxies = ['ic1459']
+# galaxies = ['ic4296']
 # galaxies = ['ngc1316']
-galaxies = ['ngc1399']
+# galaxies = ['ngc1399']
 
 
 discard = 0
@@ -49,7 +49,7 @@ for galaxy in galaxies:
 		# plt.close("all")
 		# GH_plots(galaxy, wav_range=wav_range)
 		# plt.close("all")
-		# kinematics(galaxy, discard=discard, D=D)
+		kinematics(galaxy, discard=discard, D=D)
 		# plt.close("all")
 
 		# Requires the IDL kinemetry routine to have been run. 

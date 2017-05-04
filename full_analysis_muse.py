@@ -31,14 +31,14 @@ def full_analysis(galaxy=None, opt='kin'):
 	binning_spaxels(galaxy, targetSN=targetSN, opt=opt, auto_override=True, 
 		set_range=set_range) #, debug=True)
 
-	# find_template(galaxy, set_range=set_range)
+	find_template(galaxy, set_range=set_range)
 
 if __name__=="__main__":
 	galaxies = [
 		# 'ic1459',
 		# 'ic4296', 
-		# 'ngc1316',
-		'ngc1399'
+		'ngc1316'#,
+		# 'ngc1399'
 		]
 	for g in galaxies:
 		try: 
