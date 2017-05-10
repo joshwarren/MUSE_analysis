@@ -10,7 +10,7 @@ if 'home' not in cc.device:
 	import matplotlib # 20160202 JP to stop lack-of X-windows error
 	matplotlib.use('Agg') # 20160202 JP to stop lack-of X-windows error
 from pickler_muse import pickler
-from plot_results_muse import plot_results
+from plot_results_muse import plot_results, mapping
 from kinematics_muse import kinematics
 # from GH_plots import GH_plots
 # from plot_absorption import plot_absorption
@@ -19,37 +19,45 @@ import matplotlib.pyplot as plt # used for plotting
 # from use_kinemetry import use_kinemetry
 # from classify import classify
 import traceback, sys
+from BPT import BPT
 
 galaxies = [
-			#'ic1459', 
-			# 'ic4296',
+			'ic1459', 
+			'ic4296',
 			'ngc1316',
 			'ngc1399'
 			]
-galaxies = ['ic1459']
-# galaxies = ['ic4296']
+# galaxies = ['ic1459']
+galaxies = ['ic4296']
 # galaxies = ['ngc1316']
 # galaxies = ['ngc1399']
 
+m=mapping()
+# m.SNR = False
+# m.image = False
+# m.equivalent_width = False
+# m.amp_noise = False
+# m.kinematics = False
+# m.plot_resid = False
+# m.line_ratios = False
 
 discard = 0
 norm = 'lws' #'lwv'
 
 # Arrays for error catching
-gal_err=[]
-err = []
-trace =[]
+gal_err, err, trace =[], [], []
 for galaxy in galaxies:
 	D = None
 	print galaxy
 	try:
 		D = pickler(galaxy, discard=discard, norm=norm, kinemetry=False)#, override=True)
 		D = plot_results(galaxy, discard=discard, CO = False, residual="median", 
-			norm=norm, D=D, show_bin_num=True)
+			norm=norm, D=D, show_bin_num=True, mapping=m)
 		# plt.close("all")
 		# GH_plots(galaxy, wav_range=wav_range)
 		# plt.close("all")
 		kinematics(galaxy, discard=discard, D=D)
+		BPT(galaxy, D=D)
 		# plt.close("all")
 
 		# Requires the IDL kinemetry routine to have been run. 

@@ -33,7 +33,7 @@ def check_overwrite(new, old, auto_override=False):
 
 
 def binning_spaxels(galaxy, targetSN=None, opt='kin', auto_override=False, debug=False,
-	set_range=None):
+	set_range=None, MC_dir='MC'):
 	print '     Voronoi Binning'
 # ----------===============================================---------
 # ----------============ Default parameters ===============---------
@@ -42,20 +42,21 @@ def binning_spaxels(galaxy, targetSN=None, opt='kin', auto_override=False, debug
 	data_file = "%s/analysis/galaxies.txt" %(dir)
 	# Check if file has anything in it - it does need to exsist.
 	try:
-		galaxy_gals = np.loadtxt(data_file, skiprows=1, usecols=(0,),dtype=str)
-		x_gals, y_gals, SN_kin_gals, SN_pop_gals = np.loadtxt(data_file, skiprows=1, 
-			usecols=(1,2,3,4), unpack=True, dtype='int,int,float,float')
+		d = np.loadtxt(data_file, unpack=True, dtype=str)
+		galaxy_gals = d[0][1:]
+		x_gals, y_gals = d[1][1:].astype(int), d[2][1:].astype(int)
+		SN_gals = {d[i][0]:d[i][1:].astype(float) for i in range(3,len(d))}
 	except StopIteration:
 		galaxy_gals = np.array([])
 		x_gals = np.array([])
 		y_gals = np.array([])
-		SN_kin_gals = np.array([])
-		SN_pop_gals = np.array([])
+		SN_gals = {}
 
-	if opt=='kin':
-		SN_used_gals = SN_kin_gals
-	elif opt=='pop':
-		SN_used_gals = SN_pop_gals
+	try:
+		SN_used_gals = SN_gals['SN_%s_%s' % (opt, MC_dir)]
+	except KeyError:
+		SN_used_gals = np.zeros([len(galaxy_gals)])
+
 
 	i_gal = np.where(galaxy_gals == galaxy)[0]
 	if len(i_gal) == 0:
@@ -65,7 +66,7 @@ def binning_spaxels(galaxy, targetSN=None, opt='kin', auto_override=False, debug
 	if targetSN is None and i_gal != -1:
 		targetSN=SN_used_gals[i_gal]
 	elif targetSN is not None and i_gal  != -1: 
-		targetSN = check_overwrite(targetSN, SN_used_gals[i_gal], auto_override)
+		targetSN = check_overwrite(float(targetSN), SN_used_gals[i_gal], auto_override)
 		SN_used_gals[i_gal] = targetSN
 	elif targetSN is not None and i_gal == -1:
 		SN_used_gals = np.append(SN_used_gals, targetSN)
@@ -82,18 +83,17 @@ def binning_spaxels(galaxy, targetSN=None, opt='kin', auto_override=False, debug
 			SN_kin_gals = np.append(SN_kin_gals, 0)
 
 # ----------================= Save SN_used ===============---------
-	if opt=='kin':
-		SN_kin_gals = SN_used_gals
-	elif opt=='pop':
-		SN_pop_gals = SN_used_gals 
+	SN_gals['SN_%s_%s'%(opt,MC_dir)] = SN_used_gals
 
-	temp = "{0:12}{1:4}{2:4}{3:8}{4:8}\n"
+	temp = "{0:12}{1:4}{2:4}"+''.join(['{%i:%i}'%(i+3,len(t)+1) for i, t in 
+		enumerate(SN_gals.keys())])+'\n'
+
+	SN_titles = list(SN_gals.keys())
 	with open(data_file, 'w') as f:
-		f.write(temp.format("Galaxy", "x", "y", "Kin SN", "Pop SN"))
+		f.write(temp.format("Galaxy", "x", "y", *(s for s in SN_titles)))
 		for i in range(len(galaxy_gals)):
 			f.write(temp.format(galaxy_gals[i], str(int(x_gals[i])), 
-				str(int(y_gals[i])), str(round(SN_kin_gals[i],2)),
-				str(round(SN_pop_gals[i],2))))
+				str(int(y_gals[i])), *(str(round(SN_gals[s][i],2)) for s in SN_titles)))
 
 # ----------================ Find S/N ================------------
 # Final wildcard notes that depending on the method used the quadrants
@@ -181,13 +181,13 @@ def binning_spaxels(galaxy, targetSN=None, opt='kin', auto_override=False, debug
 
 
 
-	if not os.path.exists("%s/analysis/%s" % (dir,galaxy)):
-		os.makedirs("%s/analysis/%s" % (dir, galaxy))
+	if not os.path.exists("%s/analysis/%s/%s_%s/setup" % (dir,galaxy,opt,MC_dir)):
+		os.makedirs("%s/analysis/%s/%s_%s/setup" % (dir, galaxy,opt,MC_dir))
 
 	# if not debug:
 	binNum, xNode, yNode, xBar, yBar, sn, nPixels, scale = voronoi_2d_binning(
 		x, y, signal, noise, targetSN, quiet=True, plot=False,
-		saveTo='%s/analysis/%s/binning_%s.png' %(dir,galaxy, opt))
+		saveTo='%s/analysis/%s/%s_%s/setup/binning.png' %(dir, galaxy, opt, MC_dir))
 	matplotlib.pyplot.close('all')
 	# else:
 	# 	binNum = np.arange(len(x))
@@ -216,16 +216,16 @@ def binning_spaxels(galaxy, targetSN=None, opt='kin', auto_override=False, debug
 	temp = "{0:5}{1:5}{2:8}{3:9}{4:9}\n"
 	temp2 = "{0:12}{1:12}\n"
 
-	with open("%s/analysis/%s/voronoi_2d_binning_output_%s.txt" % (dir,galaxy,opt), 
-		'w') as f:
+	with open("%s/analysis/%s/%s_%s/setup/voronoi_2d_binning_output.txt" % (dir, galaxy, 
+		opt, MC_dir), 'w') as f:
 		f.write(temp.format('X"', 'Y"', 'BIN_NUM', 'XBIN', 'YBIN'))
 		for i in range(len(xBin)):
 			f.write(temp.format(str(int(x[i])), str(int(y[i])), str(int(binNum[i])), 
 				str(round(xBin[i],5)), str(round(yBin[i],5))))
 
 
-	with open("%s/analysis/%s/voronoi_2d_binning_output2_%s.txt" % (dir,galaxy,opt), 
-		'w') as f:
+	with open("%s/analysis/%s/%s_%s/setup/voronoi_2d_binning_output2.txt" % (dir, 
+		galaxy, opt, MC_dir), 'w') as f:
 		f.write(temp2.format('XBAR','YBAR'))
 		for i in range(len(xBar)):
 			f.write(temp2.format(str(round(xBar[i],5)), str(round(yBar[i],5)))) 

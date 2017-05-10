@@ -82,23 +82,17 @@ vin_dir_cube = '%s/Data/muse' % (cc.base_dir)
 ain_dir = '%s/Data/alma' % (cc.base_dir)
 out_dir = '%s/Data/muse/analysis' % (cc.base_dir)
 
-SNR = False
-image = False
-equivalent_width = False
-amp_noise = False
-kinematics = False
-plot_resid = False
-line_ratios = False
-
-# SNR = True
-# image = True
-# equivalent_width = True
-# amp_noise = True
-kinematics = True
-# plot_resid = True
-# line_ratios = True
-
-
+#-----------------------------------------------------------------------------
+class mapping(object):
+	def __init__(self):
+		self.SNR = True
+		self.image = True
+		self.equivalent_width = True
+		self.amp_noise = True
+		self.kinematics = True
+		self.plot_resid = True
+		self.line_ratios = True
+#-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
 def set_lims(v, positive=False, symmetric=False):
@@ -122,6 +116,7 @@ def set_lims(v, positive=False, symmetric=False):
 
 	if positive:
 		vmin = max(vmin, 0)
+		vmax = max(vmax, 0)
 
 	return vmin, vmax
 #-----------------------------------------------------------------------------
@@ -255,7 +250,7 @@ def add_CO(ax, galaxy, header, close=False):
 #-----------------------------------------------------------------------------
 def plot_results(galaxy, discard=0, wav_range="", norm="lwv", 
 	plots=False, residual=False, CO=False, show_bin_num=False,
-	D=None, **kwargs):	
+	D=None, mapping=None, MC_dir='MC' **kwargs):	
 
 	pa = {'ic1459':0, 'ic4296':0, 'ngc1316':0, 'ngc1399':0}
 
@@ -264,8 +259,11 @@ def plot_results(galaxy, discard=0, wav_range="", norm="lwv",
 
 	data_file =  "%s/galaxies.txt" % (vin_dir)
 	# different data types need to be read separetly
+	file_headings = np.loadtxt(data_file, dtype=str)[0]
+	col = np.where(file_headings=='SN_kin_%s' % (MC_dir))[0][0]
+
 	SN_target_gals = np.loadtxt(data_file, unpack=True, skiprows=1, 
-		usecols=(3))
+		usecols=(col))
 	galaxy_gals = np.loadtxt(data_file, skiprows=1, usecols=(0,),dtype=str)
 	i_gal = np.where(galaxy_gals==galaxy)[0][0]
 	SN_target=SN_target_gals[i_gal]-10
@@ -292,7 +290,7 @@ def plot_results(galaxy, discard=0, wav_range="", norm="lwv",
 	output = "%s/%s/results/%s" % (out_dir, galaxy, wav_range_dir)
 	out_plots = "%s/plots" % (output)
 	out_nointerp = "%s/notinterpolated" % (out_plots)
-	vin_dir_gasMC = "%s/%s/gas_MC" % (vin_dir, galaxy) # for chi2
+	vin_dir_gasMC = "%s/%s/kin_%s" % (vin_dir, galaxy, MC_dir) # for chi2
 	out_pickle = '%s/pickled' % (output)
 
 	# Used for CO plotting
@@ -330,13 +328,13 @@ def plot_results(galaxy, discard=0, wav_range="", norm="lwv",
 	ax_array = []
 
 
-	if SNR:	
+	if mapping.SNR or mapping is None:	
 		saveTo = "%s/SNR_%s.png" % (out_nointerp, wav_range)
 		ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, 
 			D.SNRatio, colorbar=True, 
 			nodots=True, title='SNR', save=saveTo, close=not CO, pa=pa, res=res)
 # ------------=============== Plot image ================----------
-	if image:
+	if mapping.image or mapping is None:
 		print "    Image"
 		
 		title = "Total Flux"
@@ -366,7 +364,7 @@ def plot_results(galaxy, discard=0, wav_range="", norm="lwv",
 		if plots:
 			plt.show()
 # ------------========= Plot intensity (& EW) ===========----------
-	if equivalent_width:
+	if mapping.equivalent_width or mapping is None:
 		print "    gas map(s) and equivalent widths"
 
 		for c in D.e_components:
@@ -416,7 +414,7 @@ def plot_results(galaxy, discard=0, wav_range="", norm="lwv",
 			eqh_title = "%s Equivalent Width Histogram" % (c_title)
 			eqCBtitle = r"Equivalent Width ($\AA$)"
 
-			eq_min, eq_max = set_lims(D.e_line[c].equiv_width, positive=True)
+			eq_min, eq_max = set_lims(D.e_line[c].equiv_width)#, positive=True)
 
 			saveTo = "%s/%s_eqWidth_hist_%s.png" % (out_plots, c, wav_range)
 			plot_histogram(D.e_line[c].equiv_width, galaxy=galaxy.upper(), redshift=z,
@@ -439,7 +437,7 @@ def plot_results(galaxy, discard=0, wav_range="", norm="lwv",
 			if hasattr(ax,'ax2'): f.delaxes(ax.ax2)
 			if hasattr(ax,'ax3'): f.delaxes(ax.ax3)
 # ------------============ Amplitude/Noise ==============----------
-		if amp_noise:
+		if mapping.amp_noise or mapping is None:
 			amp_title = '%s Amplitude to Noise ratio' % (c_title)
 			amp_min, amp_max = set_lims(D.e_line[c].amp_noise, positive=True)
 			saveTo = "%s/%s_amp_nosie_%s.png" % (out_nointerp, c, wav_range)
@@ -452,7 +450,7 @@ def plot_results(galaxy, discard=0, wav_range="", norm="lwv",
 				ax1.saveTo = saveTo
 				add_CO(ax1, galaxy, header, close=True)
 # ------------=========== Setting titles etc ============----------
-	if kinematics:
+	if mapping.kinematics or mapping is None:
 		print '    Kinematics'
 		# for c in ['stellar']: # For debugging
 		for c in D.independent_components:
@@ -590,7 +588,7 @@ def plot_results(galaxy, discard=0, wav_range="", norm="lwv",
 				# if plots:
 				# 	plt.show()
 # ------------============= Plot residuals ==============----------
-	if residual and plot_resid:
+	if residual and (mapping.plot_resid or mapping is None):
 		print "    " + residual + " residuals"
 
 		average_residuals = np.zeros(D.number_of_bins)
@@ -651,7 +649,7 @@ def plot_results(galaxy, discard=0, wav_range="", norm="lwv",
 	# 	add_CO(ax1, galaxy, header, close=True)
 # ------------============ Line ratio maps ==============----------
 	# if any('OIII' in o for o in D.list_components) and line_ratios:
-	if len(D.list_components) > 2 and line_ratios:
+	if len(D.list_components) > 2 and (mapping.line_ratios or mapping is None):
 		print "    line ratios"
 
 		t_num = (len(D.e_components)-1)*len(D.e_components)/2

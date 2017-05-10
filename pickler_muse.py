@@ -30,18 +30,17 @@ out_dir = '%s/Data/muse/analysis' % (cc.base_dir)
 
 #-----------------------------------------------------------------------------
 def pickler(galaxy, discard=0, wav_range="", norm="lwv", opt="kin",	kinemetry=True,
-	override=False,	**kwargs):
+	MC_dir='MC', override=False, **kwargs):
 	print "    Loading D"
 	vin_dir_cube = '%s/Data/muse/%s' % (cc.base_dir,galaxy)
 
-	tessellation_File = "%s/%s/voronoi_2d_binning_output_%s.txt" % (vin_dir, galaxy, opt)
-	tessellation_File2 = "%s/%s/voronoi_2d_binning_output2_%s.txt" %(vin_dir, galaxy, opt)
+	tessellation_File = "%s/%s/%s_%s/setup/voronoi_2d_binning_output.txt" % (vin_dir, 
+		galaxy, opt, MC_dir)
+	tessellation_File2 = "%s/%s/%s_%s/setup/voronoi_2d_binning_output2.txt" %(vin_dir, 
+		galaxy, opt, MC_dir)
 	dataCubeDirectory = get_dataCubeDirectory(galaxy)
 	output = "%s/%s/results/%s" % (out_dir, galaxy, wav_range)
-	if opt == "kin":
-		vin_dir_gasMC = "%s/%s/gas_MC" % (vin_dir, galaxy)
-	elif opt == "pop":
-		vin_dir_gasMC = "%s/%s/pop_MC" % (vin_dir, galaxy)
+	vin_dir_gasMC = "%s/%s/%s_%s" % (vin_dir, galaxy, opt, MC_dir)
 	out_pickle = '%s/pickled' % (output)
 
 	# Check tessellation file is older than pPXF outputs (checks vin_dir_gasMC/0.dat only).
@@ -54,11 +53,11 @@ def pickler(galaxy, discard=0, wav_range="", norm="lwv", opt="kin",	kinemetry=Tr
 				os.path.exists('%s/%i.dat' % (vin_dir_gasMC, max(bin_num)+1)):
 				# Issue warning, but do not stop.
 				warnings.warn('WANING: The tesselation file '+\
-					'voronoi_2d_binning_output_%s.txt may to have been changed.' % (opt))
+					'voronoi_2d_binning_output.txt may to have been changed.')
 			else:
 				# Stop and raise exception
 				raise UserWarning('WANING: The tesselation file '+\
-					'voronoi_2d_binning_output_%s.txt has been overwritten. ' % (opt) +\
+					'voronoi_2d_binning_output.txt has been overwritten. ' + \
 					"Use the 'override' keyword to run this routine anyway.")
 # ------------======== Reading the spectrum  ============----------
 	D = Data(np.loadtxt(tessellation_File, unpack=True, skiprows = 1, 

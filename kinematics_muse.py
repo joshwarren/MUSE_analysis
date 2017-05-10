@@ -61,6 +61,8 @@ def kinematics(galaxy, discard=0, plots=False, D=None):
 
 	# print "ellip: " + str(f.eps) #+ "+/-" + str(abs(f.eps-f_err.eps))
 	# print "PA_photo: " + str(90-f.theta) #+ "+/-" + str(abs(f.theta-f_err.theta))
+
+
 # # ------------================ Lambda_R ==================----------
 # 	# distance from center
 # 	R = np.sqrt(np.square(xBar)+np.square(yBar))

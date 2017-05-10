@@ -12,7 +12,7 @@ from find_template_muse import find_template
 import traceback, sys
 
 
-def full_analysis(galaxy=None, opt='kin'):
+def full_analysis(galaxy=None, opt='kin', MC_dir='MC'):
 
 	galaxies = np.array([
 		'ic1459', 
@@ -23,26 +23,26 @@ def full_analysis(galaxy=None, opt='kin'):
 	gal=6
 	if galaxy is None:
 		galaxy = galaxies[gal]
-	print galaxy
+	print galaxy, opt, MC_dir
 
-	targetSN = 60 #None# 200
+	targetSN = 120 #None# 200
 	set_range = np.array([2000,5500])#7350])
 
 	binning_spaxels(galaxy, targetSN=targetSN, opt=opt, auto_override=True, 
-		set_range=set_range) #, debug=True)
+		set_range=set_range, MC_dir=MC_dir) #, debug=True)
 
-	find_template(galaxy, set_range=set_range)
+	# find_template(galaxy, set_range=set_range)
 
 if __name__=="__main__":
 	galaxies = [
 		# 'ic1459',
 		# 'ic4296', 
-		'ngc1316'#,
-		# 'ngc1399'
+		# 'ngc1316'#,
+		'ngc1399'
 		]
 	for g in galaxies:
 		try: 
-			full_analysis(galaxy=g, opt='kin')
+			full_analysis(galaxy=g, opt='kin', MC_dir='MC_low_res')
 		except Exception as e:
 			print '%s failed' % (g)
 			print e
