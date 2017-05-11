@@ -250,7 +250,7 @@ def add_CO(ax, galaxy, header, close=False):
 #-----------------------------------------------------------------------------
 def plot_results(galaxy, discard=0, wav_range="", norm="lwv", 
 	plots=False, residual=False, CO=False, show_bin_num=False,
-	D=None, mapping=None, MC_dir='MC' **kwargs):	
+	D=None, mapping=None, opt='kin', **kwargs):	
 
 	pa = {'ic1459':0, 'ic4296':0, 'ngc1316':0, 'ngc1399':0}
 
@@ -260,7 +260,7 @@ def plot_results(galaxy, discard=0, wav_range="", norm="lwv",
 	data_file =  "%s/galaxies.txt" % (vin_dir)
 	# different data types need to be read separetly
 	file_headings = np.loadtxt(data_file, dtype=str)[0]
-	col = np.where(file_headings=='SN_kin_%s' % (MC_dir))[0][0]
+	col = np.where(file_headings=='SN_%s' % (opt))[0][0]
 
 	SN_target_gals = np.loadtxt(data_file, unpack=True, skiprows=1, 
 		usecols=(col))
@@ -287,10 +287,10 @@ def plot_results(galaxy, discard=0, wav_range="", norm="lwv",
 		if not os.path.exists(CO_image_dir): CO = False
 
 	dataCubeDirectory = get_dataCubeDirectory(galaxy)
-	output = "%s/%s/results/%s" % (out_dir, galaxy, wav_range_dir)
+	output = "%s/%s/%s" % (out_dir, galaxy, opt)
 	out_plots = "%s/plots" % (output)
 	out_nointerp = "%s/notinterpolated" % (out_plots)
-	vin_dir_gasMC = "%s/%s/kin_%s" % (vin_dir, galaxy, MC_dir) # for chi2
+	vin_dir_gasMC = "%s/%s/%s/MC" % (vin_dir, galaxy, opt) # for chi2
 	out_pickle = '%s/pickled' % (output)
 
 	# Used for CO plotting
@@ -301,7 +301,7 @@ def plot_results(galaxy, discard=0, wav_range="", norm="lwv",
 
 	# Load pickle file from pickler.py
 	if D is None:
-		pickleFile = open("%s/dataObj_%s.pkl" % (out_pickle, wav_range), 'rb')
+		pickleFile = open("%s/dataObj.pkl" % (out_pickle), 'rb')
 		D = pickle.load(pickleFile)
 		pickleFile.close()
 

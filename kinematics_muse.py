@@ -63,66 +63,66 @@ def kinematics(galaxy, discard=0, plots=False, D=None):
 	# print "PA_photo: " + str(90-f.theta) #+ "+/-" + str(abs(f.theta-f_err.theta))
 
 
-# # ------------================ Lambda_R ==================----------
-# 	# distance from center
-# 	R = np.sqrt(np.square(xBar)+np.square(yBar))
-# 	# Angle of r from axis of rotation
-# 	#ang = abs(math.asin(math.sin(math.radians(f.theta))) - np.abs(
-# 	#	np.arctan((xBar)/(yBar))))
-# 	#R = r * np.sin(ang)
+# ------------================ Lambda_R ==================----------
+	# distance from center
+	R = np.sqrt(np.square(D.xBar)+np.square(D.yBar))
+	# Angle of r from axis of rotation
+	#ang = abs(math.asin(math.sin(math.radians(f.theta))) - np.abs(
+	#	np.arctan((xBar)/(yBar))))
+	#R = r * np.sin(ang)
 
-# 	order = np.argsort(R)
+	order = np.argsort(R)
 
-# 	xBar_r = -xBar*math.cos(f.theta)-yBar*math.sin(f.theta)
-# 	yBar_r = xBar*math.sin(f.theta) - yBar*math.cos(f.theta)
+	xBar_r = -xBar*math.cos(f.theta)-yBar*math.sin(f.theta)
+	yBar_r = xBar*math.sin(f.theta) - yBar*math.cos(f.theta)
 
-# 	R_m = np.sqrt(np.square(xBar_r)*(1-f.eps) + np.square(yBar_r)/(1+f.eps))
-# 	h = 0.1 # discretization accuracy
-# 		# discretizing the unit square
-# 	x, y = np.mgrid[-f.xmed:40-2*discard-f.xmed:h, -f.ymed:40-2*discard-f.ymed:h]
-# 	for i, r in enumerate(R_m):
-# 			# set all points of ellipse that are inside 
-# 		el = (np.square(-x*math.cos(f.theta)-y*math.sin(f.theta))*(1-f.eps) + \
-# 			np.square(x*math.sin(f.theta) - y*math.cos(f.theta))/(1+f.eps))/r**2 <= 1
+	R_m = np.sqrt(np.square(xBar_r)*(1-f.eps) + np.square(yBar_r)/(1+f.eps))
+	h = 0.1 # discretization accuracy
+		# discretizing the unit square
+	x, y = np.mgrid[-f.xmed:40-2*discard-f.xmed:h, -f.ymed:40-2*discard-f.ymed:h]
+	for i, r in enumerate(R_m):
+			# set all points of ellipse that are inside 
+		el = (np.square(-x*math.cos(f.theta)-y*math.sin(f.theta))*(1-f.eps) + \
+			np.square(x*math.sin(f.theta) - y*math.cos(f.theta))/(1+f.eps))/r**2 <= 1
 		
-# 		if el.any():
-# 			A_s = np.sum(el) * h * h
-# 			A_ellipse = math.pi * r**2 * math.sqrt((1+f.eps**2)/(1-f.eps))
-# 			if 0.85 * A_ellipse < A_s:
-# 				R_m[i] = math.sqrt(A_s/math.pi)
-# 			else:
-# 				R_m[i] = np.nan
+		if el.any():
+			A_s = np.sum(el) * h * h
+			A_ellipse = math.pi * r**2 * math.sqrt((1+f.eps**2)/(1-f.eps))
+			if 0.85 * A_ellipse < A_s:
+				R_m[i] = math.sqrt(A_s/math.pi)
+			else:
+				R_m[i] = np.nan
 
-# 	order_m = np.argsort(R_m)
+	order_m = np.argsort(R_m)
 
-# 	# NB: lam is ordered in terms of increasing R.
-# 	lam_num = D.flux[order_m]*R[order_m]*np.abs(np.array(
-# 		D.components['stellar'].plot['vel'][order_m])) # numerator
-# 	lam_den = D.flux[order_m]*R[order_m]*np.sqrt(np.square(
-# 		np.array(D.components['stellar'].plot['vel'])[order_m]) + np.square(
-# 		np.array(D.components['stellar'].plot['sigma'])[order_m])) # denominator
+	# NB: lam is ordered in terms of increasing R.
+	lam_num = D.flux[order_m]*R[order_m]*np.abs(np.array(
+		D.components['stellar'].plot['vel'][order_m])) # numerator
+	lam_den = D.flux[order_m]*R[order_m]*np.sqrt(np.square(
+		np.array(D.components['stellar'].plot['vel'])[order_m]) + np.square(
+		np.array(D.components['stellar'].plot['sigma'])[order_m])) # denominator
 
-# 	# cumulative summation with mask from R_m
-# 	lam_num = np.cumsum(lam_num[~np.isnan(R_m)])
-# 	lam_den = np.cumsum(lam_den[~np.isnan(R_m)])
+	# cumulative summation with mask from R_m
+	lam_num = np.cumsum(lam_num[~np.isnan(R_m)])
+	lam_den = np.cumsum(lam_den[~np.isnan(R_m)])
 
-# 	lam = lam_num/lam_den
-# 	plt.figure()
-# 	plt.title(r"Radial $\lambda_R$ profile")
-# 	plt.ylabel(r"$\lambda_R$")
-# 	plt.xlabel("Radius (R_e)")
-# 	x = spxToRe(R[order_m], R_e)[~np.isnan(R_m[order_m])] # Plotted as a fucntion of R not R_m
-# 	order = np.argsort(x)
-# 	lambda_R[i_gal2] = lam[order][-1]
-# 	print 'lambda_R_MAX: ', lambda_R[i_gal2]
-# 	plt.plot(x[order[5:]], lam[order[5:]])
-# 	ax =plt.gca()
-# 	plt.text(0.02,0.98, "Galaxy: " + galaxy.upper(), verticalalignment='top',
-# 		transform=ax.transAxes)
-# 	plt.savefig("%s/%s/results/%s/plots/" % (analysis_dir, galaxy, wav_range_dir
-# 		) + "lambda_R_%s.png" % (wav_range), bbox_inches="tight")
-# 	if plots: 
-# 		plt.show()
+	lam = lam_num/lam_den
+	plt.figure()
+	plt.title(r"Radial $\lambda_R$ profile")
+	plt.ylabel(r"$\lambda_R$")
+	plt.xlabel("Radius (R_e)")
+	x = spxToRe(R[order_m], R_e)[~np.isnan(R_m[order_m])] # Plotted as a fucntion of R not R_m
+	order = np.argsort(x)
+	lambda_R[i_gal2] = lam[order][-1]
+	print 'lambda_R_MAX: ', lambda_R[i_gal2]
+	plt.plot(x[order[5:]], lam[order[5:]])
+	ax =plt.gca()
+	plt.text(0.02,0.98, "Galaxy: " + galaxy.upper(), verticalalignment='top',
+		transform=ax.transAxes)
+	plt.savefig("%s/%s/results/%s/plots/" % (analysis_dir, galaxy, wav_range_dir
+		) + "lambda_R_%s.png" % (wav_range), bbox_inches="tight")
+	if plots: 
+		plt.show()
 
 # ------------============== Save outputs ================----------
 	template = "{0:12}{1:4}{2:4}{3:8}{4:8}\n"

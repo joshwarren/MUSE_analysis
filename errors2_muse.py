@@ -26,23 +26,27 @@ from rolling_stats import *
 
 #-----------------------------------------------------------------------------
 class set_params(object):
-	def __init__(self):
+	def __init__(self, opt='kin'):
 		self.quiet = True
 		self.gas = 1 # 0   No gas emission lines
 					# 1   Probe ionised gas
 					# 2   Seperate gases heated by shocks (OIII and NI) and by SF gas
 					#     (Hb and Hd)
 					# 3   All gas seperate.
-		self.reps = 0 ## number of monte carlo reps per bin.
+		self.reps = 1000 ## number of monte carlo reps per bin.
 		self.FWHM_gal = 2.3 # MUSE documentation
 		self.set_range = np.array([2000,7350])#5500])
 		self.stellar_moments = 2 # number of componants to calc with ppxf (see 
 							# keyword moments in ppxf.pro for more details)
 		self.gas_moments = 2
-		self.degree = 4  # order of addative Legendre polynomial used to 
-					#; correct the template continuum shape during the fit
-		self.MC_dir = 'MC_low_res'
-#-----------------------------------------------------------------------------
+		if 'kin' in opt:
+			self.degree = 4  # order of addative Legendre polynomial used to 
+							# correct the template continuum shape during the fit
+			self.mdegree = 0
+		elif 'pop' in opt:
+			self.degree = -1
+			self.mdegree = 10
+# -----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
 def set_lines (lines, logLam_temp, FWHM_gal):
@@ -159,8 +163,8 @@ class get_emission_templates(object):
 					self.templatesToUse = np.append(self.templatesToUse, line_name[i])
 					self.templates.append(emission_lines[:,i])
 					self.component = self.component + [1]
-					self.element.append('gas')
 					self.line_wav.append(line_wav[i])
+			self.element = ['gas']
 		## ----------=============== SF and shocks lines ==============---------
 		if gas == 2:
 			emission_lines, line_name, line_wav = util.emission_lines(
@@ -173,13 +177,12 @@ class get_emission_templates(object):
 						self.templatesToUse = np.append(self.templatesToUse, line_name[i])
 						self.templates.append(emission_lines[:,i])
 						self.component = self.component + [1]
-						self.element.append['SF']
 					else:
 						self.templatesToUse = np.append(self.templatesToUse, line_name[i])
 						self.templates.append(emission_lines[:,i])
 						self.component = self.component + [2] 
-						self.element.append['Shocks']
 					self.line_wav.append(line_wav[i])
+			self.element = ['SF', 'Shocks']
 		## ----------=========== All lines inderpendantly ==============---------
 		if gas == 3:
 			emission_lines, line_name, line_wav = util.emission_lines(
@@ -278,13 +281,12 @@ def determine_goodpixels(logLam, lamRangeTemp, vel, z, gas=False, mask=False):
 
 #-----------------------------------------------------------------------------
 def saveAll(galaxy, bin, pp, lambdaq, stellar_output, stellar_errors, bin_log_sav, 
-	noise_sav, element, templatesToUse, gas_output=None, gas_errors=None, opt='kin',
-	MC_dir='MC'):
+	noise_sav, element, templatesToUse, gas_output=None, gas_errors=None, opt='kin'):
 	# stellar MC results
 	if cc.device == 'glamdring':
-		dir = '%s/analysis_muse/%s/%s_%s' % (cc.base_dir, galaxy, opt, MC_dir)
+		dir = '%s/analysis_muse/%s/%s/MC' % (cc.base_dir, galaxy, opt)
 	else:
-		dir = '%s/Data/muse/analysis/%s/%s_%s' % (cc.base_dir, galaxy, opt, MC_dir)
+		dir = '%s/Data/muse/analysis/%s/%s/MC' % (cc.base_dir, galaxy, opt)
 
 	reps = stellar_output.shape[0]
 	gas = len(element) > 1
@@ -298,18 +300,15 @@ def saveAll(galaxy, bin, pp, lambdaq, stellar_output, stellar_errors, bin_log_sa
 				# statement above
 				pass
 
-
+	# stellar MC results
 	check_directory("%s/stellar/errors" % (dir))
 	bin_file = "%s/stellar/%s.dat" % (dir, str(bin))
 	errors_file = "%s/stellar/errors/%s.dat" % (dir, str(bin))
 	with open(bin_file, 'w') as f,  open(errors_file, 'w') as e:
 		for i in range(reps):
-			f.write(str(stellar_output[i,0]) + "   " + \
-				str(stellar_output[i,1]) + "   " + str(stellar_output[i,2]) + \
-				"   " + str(stellar_output[i,3]) + '\n')
-			e.write(str(stellar_errors[i,0]) + "   " + str(stellar_errors[i,1]) + \
-				"   " + str(stellar_errors[i,2]) + "   " + \
-				str(stellar_errors[i,3]) + '\n')
+			f.write("   ".join([str(s) for s in stellar_output[i,:]]) + '\n')
+			e.write("   ".join([str(s) for s in stellar_errors[i,:]]) + '\n')
+
 	
 	# gas MC results
 	if gas: gas_dir = [e for e in element if e != 'stellar']
@@ -323,13 +322,9 @@ def saveAll(galaxy, bin, pp, lambdaq, stellar_output, stellar_errors, bin_log_sa
 		with open(gas_file, 'w') as g, open(gas_errors_file, 'w') as ger:
 			for i in range(reps):
 				if gas_output is not None:
-					g.write(str(gas_output[d,i,0]) + "   " + str(gas_output[d,i,1]) + \
-						"   " + str(gas_output[d,i,2]) + "   " + \
-						str(gas_output[d,i,3]) + '\n')
+					g.write("   ".join([str(s) for s in gas_output[d,i,:]]) + '\n')
 				if gas_errors is not None:
-					ger.write(str(gas_errors[d,i,0]) + "   " + \
-						str(gas_errors[d,i,1]) + "   " + str(gas_errors[d,i,2]) + \
-						"   " + str(gas_errors[d,i,3]) + '\n')
+					ger.write("   ".join([str(s) for s in gas_errors[d,i,:]]) + '\n')
 
 	## save bestfit spectrum
 	check_directory("%s/bestfit" % (dir)) 
@@ -358,16 +353,10 @@ def saveAll(galaxy, bin, pp, lambdaq, stellar_output, stellar_errors, bin_log_sa
 	## save bestfit LOSVD output
 	bestfit_file = "%s/%s.dat" % (dir, str(bin))
 	with open(bestfit_file, 'w') as b:
-		if gas:
-			for i in range(np.shape(pp.sol)[0]):
-				b.write(element[i])
-				for j in pp.sol[i]:
-					b.write("   " + str(j)) 
-				b.write('\n')
-		else: 
-			b.write("stellar")
-			for j in range(stellar_moments):
-				b.write("   " + str(j))
+		for i in range(np.shape(pp.sol)[0]):
+			b.write(element[i])
+			for j in pp.sol[i]:
+				b.write("   " + str(j)) 
 			b.write('\n')
 
 	## save chi2
@@ -499,14 +488,15 @@ def get_dataCubeDirectory(galaxy):
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
-def errors2(i_gal=None, bin=None):
+def errors2(i_gal=None, opt=None, bin=None):
 	if i_gal is None: i_gal=int(sys.argv[1])
-	if bin is None: bin=int(sys.argv[2])
+	if opt is None: opt=sys.argv[2]
+	if bin is None: bin=int(sys.argv[3])
 	from ppxf import ppxf
 ## ----------===============================================---------
 ## ----------============= Input parameters  ===============---------
 ## ----------===============================================---------
-	params = set_params()
+	params = set_params(opt)
 	
 	galaxies = ['ic1459', 'ic4296', 'ngc1316', 'ngc1399']
 	galaxy = galaxies[i_gal]
@@ -517,12 +507,12 @@ def errors2(i_gal=None, bin=None):
 		dir = cc.base_dir
 		data_file = "%s/analysis/galaxies.txt" % (dir)
 		tessellation_File = "%s/analysis_muse/%s/" % (dir, galaxy) + \
-			"%s_%s/setup/voronoi_2d_binning_output.txt" % ('kin', params.MC_dir)
+			"%s/setup/voronoi_2d_binning_output.txt" % (opt)
 	else:
 		dir = '%s/Data/muse' % (cc.base_dir)
 		data_file = "%s/Data/vimos/analysis/galaxies.txt" % (cc.base_dir)
 		tessellation_File = "%s/analysis/%s/" % (dir, galaxy) + \
-			"%s_%s/setup/voronoi_2d_binning_output.txt" % ('kin', params.MC_dir)
+			"%s/setup/voronoi_2d_binning_output.txt" % (opt)
 
 	# different data types need to be read separetly
 	z_gals, vel_gals, sig_gals = np.loadtxt(data_file, unpack=True, skiprows=1, 
@@ -628,22 +618,19 @@ def errors2(i_gal=None, bin=None):
 	noise_sav = noise
 
 	if cc.device == 'glamdring':
-		saveTo="%s/analysis_muse/%s/kin_%s/bestfit/plots/%s.png" % (dir, galaxy, 
-			params.MC_dir, str(bin))	
+		saveTo="%s/analysis_muse/%s/%s/MC/bestfit/plots/%s.png" % (dir, galaxy, 
+			opt, str(bin))	
 	else:
-		saveTo="%s/analysis/%s/kin_%s/bestfit/plots/%s.png" % (dir, galaxy, 
-			params.MC_dir, str(bin))
+		saveTo="%s/analysis/%s/%s/MC/bestfit/plots/%s.png" % (dir, galaxy, opt, str(bin))
 
 	pp = ppxf(templates, bin_log, noise, velscale, start, 
-			  goodpixels=goodPixels, 
-			  moments=moments, degree=params.degree, vsyst=dv, 
-			  component=component, lam=lambdaq, 
-			  plot=not params.quiet, 
-			  quiet=params.quiet, save=saveTo)
-	ax=plt.gca()
-	for p in e_templates.line_wav:
-		ax.axvline(p, color='c')
-	plt.savefig(saveTo)
+		goodpixels=goodPixels, mdegree=params.mdegree, moments=moments, 
+		degree=params.degree, vsyst=dv, component=component, lam=lambdaq, 
+		plot=not params.quiet, quiet=params.quiet, save=saveTo)
+	# ax=plt.gca()
+	# for p in e_templates.line_wav:
+	# 	ax.axvline(p, color='c')
+	# plt.savefig(saveTo)
 ## ----------===============================================---------
 ## ----------================= The MC part =================---------
 ## ----------===============================================---------
@@ -654,7 +641,6 @@ def errors2(i_gal=None, bin=None):
 		gas_errors = np.zeros((max(component), params.reps, params.gas_moments))
 
 	for rep in range(params.reps):
-		# print rep
 		random = np.random.randn(len(noise))
 		add_noise = random*np.abs(noise)
 		bin_log = pp.bestfit + add_noise
@@ -662,7 +648,7 @@ def errors2(i_gal=None, bin=None):
 		ppMC = ppxf(templates, bin_log, noise, velscale, start, 
 			goodpixels=goodPixels, moments=moments, degree=params.degree, vsyst=dv, 
 			lam=lambdaq, plot=not params.quiet, quiet=params.quiet, bias=0.1, 
-			component=component)
+			component=component, mdegree=params.mdegree)
 
 		stellar_output[rep,:] = ppMC.sol[0][0:params.stellar_moments]
 		stellar_errors[rep,:] = ppMC.error[0][0:params.stellar_moments]
@@ -674,7 +660,7 @@ def errors2(i_gal=None, bin=None):
 ## ----------============ Write ouputs to file =============---------
 	saveAll(galaxy, bin, pp, lambdaq, stellar_output, stellar_errors, bin_log_sav, 
 		noise_sav, element, templatesToUse, gas_output=gas_output, 
-		gas_errors=gas_errors, opt='kin', MC_dir=params.MC_dir)
+		gas_errors=gas_errors, opt=opt)
 	
 ##############################################################################
 
@@ -683,7 +669,7 @@ def errors2(i_gal=None, bin=None):
 
 
 if __name__ == '__main__':
-	errors2(5,29) if len(sys.argv)<3 else errors2()
+	errors2(5, 'kin', 29) if len(sys.argv)<4 else errors2()
 
 
 

@@ -30,17 +30,16 @@ out_dir = '%s/Data/muse/analysis' % (cc.base_dir)
 
 #-----------------------------------------------------------------------------
 def pickler(galaxy, discard=0, wav_range="", norm="lwv", opt="kin",	kinemetry=True,
-	MC_dir='MC', override=False, **kwargs):
+	override=False, **kwargs):
 	print "    Loading D"
-	vin_dir_cube = '%s/Data/muse/%s' % (cc.base_dir,galaxy)
 
-	tessellation_File = "%s/%s/%s_%s/setup/voronoi_2d_binning_output.txt" % (vin_dir, 
-		galaxy, opt, MC_dir)
-	tessellation_File2 = "%s/%s/%s_%s/setup/voronoi_2d_binning_output2.txt" %(vin_dir, 
-		galaxy, opt, MC_dir)
+	tessellation_File = "%s/%s/%s/setup/voronoi_2d_binning_output.txt" % (vin_dir, 
+		galaxy, opt)
+	tessellation_File2 = "%s/%s/%s/setup/voronoi_2d_binning_output2.txt" %(vin_dir, 
+		galaxy, opt)
 	dataCubeDirectory = get_dataCubeDirectory(galaxy)
-	output = "%s/%s/results/%s" % (out_dir, galaxy, wav_range)
-	vin_dir_gasMC = "%s/%s/%s_%s" % (vin_dir, galaxy, opt, MC_dir)
+	output = "%s/%s/%s" % (out_dir, galaxy, opt)
+	vin_dir_gasMC = "%s/%s/%s/MC" % (vin_dir, galaxy, opt)
 	out_pickle = '%s/pickled' % (output)
 
 	# Check tessellation file is older than pPXF outputs (checks vin_dir_gasMC/0.dat only).
@@ -106,10 +105,10 @@ def pickler(galaxy, discard=0, wav_range="", norm="lwv", opt="kin",	kinemetry=Tr
 
 		D.bin[i].bestfit = np.loadtxt("%s/bestfit/%d.dat" %(vin_dir_gasMC,i), 
 			unpack=True)
-		if opt == 'kin':
+		if 'kin' in opt:
 			D.bin[i].apweight = np.loadtxt("%s/apweights/%d.dat" %(vin_dir_gasMC,i), 
 				unpack=True)
-		elif opt == 'pop':
+		elif 'pop' in opt:
 			D.bin[i].mpweight = np.loadtxt("%s/mpweights/%d.dat" %(vin_dir_gasMC,i), 
 				unpack=True)
 	D.xBar, D.yBar = np.loadtxt(tessellation_File2, unpack=True, skiprows = 1)
@@ -201,14 +200,11 @@ def pickler(galaxy, discard=0, wav_range="", norm="lwv", opt="kin",	kinemetry=Tr
 	print "    Pickling D"
 	if not os.path.exists(out_pickle):
 		os.makedirs(out_pickle) 
-	if opt == 'kin':
-		pickleFile = open("%s/dataObj_%s.pkl" % (out_pickle, wav_range), 'wb')
-	elif opt == 'pop':
-		pickleFile = open("%s/dataObj_%s_pop.pkl" % (out_pickle, wav_range), 'wb')
+	pickleFile = open("%s/dataObj.pkl" % (out_pickle), 'wb')
 	pickle.dump(D,pickleFile)
 	pickleFile.close()
 # ------------======== Save flux for KINEMTRY (IDL) =====----------
-	if opt == 'kin' and kinemetry:
+	if 'kin' in opt and kinemetry:
 		print "    Saving flux for KINEMETRY (IDL)"
 		with open('%s/flux.dat' % (output), 'wb') as f:
 			for i in range(D.number_of_bins):

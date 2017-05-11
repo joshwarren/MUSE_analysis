@@ -11,17 +11,17 @@ from plot_velfield_nointerp import plot_velfield_nointerp
 
 
 
-def BPT(galaxy, D=None):
+def BPT(galaxy, D=None, opt='kin'):
 	print '   BPT'
 
 	analysis_dir = "%s/Data/muse/analysis" % (cc.base_dir)
-	galaxiesFile = "%s/galaxies.txt" % (analysis_dir)
+	# galaxiesFile = "%s/galaxies.txt" % (analysis_dir)
 
-	output = '%s/%s/results' % (analysis_dir, galaxy)
+	output = '%s/%s/%s' % (analysis_dir, galaxy, opt)
 
 
 	if D is None:
-		pickleFile = open('%s/pickled/dataObj_.pkl' % (output))
+		pickleFile = open('%s/pickled/dataObj.pkl' % (output))
 		D = pickle.load(pickleFile)
 		pickleFile.close()
 
@@ -60,14 +60,14 @@ def BPT(galaxy, D=None):
 	ax.set_xlim([-1.2, 0.7])
 	ax.set_ylim([-1.2, 1.5])
 
-	fig.savefig('/Data/MUSE/analysis/%s/results/plots/BPT.png' % (galaxy))
+	fig.savefig('%s/plots/BPT.png' % (output))
 # ------------================= BPT map ===================----------
 	m = np.ones(D.number_of_bins)*np.nan
 	m[Seyfert2] = +1
 	m[LINER] = 0
 	m[SF] = -1
 
-	saveTo = '/Data/MUSE/analysis/%s/results/plots/AGN_map.png' % (galaxy)
+	saveTo = '%s/plots/AGN_map.png' % (output)
 	plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, m, vmin=-1.3, vmax=1.3,
 		nodots=True, title='Map of AGN', save=saveTo, res=0.2)
 
