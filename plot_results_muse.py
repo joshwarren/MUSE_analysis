@@ -552,9 +552,6 @@ def plot_results(galaxy, discard=0, wav_range="", norm="lwv",
 				ax.saveTo = saveTo
 				ax.figx, ax.figy = ax_x, ax_y
 				ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar,
-					# max(D.x)-D.x,D.y,D.bin_num,max(D.x)-D.xBar,D.yBar,
-					# max(D.y)-D.y,D.x,D.bin_num,max(D.y)-D.yBar,D.xBar,
-					# max(D.y)-D.y,max(D.x)-D.x,D.bin_num,max(D.y)-D.yBar,max(D.xBar)-D.xBar,
 					D.components[pl].plot[k], vmin=vmin, vmax=vmax, 
 					flux_unbinned=D.unbinned_flux, #flux_type='notmag',
 					nodots=True, show_bin_num=show_bin_num, colorbar=True, 
@@ -573,20 +570,22 @@ def plot_results(galaxy, discard=0, wav_range="", norm="lwv",
 				if hasattr(ax,'ax3'): f.delaxes(ax.ax3)
 				
 				# Uncertainty plot
-				# saveTo = "%s/%s_%s_uncert_field_%s.png" % (out_nointerp, c, k, wav_range)
-				# ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar,
-				# 	D.components[pl].plot[k].uncert, vmin=v_uncert_min, vmax=v_uncert_max,
-				# 	flux_type='notmag', nodots=True, show_bin_num=show_bin_num,
-				# 	colorbar=True, label=CBLabel, galaxy = galaxy.upper(),
-				# 	redshift = z, title=utitle, save=saveTo, close=not CO, pa=pa, res=res)
-				# 	#, header=header)
-				# if CO:
-				# 	ax1.saveTo = saveTo
-				# 	add_CO(ax1, galaxy, header, close=True)
+				saveTo = "%s/%s_%s_uncert_field_%s.png" % (out_nointerp, c, k, 
+					wav_range)
+				ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar,
+					D.components[pl].plot[k].uncert, vmin=v_uncert_min, 
+					vmax=v_uncert_max, #flux_type='notmag', 
+					nodots=True, show_bin_num=show_bin_num, colorbar=True, 
+					label=CBLabel, galaxy = galaxy.upper(), redshift = z, 
+					title=utitle, save=saveTo, close=not CO, res=res)
+					#, header=header)
+				if CO:
+					ax1.saveTo = saveTo
+					add_CO(ax1, galaxy, header, close=True)
 					
-				# #plots=False
-				# if plots:
-				# 	plt.show()
+				#plots=False
+				if plots:
+					plt.show()
 # ------------============= Plot residuals ==============----------
 	if residual and (mapping.plot_resid or mapping is None):
 		print "    " + residual + " residuals"

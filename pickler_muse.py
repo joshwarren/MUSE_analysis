@@ -178,11 +178,11 @@ def pickler(galaxy, discard=0, wav_range="", norm="lwv", opt="kin",	kinemetry=Tr
 					f = np.loadtxt(glamdring_file, unpack=True)
 				# Check if MC has been run.
 				if len(f) != 0:
-					vel, sig, h3s, h4s = f[0,:], f[1,:], f[2,:], f[3,:]
-					dynamics_uncert['vel'][bin] = np.std(vel)
-					dynamics_uncert['sigma'][bin] = np.std(sig)
-					dynamics_uncert['h3'][bin] = np.std(h3s)
-					dynamics_uncert['h4'][bin] = np.std(h4s)
+					for j, d in enumerate(['vel', 'sigma', 'h3', 'h4']):
+						try:
+							dynamics_uncert[d][bin] = np.std(f[j,:])
+						except IndexError:
+							pass
 				else:
 					dynamics_uncert = dynamics
 
