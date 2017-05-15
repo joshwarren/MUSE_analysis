@@ -21,7 +21,7 @@ for gal in gals:
 	for i in range(n_bins):
 		f.write("python errors2_muse.py " + str(gal) + " " + opt + " " + str(i) + 
 			"\n")
-		
+
 if 'pop' in opt:
 	for gal in gals:
 		galaxy = galaxies[gal]

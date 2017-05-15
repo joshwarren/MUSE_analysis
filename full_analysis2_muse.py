@@ -59,7 +59,7 @@ for galaxy in galaxies:
 		# plt.close("all")
 		# # GH_plots(galaxy, wav_range=wav_range)
 		# plt.close("all")
-		kinematics(galaxy, discard=discard, D=D, opt='kin'+MC_dir)
+		# kinematics(galaxy, discard=discard, D=D, opt='kin'+MC_dir)
 		# BPT(galaxy, D=D, opt='kin'+MC_dir)
 		# plt.close("all")
 
@@ -69,7 +69,7 @@ for galaxy in galaxies:
 
 		D = None
 		# D = pickler(galaxy, discard=discard, norm=norm, opt='pop'+MC_dir)
-		# D = plot_absorption(galaxy, D=D, opt='pop'+MC_dir, uncert=False)
+		D = plot_absorption(galaxy, D=D, opt='pop'+MC_dir, uncert=False)
 		# D = plot_stellar_pop(galaxy, opt='pop'+MC_dir, D=D)
 	except Exception as e:
 		gal_err.append(galaxy)

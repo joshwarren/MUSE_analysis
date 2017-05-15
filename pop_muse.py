@@ -43,7 +43,9 @@ class population(object):
 		self.opt = sys.argv[2]
 		self.bin=int(sys.argv[3])
 
-		self.lines = ['G4300', 'Fe4383', 'Ca4455', 'Fe4531', 'H_beta', 'Fe5015', 'Mg_b']
+		self.lines = ['H_beta', 'Fe5015', #'Mg_1', 'Mg_2', 
+			'Mg_b', 'Fe5270', 'Fe5335', 
+			'Fe5406', 'Fe5709', 'Fe5782', 'NaD', 'TiO1', 'TiO2']
 
 		galaxies = ['ic1459', 'ic4296', 'ngc1316', 'ngc1399']
 		self.galaxy = galaxies[self.i_gal]

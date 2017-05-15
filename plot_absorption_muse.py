@@ -12,9 +12,10 @@ cc = checkcomp()
 
 def plot_absorption(galaxy, opt='pop', D=None, uncert=True):
 	# Find lines:
-	lines = ['G4300', 'Fe4383', 'Ca4455', 'Fe4531', 'H_beta', 'Fe5015', 
-		#'Mg_1', 'Mg_2', 
-		'Mg_b']
+	lines = [#'G4300', 'Fe4383', 'Ca4455', 'Fe4531', 
+		'H_beta', 'Fe5015', 
+		# 'Mg_1', 'Mg_2', 
+		'Mg_b', 'Fe5270', 'Fe5335', 'Fe5406', 'Fe5709', 'Fe5782', 'NaD', 'TiO1', 'TiO2']
 	limits = {#'G4300', 'Fe4383', 'Ca4455', 'Fe4531', 
 		'H_beta':[1.0,2.9], 'Fe5015':[3.5,5.9], 'Mg_b':[3.1,4.7]}
 
