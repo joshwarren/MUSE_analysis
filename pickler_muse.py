@@ -29,8 +29,7 @@ out_dir = '%s/Data/muse/analysis' % (cc.base_dir)
 
 
 #-----------------------------------------------------------------------------
-def pickler(galaxy, discard=0, wav_range="", norm="lwv", opt="kin",	kinemetry=True,
-	override=False, **kwargs):
+def pickler(galaxy, discard=0, norm="lwv", opt="kin", kinemetry=True, override=False):
 	print "    Loading D"
 
 	tessellation_File = "%s/%s/%s/setup/voronoi_2d_binning_output.txt" % (vin_dir, 
@@ -75,7 +74,6 @@ def pickler(galaxy, discard=0, wav_range="", norm="lwv", opt="kin",	kinemetry=Tr
 	
 	D.unbinned_flux = np.nansum(galaxy_data, axis=0)
 	
-	FWHM_gal = 4*0.71
 	temp_wav = np.loadtxt('%s/models/miles_library/m0001V' % (cc.home_dir),
 		usecols=(0,), unpack=True)
 	for i in range(D.number_of_bins):
@@ -217,12 +215,10 @@ def pickler(galaxy, discard=0, wav_range="", norm="lwv", opt="kin",	kinemetry=Tr
 
 if __name__ == '__main__':
 
-	galaxies = ['ngc3557', 'ic1459', 'ic1531', 'ic4296', 'ngc0612', 
-		'ngc1399', 'ngc3100', 'ngc7075', 'pks0718-34', 'eso443-g024']
-	galaxy = galaxies[6]
+	galaxies = ['ic1459', 'ic4296', 'ngc1316', 'ngc1399']
+	galaxy = galaxies[0]
 
-	wav_range="4200-"
-	discard = 2 # rows of pixels to discard- must have been the same 
+	discard = 0 # rows of pixels to discard- must have been the same 
 			#	for all routines 
 
-	pickler(galaxy, discard=discard, wav_range=wav_range, opt='pop')
+	pickler(galaxy, discard, opt='pop')

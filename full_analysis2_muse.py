@@ -13,13 +13,14 @@ from pickler_muse import pickler
 from plot_results_muse import plot_results, mapping
 from kinematics_muse import kinematics
 # from GH_plots import GH_plots
-# from plot_absorption import plot_absorption
+from plot_absorption_muse import plot_absorption
 import matplotlib.pyplot as plt # used for plotting
-# from stellar_pop import stellar_pop
+from plot_stellar_pop_muse import plot_stellar_pop
 # from use_kinemetry import use_kinemetry
 # from classify import classify
 import traceback, sys
 from BPT import BPT
+from compare_atlas3d import compare_atlas3d
 
 galaxies = [
 			'ic1459', 
@@ -56,7 +57,7 @@ for galaxy in galaxies:
 		# D = plot_results(galaxy, discard=discard, CO = False, residual="median", 
 		# 	norm=norm, D=D, show_bin_num=True, mapping=m, opt='kin'+MC_dir)
 		# plt.close("all")
-		# GH_plots(galaxy, wav_range=wav_range)
+		# # GH_plots(galaxy, wav_range=wav_range)
 		# plt.close("all")
 		kinematics(galaxy, discard=discard, D=D, opt='kin'+MC_dir)
 		# BPT(galaxy, D=D, opt='kin'+MC_dir)
@@ -65,18 +66,19 @@ for galaxy in galaxies:
 		# Requires the IDL kinemetry routine to have been run. 
 		# use_kinemetry(galaxy)
 		# classify(galaxy)
-		
+
+		D = None
 		# D = pickler(galaxy, discard=discard, norm=norm, opt='pop'+MC_dir)
-		# D = plot_absorption(galaxy, wav_range=wav_range, vLimit=vLimit, D=D)
-		# 	#, uncert=False)
-		# D = stellar_pop(galaxy, wav_range=wav_range, vLimit=vLimit, D=D)
+		# D = plot_absorption(galaxy, D=D, opt='pop'+MC_dir, uncert=False)
+		# D = plot_stellar_pop(galaxy, opt='pop'+MC_dir, D=D)
 	except Exception as e:
 		gal_err.append(galaxy)
 		err.append(e)
 		trace.append(sys.exc_info())
 		# traceback.print_exc()
 		 
-#v_vd_ellip(wav_range=wav_range)
+# # v_vd_ellip(wav_range=wav_range)
+compare_atlas3d()
 
 # Display errors
 for i in range(len(gal_err)):

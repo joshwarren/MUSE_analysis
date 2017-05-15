@@ -248,9 +248,8 @@ def add_CO(ax, galaxy, header, close=False):
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
-def plot_results(galaxy, discard=0, wav_range="", norm="lwv", 
-	plots=False, residual=False, CO=False, show_bin_num=False,
-	D=None, mapping=None, opt='kin', **kwargs):	
+def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False, 
+	CO=False, show_bin_num=False, D=None, mapping=None, opt='kin'):	
 
 	pa = {'ic1459':0, 'ic4296':0, 'ngc1316':0, 'ngc1399':0}
 
@@ -274,12 +273,6 @@ def plot_results(galaxy, discard=0, wav_range="", norm="lwv",
 	galaxy_gals = np.loadtxt(data_file, skiprows=1, usecols=(0,),dtype=str)
 	i_gal = np.where(galaxy_gals==galaxy)[0][0]
 	z = z_gals[i_gal]
-
-
-	if wav_range:
-		wav_range_dir = wav_range + "/"
-	else:
-		wav_range_dir = ""
 
 	# Return CO to False if ALMA file does not exist.
 	if CO:
@@ -329,7 +322,7 @@ def plot_results(galaxy, discard=0, wav_range="", norm="lwv",
 
 
 	if mapping.SNR or mapping is None:	
-		saveTo = "%s/SNR_%s.png" % (out_nointerp, wav_range)
+		saveTo = "%s/SNR.png" % (out_nointerp)
 		ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, 
 			D.SNRatio, colorbar=True, 
 			nodots=True, title='SNR', save=saveTo, close=not CO, pa=pa, res=res)
@@ -341,7 +334,7 @@ def plot_results(galaxy, discard=0, wav_range="", norm="lwv",
 		CBLabel = r"Flux (erg s$^{-1}$ cm$^{-2}$)"
 
 		ax = f.add_subplot(111, aspect='equal')
-		saveTo = "%s/total_image_%s.png" % (out_nointerp, wav_range)
+		saveTo = "%s/total_image.png" % (out_nointerp)
 		ax.saveTo = saveTo
 		ax.figx, ax.figy = 0, 0
 
@@ -364,10 +357,10 @@ def plot_results(galaxy, discard=0, wav_range="", norm="lwv",
 		if plots:
 			plt.show()
 # ------------========= Plot intensity (& EW) ===========----------
-	if mapping.equivalent_width or mapping is None:
-		print "    gas map(s) and equivalent widths"
+	for c in D.e_components:
+		if mapping.equivalent_width or mapping is None:
+			print "    gas map(s) and equivalent widths"
 
-		for c in D.e_components:
 			print "        " + c
 
 			if 'OIII' in c:
@@ -385,7 +378,7 @@ def plot_results(galaxy, discard=0, wav_range="", norm="lwv",
 			fCBtitle = r"Flux (erg s$^{-1}$ cm$^{-2}$)"
 			f_min, f_max = set_lims(D.e_line[c].flux, positive=True)
 
-			saveTo = "%s/%s_flux_hist_%s.png" % (out_plots, c, wav_range)
+			saveTo = "%s/%s_flux_hist.png" % (out_plots, c)
 			plot_histogram(D.e_line[c].flux, galaxy=galaxy.upper(), redshift=z,
 				vmin=f_min,vmax=f_max, weights=D.n_spaxels_in_bin, title=fh_title,
 				xaxis=fCBtitle, save=saveTo)
@@ -393,7 +386,7 @@ def plot_results(galaxy, discard=0, wav_range="", norm="lwv",
 			ax_y = set_ax_y(c)
 
 			ax = f.add_subplot(111, aspect='equal')
-			saveTo = "%s/%s_img_%s.png" % (out_nointerp, c, wav_range)
+			saveTo = "%s/%s_img.png" % (out_nointerp, c)
 			ax.saveTo = saveTo
 			ax.figx, ax.figy = 0, ax_y
 			
@@ -416,13 +409,13 @@ def plot_results(galaxy, discard=0, wav_range="", norm="lwv",
 
 			eq_min, eq_max = set_lims(D.e_line[c].equiv_width)#, positive=True)
 
-			saveTo = "%s/%s_eqWidth_hist_%s.png" % (out_plots, c, wav_range)
+			saveTo = "%s/%s_eqWidth_hist.png" % (out_plots, c)
 			plot_histogram(D.e_line[c].equiv_width, galaxy=galaxy.upper(), redshift=z,
 				vmin=eq_min,vmax=eq_max, weights=D.n_spaxels_in_bin, title=eqh_title,
 				xaxis=eqCBtitle, save=saveTo)
 			
 			ax = f.add_subplot(111, aspect='equal')
-			saveTo = "%s/%s_equiv_width_%s.png" % (out_nointerp, c, wav_range)
+			saveTo = "%s/%s_equiv_width.png" % (out_nointerp, c)
 			ax.saveTo = saveTo
 			ax.figx, ax.figy = 0, ax_y+1
 
@@ -440,7 +433,7 @@ def plot_results(galaxy, discard=0, wav_range="", norm="lwv",
 		if mapping.amp_noise or mapping is None:
 			amp_title = '%s Amplitude to Noise ratio' % (c_title)
 			amp_min, amp_max = set_lims(D.e_line[c].amp_noise, positive=True)
-			saveTo = "%s/%s_amp_nosie_%s.png" % (out_nointerp, c, wav_range)
+			saveTo = "%s/%s_amp_nosie.png" % (out_nointerp, c)
 
 			ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, 
 				D.e_line[c].amp_noise, vmin=amp_min, vmax=amp_max, colorbar=True, 
@@ -532,7 +525,7 @@ def plot_results(galaxy, discard=0, wav_range="", norm="lwv",
 					positive=True)
 # # ------------============== Plot Histogram =============----------
 				# Field histogram
-				# saveTo = "%s/%s_hist_%s.png" % (out_plots, plot_title, wav_range)
+				# saveTo = "%s/%s_hist_%s.png" % (out_plots, plot_title)
 				# plot_histogram(D.components[c].plot[k], galaxy=galaxy.upper(), 
 				# 	redshift=z, vmin=vmin,vmax=vmax, weights=D.n_spaxels_in_bin, 
 				# 	title=htitle, xaxis=CBLabel, save=saveTo)
@@ -548,7 +541,7 @@ def plot_results(galaxy, discard=0, wav_range="", norm="lwv",
 # ------------==== Plot velfield - no interperlation ====----------
 				# Field plot
 				ax = f.add_subplot(111, aspect='equal')
-				saveTo = ("%s/%s_%s_field_%s.png" % (out_nointerp, c, k, wav_range))
+				saveTo = ("%s/%s_%s_field.png" % (out_nointerp, c, k))
 				ax.saveTo = saveTo
 				ax.figx, ax.figy = ax_x, ax_y
 				ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar,
@@ -609,7 +602,7 @@ def plot_results(galaxy, discard=0, wav_range="", norm="lwv",
 		CBLabel = "Residuals"
 		title = str.capitalize(residual) + \
 		" Residuals of Bestfit to Normalised Spectrum"
-		saveTo = "%s/%s_residual_%s.png" % (out_nointerp, residual, wav_range)
+		saveTo = "%s/%s_residual.png" % (out_nointerp, residual)
 
 		ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar,
 			average_residuals, vmin=minres, vmax=maxres, flux_type='notmag',
@@ -633,7 +626,7 @@ def plot_results(galaxy, discard=0, wav_range="", norm="lwv",
 	
 	# CBLabel = "Chi2/DOF"
 	# title = "Chi2/DOF of the bestfit"
-	# saveTo = "%s/chi2_%s.png" % (out_nointerp, wav_range)
+	# saveTo = "%s/chi2_%s.png" % (out_nointerp)
 
 	# ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, chi2, 
 	# 	vmin=minchi2, vmax=maxchi2, flux_type='notmag',
@@ -755,7 +748,7 @@ def plot_results(galaxy, discard=0, wav_range="", norm="lwv",
 	# f.subplots_adjust(top=0.94)
 	# f.suptitle(galaxy.upper())
 
-	# saveTo = "%s/grid_%s.pdf" % (out_plots, wav_range)
+	# saveTo = "%s/grid.pdf" % (out_plots)
 	# f.savefig(saveTo, bbox_inches="tight",format='pdf')
 
 	# return D
