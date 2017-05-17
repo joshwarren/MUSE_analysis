@@ -18,8 +18,6 @@
 # discard	0	Interger giving the number of rows and columns 
 #				to be removed from the plot to remove edge 
 #				effects.
-# wav_range 	null	Imposed wavelength range on top of the automated 
-#				limits.	
 # norm		"lwv"	Normalisation methods for velocity fields:
 #				lwv: luminosity weighted mean of the whole 
 #				field is set to 0.
@@ -41,7 +39,7 @@
 #				each bin.
 #			False: do not calculate and produce plot of 
 #				residuals.
-# CO	   False	Boolean to show ALMA CO plots overlaied (if they exist)
+# overplot   {}	Dictionary containing name of thing to overplot and its color.
 # D 		None Option to pass in the Data object instead of loading it.
 ## ************************************************************** ##
 
@@ -252,7 +250,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 	i_gal = np.where(galaxy_gals==galaxy)[0][0]
 	z = z_gals[i_gal]
 
-	# Return CO to False if ALMA file does not exist.
+	# Remove option if overplot file does not exist.
 	if overplot:
 		for o in overplot.keys():
 			if not getattr(get_dataCubeDirectory(galaxy),o):
@@ -265,7 +263,6 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 	vin_dir_gasMC = "%s/%s/%s/MC" % (vin_dir, galaxy, opt) # for chi2
 	out_pickle = '%s/pickled' % (output)
 
-	# Used for CO plotting
 	cubeFile = fits.open(dataCubeDirectory)
 	header = cubeFile[1].header
 	cubeFile.close()
@@ -302,9 +299,9 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 
 	if mapping.SNR or mapping is None:	
 		saveTo = "%s/SNR.png" % (out_nointerp)
-		ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, 
-			D.SNRatio, colorbar=True, 
-			nodots=True, title='SNR', save=saveTo, close=not CO, pa=pa, res=res)
+		ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, D.SNRatio, 
+			colorbar=True, nodots=True, title='SNR', save=saveTo, close=not overplot=={}, 
+			res=res)
 # ------------=============== Plot image ================----------
 	if mapping.image or mapping is None:
 		print "    Image"
@@ -410,8 +407,8 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 
 			ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, 
 				D.e_line[c].amp_noise, vmin=amp_min, vmax=amp_max, colorbar=True, 
-				nodots=True, title=amp_title, save=saveTo, close=not CO, res=res,
-				flux_unbinned=D.unbinned_flux)
+				nodots=True, title=amp_title, save=saveTo, close=not overplot=={}, 
+				res=res, flux_unbinned=D.unbinned_flux)
 			if overplot:
 				ax1.saveTo = saveTo
 				for o, c in overplot.interitems():
@@ -528,7 +525,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 					vmax=v_uncert_max, #flux_type='notmag', 
 					nodots=True, show_bin_num=show_bin_num, colorbar=True, 
 					label=CBLabel, galaxy = galaxy.upper(), redshift = z, 
-					title=utitle, save=saveTo, close=not CO, res=res)
+					title=utitle, save=saveTo, close=not overplot=={}, res=res)
 					#, header=header)
 				if overplot:
 					ax1.saveTo = saveTo
@@ -568,7 +565,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 			nodots=True, show_bin_num=show_bin_num, colorbar=True, 
 			label=CBLabel, #flux_unbinned=D.unbinned_flux, 
 			galaxy = galaxy.upper(), redshift = z, title=title, 
-			save=saveTo, close=not CO, pa=pa, res=res)#, header=header)
+			save=saveTo, close=not overplot=={}, res=res)#, header=header)
 		if plots:
 			plt.show()
 		if overplot:
@@ -593,7 +590,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 	# 	nodots=True, show_bin_num=show_bin_num, colorbar=True, 
 	# 	label=CBLabel, flux_unbinned=D.unbinned_flux, 
 	# 	galaxy = galaxy.upper(), redshift = z, title=title, 
-	# 	save=saveTo, close=not CO, header=header)#, cmap=cm.blue)
+	# 	save=saveTo, close=not overplot=={}, header=header)#, cmap=cm.blue)
 	# if plots:
 	# 	plt.show()
 	# if overplot:
@@ -655,7 +652,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 				line_ratio, vmin=lr_min, vmax=lr_max, colorbar=True,
 				nodots=True, title=lr_title, label=lrCBtitle, ax=ax,
 				show_bin_num=show_bin_num, galaxy = galaxy.upper(), redshift = z, 
-				pa=pa, res=res)#,	header=header)
+				res=res)#,	header=header)
 
 			ax_array.append(ax)
 			f.delaxes(ax)
