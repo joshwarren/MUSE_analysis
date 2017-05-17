@@ -6,8 +6,9 @@ if 'home' not in cc.device:
 	import matplotlib # 20160202 JP to stop lack-of X-windows error
 	matplotlib.use('Agg') 
 import numpy as np 
-import matplotlib.pyplot as plt 
-
+import matplotlib.pyplot as plt
+from prefig import Prefig
+Prefig()
 
 def compare_atlas3d():
 	print 'Compare to Atlas3d/SAURON'
@@ -17,10 +18,13 @@ def compare_atlas3d():
 
 	lambda_Re_muse, ellipticity_muse =  np.loadtxt(museGalaxiesFile, unpack=True, 
 		skiprows=1, usecols=(1,2))
+	galaxies_muse =  np.loadtxt(museGalaxiesFile, unpack=True, skiprows=1, usecols=(0,), 
+		dtype=str)
 
 	lambda_Re_vimos, ellipticity_vimos =  np.loadtxt(vimosGalaxiesFile, unpack=True, 
 		skiprows=1, usecols=(1,2))
-
+	galaxies_vimos =  np.loadtxt(vimosGalaxiesFile, unpack=True, skiprows=1, usecols=(0,), 
+		dtype=str)
 
 	fig, ax = plt.subplots()
 
@@ -30,6 +34,9 @@ def compare_atlas3d():
 		usecols=(2,7), dtype=float)
 	atlas3d_file = '%s/Data/atlas3d/II_tableD1.dat' % (cc.base_dir)
 	structure_altas = np.loadtxt(atlas3d_file, unpack=True, usecols=(13,), dtype=str)
+	atlas3d_file = '%s/Data/atlas3d/I_table3.dat' % (cc.base_dir)
+	T_type = np.loadtxt(atlas3d_file, unpack=True, usecols=(10,))
+	E = T_type < -3.5
 	
 	no_rot_altas = structure_altas=='NRR/LV'
 	complex_rot_atlas = structure_altas=='NRR/NF'
@@ -39,20 +46,38 @@ def compare_atlas3d():
 	regular_rot_atlas = (structure_altas=='RR/NF') + (structure_altas=='RR/2m') + \
 		(structure_altas=='RR/KT')
 
-	ax.scatter(ellipticity_atlas[no_rot_altas], lambda_Re_altas[no_rot_altas], marker='o',
-		c='grey', alpha=0.5)
-	ax.scatter(ellipticity_atlas[complex_rot_atlas], lambda_Re_altas[complex_rot_atlas], 
-		c='grey', alpha=0.5)
-	ax.scatter(ellipticity_atlas[KDC_atlas], lambda_Re_altas[KDC_atlas], marker='^', 
-		c='grey', alpha=0.5)
-	ax.scatter(ellipticity_atlas[counter_rot_atlas], lambda_Re_altas[counter_rot_atlas], 
-		c='grey', alpha=0.5)
-	ax.scatter(ellipticity_atlas[regular_rot_atlas], lambda_Re_altas[regular_rot_atlas], 
-		c='grey', alpha=0.5)
+	# S0s
+	ax.scatter(ellipticity_atlas[no_rot_altas*~E], lambda_Re_altas[no_rot_altas*~E], 
+		marker='o', c='lightgrey', alpha=0.5, lw=0)
+	ax.scatter(ellipticity_atlas[complex_rot_atlas*~E], 
+		lambda_Re_altas[complex_rot_atlas*~E], c='lightgrey', alpha=0.5, lw=0)
+	ax.scatter(ellipticity_atlas[KDC_atlas*~E], lambda_Re_altas[KDC_atlas*~E], 
+		marker='^', c='lightgrey', alpha=0.5, lw=0)
+	ax.scatter(ellipticity_atlas[counter_rot_atlas*~E], 
+		lambda_Re_altas[counter_rot_atlas*~E], c='lightgrey', alpha=0.5, lw=0)
+	ax.scatter(ellipticity_atlas[regular_rot_atlas*~E], 
+		lambda_Re_altas[regular_rot_atlas*~E], c='lightgrey', alpha=0.5, lw=0)
+
+	# Ellipticals
+	ax.scatter(ellipticity_atlas[no_rot_altas*E], lambda_Re_altas[no_rot_altas*E], 
+		marker='o', c='k', alpha=0.5, lw=0)
+	ax.scatter(ellipticity_atlas[complex_rot_atlas*E], 
+		lambda_Re_altas[complex_rot_atlas*E], c='k', alpha=0.5, lw=0)
+	ax.scatter(ellipticity_atlas[KDC_atlas*E], lambda_Re_altas[KDC_atlas*E], marker='^', 
+		c='k', alpha=0.5, lw=0)
+	ax.scatter(ellipticity_atlas[counter_rot_atlas*E], 
+		lambda_Re_altas[counter_rot_atlas*E], c='k', alpha=0.5, lw=0)
+	ax.scatter(ellipticity_atlas[regular_rot_atlas*E], 
+		lambda_Re_altas[regular_rot_atlas*E], c='k', alpha=0.5, lw=0)
 	
 	# Plot scatter
-	ax.scatter(ellipticity_muse, lambda_Re_muse, c='r')
-	ax.scatter(ellipticity_vimos, lambda_Re_vimos, c='g')
+	for i_muse, g in enumerate(galaxies_muse):
+		if g in galaxies_vimos:
+			i_vimos = np.where(galaxies_vimos==g)[0][0]
+			ax.plot([ellipticity_muse[i_muse], ellipticity_vimos[i_vimos]], 
+				[lambda_Re_muse[i_muse],lambda_Re_vimos[i_vimos]], 'k', zorder=1)
+	ax.scatter(ellipticity_muse, lambda_Re_muse, c='b', lw=0, zorder=2)
+	ax.scatter(ellipticity_vimos, lambda_Re_vimos, c='r', lw=0, zorder=2)
 	ax.set_xlabel(r'$\epsilon$')
 	ax.set_ylabel(r'$\lambda_R (R_e)$')
 	ax.set_xlim([0, 0.9])

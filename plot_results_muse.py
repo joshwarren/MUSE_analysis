@@ -122,29 +122,6 @@ def set_lims(v, positive=False, symmetric=False):
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
-def set_ax_y(plt_title):
-	if "gas" in plt_title:
-		ax_y=2
-	elif "SF" in plt_title:
-		ax_y=2
-	elif "Shocks" in plt_title:
-		ax_y=4
-	elif 'Hbeta' in plt_title:
-		ax_y=4
-	elif 'Hgamma' in plt_title:
-		ax_y=6
-	elif 'OIII' in plt_title:
-		ax_y=2
-	elif 'stellar' in plt_title:
-	   ax_y=0
-	elif 'Hdelta' in plt_title or 'NI' in plt_title:
-		ax_y = 8
-	else: ax_y=8
-	   
-	return ax_y
-#-----------------------------------------------------------------------------
-
-#-----------------------------------------------------------------------------
 def add_R_e(ax, galaxy, discard=0, pa=0):
 	from classify import get_R_e
 	from  matplotlib.patches import Ellipse
@@ -184,55 +161,57 @@ def add_R_e(ax, galaxy, discard=0, pa=0):
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
-def add_CO(ax, galaxy, header, close=False):
-	CO_image_dir="%s/%s-mom0.fits" % (ain_dir, galaxy)
+def add_(overplot, color, ax, galaxy, header, close=False):
+	image_dir=getattr(get_dataCubeDirectory(galaxy), overplot)
 	# Arcsec coords
-	if os.path.exists(CO_image_dir) and not ax.RaDec:
-		alma = fits.open(CO_image_dir)[0]
+	if os.path.exists(image_dir) and not ax.RaDec:
+		f = fits.open(image_dir)[0]
 
-		CO_x = np.arange(alma.header['NAXIS1'])*alma.header['CDELT1']*60*60
-		CO_y = np.arange(alma.header['NAXIS2'])*alma.header['CDELT2']*60*60
+		x = np.arange(f.header['NAXIS1'])*f.header['CDELT1']*60*60
+		y = np.arange(f.header['NAXIS2'])*f.header['CDELT2']*60*60
 
-		CO_x -= max(CO_x)/2
-		CO_y -= max(CO_y)/2
+		x -= max(x)/2
+		y -= max(y)/2
 
 		# Coordinates of VIMOS pointing
-		vc = SkyCoord(header['HIERARCH CCD1 ESO INS IFU RA'], 
-			header['HIERARCH CCD1 ESO INS IFU DEC'], 
-			unit=(u.deg, u.deg))
+		vcoord = SkyCoord(header['HIERARCH CCD1 ESO INS IFU RA'], 
+			header['HIERARCH CCD1 ESO INS IFU DEC'], unit=(u.deg, u.deg))
 
 		# Coordinates of ALMA pointing
-		ac = SkyCoord(alma.header['CRVAL1'], alma.header['CRVAL2'],
+		imcoord = SkyCoord(f.header['CRVAL1'], f.header['CRVAL2'],
 			unit=(u.deg, u.deg))
 
 		# Offset between the two pointings
-		CO_x -= ((vc.ra.degree - header['CRPIX1']*header['CDELT1']/(60*60)) -
-			(ac.ra.degree +
-			alma.header['CRPIX1']*alma.header['CDELT1']/(60*60)))*60*60
+		x -= ((vcoord.ra.degree - header['CRPIX1']*header['CDELT1']/(60*60)) -
+			(imcoord.ra.degree +
+			f.header['CRPIX1']*f.header['CDELT1']/(60*60)))*60*60
 				
-		CO_y += ((vc.dec.degree - header['CRPIX2']*header['CDELT2']/(60*60)) -
-			(ac.dec.degree +
-			alma.header['CRPIX2']*alma.header['CDELT2']/(60*60)))*60*60
+		y += ((vcoord.dec.degree - header['CRPIX2']*header['CDELT2']/(60*60)) -
+			(imcoord.dec.degree +
+			f.header['CRPIX2']*f.header['CDELT2']/(60*60)))*60*60
 
 	#RA and dec coords
-	elif os.path.exists(CO_image_dir):
-		alma = fits.open(CO_image_dir)[0]
+	elif os.path.exists(image_dir):
+		f = fits.open(image_dir)[0]
 
-		ac = SkyCoord(alma.header['CRVAL1'], alma.header['CRVAL2'],
+		imcoord = SkyCoord(f.header['CRVAL1'], f.header['CRVAL2'],
 			unit=(u.deg, u.deg))
 
-		CO_x = (np.arange(alma.header['NAXIS1']) - alma.header['CRPIX1']) *\
-			alma.header['CDELT1'] + ac.ra.degree
-		CO_y = (np.arange(alma.header['NAXIS2'])-alma.header['CRPIX2']) *\
-			alma.header['CDELT2'] + ac.dec.degree
+		x = (np.arange(f.header['NAXIS1']) - f.header['CRPIX1']) *\
+			f.header['CDELT1'] + imcoord.ra.degree
+		y = (np.arange(f.header['NAXIS2'])-f.header['CRPIX2']) *\
+			f.header['CDELT2'] + imcoord.dec.degree
 
 	# Plot and save
-	if os.path.exists(CO_image_dir):
+	if os.path.exists(image_dir):
 		#remove random extra dimenisons.
-		CO_image = np.sum(np.sum(alma.data,axis=0), axis=0)
-		cs = ax.contour(CO_x,CO_y,CO_image, colors='r')
+		s = f.data.shape
+		image = np.sum(f.data, axis=np.where(s==1)[0])
+		cs = ax.contour(x, y, image, colors=color, label=overplot)
 
-		saveTo = os.path.dirname(ax.saveTo)+"/withCO/" + \
+		plt.legend(cs)
+
+		saveTo = os.path.dirname(ax.saveTo)+"/Overplot/" + \
 			os.path.basename(ax.saveTo)
 		if not os.path.exists(os.path.dirname(saveTo)):
 			os.makedirs(os.path.dirname(saveTo))
@@ -249,7 +228,7 @@ def add_CO(ax, galaxy, header, close=False):
 
 #-----------------------------------------------------------------------------
 def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False, 
-	CO=False, show_bin_num=False, D=None, mapping=None, opt='kin'):	
+	overplot={}, show_bin_num=False, D=None, mapping=None, opt='kin'):	
 
 	pa = {'ic1459':0, 'ic4296':0, 'ngc1316':0, 'ngc1399':0}
 
@@ -275,9 +254,10 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 	z = z_gals[i_gal]
 
 	# Return CO to False if ALMA file does not exist.
-	if CO:
-		CO_image_dir="%s/%s-mom0.fits" % (ain_dir, galaxy)
-		if not os.path.exists(CO_image_dir): CO = False
+	if overplot:
+		for o in overplot.keys():
+			if not getattr(get_dataCubeDirectory(galaxy),o):
+				del overplot[o]
 
 	dataCubeDirectory = get_dataCubeDirectory(galaxy)
 	output = "%s/%s/%s" % (out_dir, galaxy, opt)
@@ -340,12 +320,9 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 
 		fmin, fmax = set_lims(D.flux, positive=True)
 
-		ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar,
-			# max(D.x)-D.x,D.y,D.bin_num,max(D.x)-D.xBar,D.yBar,
-			# max(D.y)-D.y,max(D.x)-D.x,D.bin_num,max(D.y)-D.yBar,max(D.xBar)-D.xBar,
-			D.flux, 
+		ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, D.flux, 
 			vmin=fmin, vmax=fmax, nodots=True, show_bin_num=show_bin_num, colorbar=True, 
-			label=CBLabel, title=title, cmap='gist_yarg', ax=ax, pa=pa, res=res,
+			label=CBLabel, title=title, cmap='gist_yarg', ax=ax, res=res,
 			flux_unbinned=D.unbinned_flux)
 			#, header=header)
 		ax_array.append(ax)
@@ -357,10 +334,9 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 		if plots:
 			plt.show()
 # ------------========= Plot intensity (& EW) ===========----------
-	for c in D.e_components:
-		if mapping.equivalent_width or mapping is None:
-			print "    gas map(s) and equivalent widths"
-
+	if mapping.equivalent_width or mapping is None:
+		print "    gas map(s) and equivalent widths"
+		for c in D.e_components:
 			print "        " + c
 
 			if 'OIII' in c:
@@ -383,17 +359,14 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 				vmin=f_min,vmax=f_max, weights=D.n_spaxels_in_bin, title=fh_title,
 				xaxis=fCBtitle, save=saveTo)
 			
-			ax_y = set_ax_y(c)
-
 			ax = f.add_subplot(111, aspect='equal')
 			saveTo = "%s/%s_img.png" % (out_nointerp, c)
 			ax.saveTo = saveTo
-			ax.figx, ax.figy = 0, ax_y
 			
 			ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, 
 				D.e_line[c].flux, vmin=f_min, vmax=f_max, colorbar=True, nodots=True, 
-				label=fCBtitle, title=f_title, cmap = 'gist_yarg', ax=ax, pa=pa, 
-				res=res)#, header=header)
+				label=fCBtitle, title=f_title, cmap = 'gist_yarg', ax=ax, res=res,
+				flux_unbinned=D.unbinned_flux)
 			ax_array.append(ax)
 			f.delaxes(ax)
 			f.delaxes(ax.cax)
@@ -417,31 +390,33 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 			ax = f.add_subplot(111, aspect='equal')
 			saveTo = "%s/%s_equiv_width.png" % (out_nointerp, c)
 			ax.saveTo = saveTo
-			ax.figx, ax.figy = 0, ax_y+1
 
 
 			ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, 
 				D.e_line[c].equiv_width, vmin=eq_min, vmax=eq_max, colorbar=True, 
-				nodots=True, label=eqCBtitle, title=eq_title, ax=ax, pa=pa, res=res)
-				#, header=header)
+				nodots=True, label=eqCBtitle, title=eq_title, ax=ax, res=res,
+				flux_unbinned=D.unbinned_flux, signal_noise=D.SNRatio,
+				signal_noise_target=SN_target)
 			ax_array.append(ax)
 			f.delaxes(ax)
 			f.delaxes(ax.cax)
 			if hasattr(ax,'ax2'): f.delaxes(ax.ax2)
 			if hasattr(ax,'ax3'): f.delaxes(ax.ax3)
 # ------------============ Amplitude/Noise ==============----------
-		if mapping.amp_noise or mapping is None:
+	if mapping.amp_noise or mapping is None:
+		for c in D.e_components:
 			amp_title = '%s Amplitude to Noise ratio' % (c_title)
 			amp_min, amp_max = set_lims(D.e_line[c].amp_noise, positive=True)
 			saveTo = "%s/%s_amp_nosie.png" % (out_nointerp, c)
 
 			ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, 
 				D.e_line[c].amp_noise, vmin=amp_min, vmax=amp_max, colorbar=True, 
-				nodots=True, title=amp_title, save=saveTo, close=not CO, pa=pa, res=res)
-				#, header=header)
-			if CO:
+				nodots=True, title=amp_title, save=saveTo, close=not CO, res=res,
+				flux_unbinned=D.unbinned_flux)
+			if overplot:
 				ax1.saveTo = saveTo
-				add_CO(ax1, galaxy, header, close=True)
+				for o, c in overplot.interitems():
+					add_(o, c, ax1, galaxy, header, close=True)
 # ------------=========== Setting titles etc ============----------
 	if mapping.kinematics or mapping is None:
 		print '    Kinematics'
@@ -453,28 +428,21 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 			pl = c
 			if im_type == "gas":
 				im_type=""
-				ax_y=set_ax_y(c)
 				pl = 'Hbeta'
 			elif im_type == "SF":
 				im_type=" (Star Forming)"
-				ax_y=set_ax_y(c)
 				pl = '[OIII]5007d'
 			elif im_type == "Shocks":
 				im_type=" (Shocking)"
-				ax_y=set_ax_y(c)
 				pl = 'Hbeta'
 			elif 'Hbeta' in im_type:
 				im_type=" ("+r'H$_\beta$'+")"
-				ax_y=set_ax_y(c)
 			elif 'Hgamma' in im_type:
 				im_type=" ("+r'H$_\gamma$'+")"
-				ax_y=set_ax_y(c)
 			elif 'OIII' in im_type:
 				im_type=" (OIII)"
-				ax_y=set_ax_y(c)
 			else:
 				im_type=" (" + im_type + ")"
-				ax_y=set_ax_y(c)
 
 			for k in D.components[pl].plot.keys():
 
@@ -484,26 +452,20 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 					
 				CBLabel = None
 				if k == "vel":
-					ax_x=1
 					title = 'Velocity'
 					CBLabel = "V (km s$^{-1}$)"
 					symmetric=True
 
 				if  k == "sigma":
-					ax_x=2
 					title = 'Velocity Dispersion'
 					CBLabel = r'$\mathrm{\sigma}$ (km s$^{-1}$)'
 					positive = True
 
 				if k == "h3":
-					ax_x=1
-					ax_y+=1
 					title = 'h3'
 					symmetric = True
 
 				if k == "h4":
-					ax_x=2
-					ax_y+=1
 					title = 'h4'
 
 
@@ -543,15 +505,13 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 				ax = f.add_subplot(111, aspect='equal')
 				saveTo = ("%s/%s_%s_field.png" % (out_nointerp, c, k))
 				ax.saveTo = saveTo
-				ax.figx, ax.figy = ax_x, ax_y
 				ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar,
 					D.components[pl].plot[k], vmin=vmin, vmax=vmax, 
 					flux_unbinned=D.unbinned_flux, #flux_type='notmag',
 					nodots=True, show_bin_num=show_bin_num, colorbar=True, 
 					label=CBLabel,galaxy = galaxy.upper(), redshift = z,
 					title=title, ax=ax, res=res, signal_noise=D.SNRatio,
-					signal_noise_target=SN_target, 
-					show_vel=False) #header=header, 
+					signal_noise_target=SN_target)
 				# add_R_e(ax, galaxy, pa=pa)
 				#plots=True
 				if plots:
@@ -563,8 +523,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 				if hasattr(ax,'ax3'): f.delaxes(ax.ax3)
 				
 				# Uncertainty plot
-				saveTo = "%s/%s_%s_uncert_field_%s.png" % (out_nointerp, c, k, 
-					wav_range)
+				saveTo = "%s/%s_%s_uncert_field.png" % (out_nointerp, c, k)
 				ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar,
 					D.components[pl].plot[k].uncert, vmin=v_uncert_min, 
 					vmax=v_uncert_max, #flux_type='notmag', 
@@ -572,9 +531,10 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 					label=CBLabel, galaxy = galaxy.upper(), redshift = z, 
 					title=utitle, save=saveTo, close=not CO, res=res)
 					#, header=header)
-				if CO:
+				if overplot:
 					ax1.saveTo = saveTo
-					add_CO(ax1, galaxy, header, close=True)
+					for o, c in overplot.interitems():
+						add_(o, c, ax1, galaxy, header, close=True)
 					
 				#plots=False
 				if plots:
@@ -612,9 +572,10 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 			save=saveTo, close=not CO, pa=pa, res=res)#, header=header)
 		if plots:
 			plt.show()
-		if CO:
+		if overplot:
 			ax1.saveTo = saveTo
-			add_CO(ax1, galaxy, header, close=True)
+			for o, c in overplot.interitems():
+				add_(o, c, ax1, galaxy, header, close=True)
 # # ------------=============== Plot Chi2/DOF =============----------
 	# print "    chi2"
 
@@ -636,9 +597,10 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 	# 	save=saveTo, close=not CO, header=header)#, cmap=cm.blue)
 	# if plots:
 	# 	plt.show()
-	# if CO:
+	# if overplot:
 	# 	ax1.saveTo = saveTo
-	# 	add_CO(ax1, galaxy, header, close=True)
+	# 	for o, c in overplot.interitems():
+	# 		add_(o, c, ax1, galaxy, header, close=True)
 # ------------============ Line ratio maps ==============----------
 	# if any('OIII' in o for o in D.list_components) and line_ratios:
 	if len(D.list_components) > 2 and (mapping.line_ratios or mapping is None):
@@ -685,8 +647,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 
 
 			ax = f.add_subplot(111, aspect='equal')
-			saveTo = "%s/lineratio/%s_%s_line_ratio_%s.png" % (out_nointerp, cB, cA, 
-				wav_range)
+			saveTo = "%s/lineratio/%s_%s_line_ratio.png" % (out_nointerp, cB, cA)
 			ax.saveTo = saveTo
 			ax.figx, ax.figy = n%3, n_rows-int(np.ceil(t_num/3)) + int(np.ceil(n/3))
 
@@ -703,8 +664,6 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 			if hasattr(ax,'ax2'): f.delaxes(ax.ax2)
 			if hasattr(ax,'ax3'): f.delaxes(ax.ax3)
 # ------------============= Plot and save ===============----------
-	del D
-
 	print "    Plotting and saving"
 
 	for i, a in enumerate(ax_array):
@@ -715,43 +674,18 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 		if hasattr(a,'ax3'): f.add_axes(a.ax3)
 		if not os.path.exists(os.path.dirname(a.saveTo)):
 			os.makedirs(os.path.dirname(a.saveTo))  
-		print a.get_title()
-		plt.savefig(a.saveTo, bbox_inches="tight")
+		plt.savefig(a.saveTo)#, bbox_inches="tight")
 
-		if CO:
-			add_CO(a, galaxy, header)
+		if overplot:
+			for o, c in overplot.interitems():
+				add_(o, c, a, galaxy, header)
 
 		f.delaxes(a)
 		f.delaxes(a.cax)
 		if hasattr(a,'ax2'): f.delaxes(a.ax2)
 		if hasattr(a,'ax3'): f.delaxes(a.ax3)
-	# 	a.change_geometry(n_rows, 3, a.figy*3+a.figx+1)
 
-	# for a in ax_array:
-	# 	if not np.isnan(a.figy):
-	# 		a2 = f.add_axes(a)
-	# 		p = a2.get_position()
-	# 		c = f.add_axes([p.x1,p.y0*1.06-0.004,0.005, p.height*1.05])
-	# 		plt.colorbar(a.images[0], cax=c)
-				
-
-	# 		a.xaxis.set_visible(False)
-	# 		a.yaxis.set_visible(False)
-	# 		a.axis('off')
-	# 		a.autoscale(False)
-	# 		c.autoscale(False)
-	# 		if hasattr(a,'gal_name'): a.gal_name.remove()
-	# 		if hasattr(a, 'gal_z'): a.gal_z.remove()
-
-	# f.set_size_inches(8.5,n_rows*1.8)
-	# # f.tight_layout(h_pad=0.5)#pad=0.4, w_pad=0.5, h_pad=1.0)
-	# f.subplots_adjust(top=0.94)
-	# f.suptitle(galaxy.upper())
-
-	# saveTo = "%s/grid.pdf" % (out_plots)
-	# f.savefig(saveTo, bbox_inches="tight",format='pdf')
-
-	# return D
+	return D
 
 
 
