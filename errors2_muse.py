@@ -473,7 +473,7 @@ def get_dataCubeDirectory(galaxy):
 		dir = '%s/cygdrive/x/Data/muse' % (cc.base_dir)
 
 	dataCubeDirectory = mystring('%s/%s/%s.clipped.fits' %  (dir, galaxy, galaxy))
-	dataCubeDirectory.CO = "%s/Data/alma/%s-mom0.fits" % (ain_dir, galaxy)
+	dataCubeDirectory.CO = "%s/Data/alma/%s-mom0.fits" % (cc.base_dir, galaxy)
 
 	if galaxy == 'ic1459':
 		dataCubeDirectory.original = '%s/%s/ADP.2016-06-21T08:30:08.251.fits' % (

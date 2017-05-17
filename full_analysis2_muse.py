@@ -54,8 +54,9 @@ for galaxy in galaxies:
 	try:
 		# D = pickler(galaxy, discard=discard, norm=norm, kinemetry=False, 
 		# 	opt='kin'+MC_dir)
-		D = plot_results(galaxy, discard=discard, CO = False, residual="median", 
-			norm=norm, D=D, show_bin_num=True, mapping=m, opt='kin'+MC_dir)
+		D = plot_results(galaxy, discard=discard, overplot = {'radio':'r'}, 
+			residual="median", norm=norm, D=D, show_bin_num=True, mapping=m, 
+			opt='kin'+MC_dir)
 		# plt.close("all")
 		# # GH_plots(galaxy, wav_range=wav_range)
 		# plt.close("all")

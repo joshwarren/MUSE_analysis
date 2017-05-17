@@ -79,7 +79,6 @@ plt.axes.ax3 = property(lambda self:plt.axes())
 
 vin_dir = '%s/Data/muse/analysis' % (cc.base_dir)
 vin_dir_cube = '%s/Data/muse' % (cc.base_dir)
-ain_dir = '%s/Data/alma' % (cc.base_dir)
 out_dir = '%s/Data/muse/analysis' % (cc.base_dir)
 
 #-----------------------------------------------------------------------------
