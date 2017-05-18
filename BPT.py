@@ -7,7 +7,7 @@ import cPickle as pickle
 import matplotlib.pyplot as plt
 import numpy as np
 from plot_velfield_nointerp import plot_velfield_nointerp
-
+import os
 
 
 
@@ -60,7 +60,13 @@ def BPT(galaxy, D=None, opt='kin'):
 	ax.set_xlim([-1.2, 0.7])
 	ax.set_ylim([-1.2, 1.5])
 
-	fig.savefig('%s/plots/BPT.png' % (output))
+	ax.set_xlabel(r'log([OIII]/$H_\alpha$)')
+	ax.set_ylabel(r'log([SII]/$H_\beta$)')
+
+	saveTo = '%s/plots/BPT.png' % (output)
+	if not os.path.exists(os.path.dirname(saveTo)):
+		os.makedirs(os.path.dirname(saveTo))  
+	fig.savefig(saveTo)
 # ------------================= BPT map ===================----------
 	m = np.ones(D.number_of_bins)*np.nan
 	m[Seyfert2] = +1

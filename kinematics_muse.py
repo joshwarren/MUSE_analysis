@@ -14,7 +14,6 @@ from find_galaxy import find_galaxy # part of mge package, fits photometry
 from fit_kinematic_pa import fit_kinematic_pa # fit kinemetry
 import matplotlib.pyplot as plt # used for plotting
 import matplotlib.axes as ax # for adding text onto images
-from scipy.optimize import curve_fit # for fitting a gaussian
 from scipy.interpolate import interp1d
 from classify import get_R_e
 import cPickle as pickle
@@ -55,6 +54,8 @@ def kinematics(galaxy, opt='kin', discard=0, plots=False, D=None):
 	lambda_Re_gals, ellipticity_gals, pa_gals =  np.loadtxt(galaxiesFile2, unpack=True, 
 		skiprows=1, usecols=(1,2,3))
 	i_gal2 = np.where(galaxy_gals2==galaxy)[0][0]
+	star_kine_pa_gals = np.zeros(len(galaxy_gals2))
+	gas_kine_pa_gals = np.zeros(len(galaxy_gals2))
 
 	R_e = get_R_e(galaxy)
 # ------------=============== Photometry =================----------
@@ -133,6 +134,20 @@ def kinematics(galaxy, opt='kin', discard=0, plots=False, D=None):
 	plt.savefig("%s/plots/lambda_R.png" % (output), bbox_inches="tight")
 	if plots: 
 		plt.show()
+# ------------========= Stellar Kinematics ===============----------
+	save_to = "%s/plots/stellar_kinematics.png" % (output)
+	k = fit_kinematic_pa(D.xBar - f.xpeak, D.yBar - f.ypeak, 
+		np.array(D.components['stellar'].plot['vel']), quiet=True, plot=plots, 
+		sav_fig=save_to)
+	star_kine_pa_gals[i_gal2] = k[0]
+# ------------=========== Gas Kinematics =================----------
+# NB: this is not written for gas=2 or gas=3 options. 
+	if D.gas == 1:
+		save_to = "%s/plots/gas_kinematics.png" % (output)
+		k = fit_kinematic_pa(D.xBar - f.xpeak, D.yBar - f.ypeak, 
+			np.array(D.components['Hbeta'].plot['vel']), quiet=True, plot=plots, 
+			sav_fig=save_to)
+		gas_kine_pa_gals[i_gal2] = k[0]
 # ------------============== Save results ================----------
 	temp = "{0:12}{1:4}{2:4}"+''.join(['{%i:%i}'%(i+3,len(t)+1) for i, t in 
 		enumerate(SN_gals.keys())])+'\n'
@@ -146,13 +161,16 @@ def kinematics(galaxy, opt='kin', discard=0, plots=False, D=None):
 
 
 
-	temp = "{0:12}{1:10}{2:6}{3:6}\n"
+	temp = "{0:12}{1:10}{2:6}{3:7}{4:14}{5:14}\n"
 	with open(galaxiesFile2, 'w') as f:
-		f.write(temp.format("Galaxy", "lambda_Re", "eps", "pa"))
+		f.write(temp.format("Galaxy", "lambda_Re", "eps", "pa", "star_kine_pa", 
+			"gas_kine_pa"))
 		for i in range(len(galaxy_gals2)):
 			f.write(temp.format(galaxy_gals2[i], str(round(lambda_Re_gals[i],4)), 
-				str(round(ellipticity_gals[i], 3)), str(round(pa_gals[i], 3))))
+				str(round(ellipticity_gals[i], 3)), str(round(pa_gals[i], 3)),
+				str(round(star_kine_pa_gals[i],3)), str(round(gas_kine_pa_gals[i],3))))
 
+	return D
 
 ##############################################################################
 

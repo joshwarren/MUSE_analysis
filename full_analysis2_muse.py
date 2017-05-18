@@ -31,7 +31,7 @@ galaxies = [
 # galaxies = ['ic1459']
 # galaxies = ['ic4296']
 # galaxies = ['ngc1316']
-# galaxies = ['ngc1399']
+galaxies = ['ngc1399']
 
 m=mapping()
 # m.SNR = False
@@ -52,15 +52,16 @@ for galaxy in galaxies:
 	D = None
 	print galaxy
 	try:
-		# D = pickler(galaxy, discard=discard, norm=norm, kinemetry=False, 
-		# 	opt='kin'+MC_dir)
-		D = plot_results(galaxy, discard=discard, overplot = {'radio':'r'}, 
+		D = pickler(galaxy, discard=discard, norm=norm, kinemetry=False, 
+			opt='kin'+MC_dir)
+		D = plot_results(galaxy, discard=discard, #overplot = {'radio':'r'}, 
 			residual="median", norm=norm, D=D, show_bin_num=True, mapping=m, 
 			opt='kin'+MC_dir)
 		# plt.close("all")
 		# # GH_plots(galaxy, wav_range=wav_range)
 		# plt.close("all")
-		kinematics(galaxy, discard=discard, D=D, opt='kin'+MC_dir)
+		D = kinematics(galaxy, discard=discard, D=D, opt='kin') # Only run 
+																# for opt='kin'
 		BPT(galaxy, D=D, opt='kin'+MC_dir)
 		# plt.close("all")
 
@@ -70,8 +71,8 @@ for galaxy in galaxies:
 
 		D = None
 		# D = pickler(galaxy, discard=discard, norm=norm, opt='pop'+MC_dir)
-		D = plot_absorption(galaxy, D=D, opt='pop'+MC_dir, uncert=False)
-		D = plot_stellar_pop(galaxy, opt='pop'+MC_dir, D=D)
+		# D = plot_absorption(galaxy, D=D, opt='pop'+MC_dir, uncert=False)
+		# D = plot_stellar_pop(galaxy, opt='pop'+MC_dir, D=D)
 	except Exception as e:
 		gal_err.append(galaxy)
 		err.append(e)

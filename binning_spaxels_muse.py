@@ -211,7 +211,7 @@ def binning_spaxels(galaxy, targetSN=None, opt='kin', auto_override=False, debug
 
 # ------------================ Saving Results ===============---------------			
 
-	temp = "{0:5}{1:5}{2:8}{3:9}{4:9}\n"
+	temp = "{0:5}{1:5}{2:8}{3:10}{4:10}\n"
 	temp2 = "{0:12}{1:12}\n"
 
 	with open("%s/analysis/%s/%s/setup/voronoi_2d_binning_output.txt" % (dir, galaxy, 

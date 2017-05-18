@@ -109,7 +109,8 @@ def pickler(galaxy, discard=0, norm="lwv", opt="kin", kinemetry=True, override=F
 		elif 'pop' in opt:
 			D.bin[i].mpweight = np.loadtxt("%s/mpweights/%d.dat" %(vin_dir_gasMC,i), 
 				unpack=True)
-	D.xBar, D.yBar = np.loadtxt(tessellation_File2, unpack=True, skiprows = 1)
+	D.xBar, D.yBar = np.loadtxt(tessellation_File2, unpack=True, skiprows = 1,
+		ndmin=2)
 # ------------=========== Read kinematics results ==============----------
 	componants = [d for d in os.listdir(vin_dir_gasMC + "/gas") if \
 		os.path.isdir(os.path.join(vin_dir_gasMC + "/gas", d))]
