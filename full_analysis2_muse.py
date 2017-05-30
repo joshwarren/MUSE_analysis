@@ -12,6 +12,7 @@ if 'home' not in cc.device:
 from pickler_muse import pickler
 from plot_results_muse import plot_results, mapping
 from kinematics_muse import kinematics
+from rotation_curve_muse import rotation_curve
 # from GH_plots import GH_plots
 from plot_absorption_muse import plot_absorption
 import matplotlib.pyplot as plt # used for plotting
@@ -28,19 +29,19 @@ galaxies = [
 			'ngc1316',
 			'ngc1399'
 			]
-# galaxies = ['ic1459']
+galaxies = ['ic1459']
 # galaxies = ['ic4296']
-# galaxies = ['ngc1316']
-galaxies = ['ngc1399']
+galaxies = ['ngc1316']
+# galaxies = ['ngc1399']
 
 m=mapping()
-# m.SNR = False
+m.SNR = False
 # m.image = False
-# m.equivalent_width = False
-# m.amp_noise = False
-# m.kinematics = False
-# m.plot_resid = False
-# m.line_ratios = False
+m.equivalent_width = False
+m.amp_noise = False
+m.kinematics = False
+m.plot_resid = False
+m.line_ratios = False
 
 discard = 0
 norm = 'lws' #'lwv'
@@ -52,17 +53,18 @@ for galaxy in galaxies:
 	D = None
 	print galaxy
 	try:
-		D = pickler(galaxy, discard=discard, norm=norm, kinemetry=False, 
-			opt='kin'+MC_dir)
-		D = plot_results(galaxy, discard=discard, #overplot = {'radio':'r'}, 
+		# D = pickler(galaxy, discard=discard, norm=norm, kinemetry=False, 
+		# 	opt='kin'+MC_dir)
+		D = plot_results(galaxy, discard=discard, overplot = {'radio':'r'}, 
 			residual="median", norm=norm, D=D, show_bin_num=True, mapping=m, 
 			opt='kin'+MC_dir)
 		# plt.close("all")
 		# # GH_plots(galaxy, wav_range=wav_range)
 		# plt.close("all")
-		D = kinematics(galaxy, discard=discard, D=D, opt='kin') # Only run 
+		# kinematics(galaxy, discard=discard, D=D, opt='kin') # Only run 
 																# for opt='kin'
-		BPT(galaxy, D=D, opt='kin'+MC_dir)
+		# D = rotation_curve(galaxy, D=D, opt='kin'+MC_dir) 
+		# BPT(galaxy, D=D, opt='kin'+MC_dir)
 		# plt.close("all")
 
 		# Requires the IDL kinemetry routine to have been run. 
@@ -80,7 +82,7 @@ for galaxy in galaxies:
 		# traceback.print_exc()
 		 
 # # v_vd_ellip(wav_range=wav_range)
-compare_atlas3d()
+# compare_atlas3d()
 
 # Display errors
 for i in range(len(gal_err)):

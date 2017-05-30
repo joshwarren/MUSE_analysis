@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from checkcomp import checkcomp
 cc =checkcomp()
 import prefig
-prefig.Prefig()
+prefig.Prefig(transparent=False)
 from classify import get_R_e
 from plot_results_muse import set_lims
 
@@ -41,10 +41,8 @@ def rotation_curve(galaxy, opt='kin', D=None):
 	R_e = get_R_e(galaxy)
 	# R = np.sqrt((D.xBar - x_cent)**2 + (D.yBar - y_cent)**2)*res/R_e
 
-	R = np.abs(-D.xBar/np.tan(np.radians(pa)) + D.yBar + 
-		y_cent - x_cent/np.tan(np.radians(pa)))/np.sqrt(
-		1+1/np.tan(np.radians(pa))**2)/R_e
-
+	R = np.abs(np.sin(pa)*D.xBar - np.cos(pa)*D.yBar + x_cent*np.cos(pa) - 
+		y_cent*np.sin(pa))*res/R_e
 
 
 

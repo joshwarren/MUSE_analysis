@@ -51,11 +51,9 @@ def kinematics(galaxy, opt='kin', discard=0, plots=False, D=None):
 
 	galaxy_gals2 = np.loadtxt(galaxiesFile2, unpack=True, usecols=(0,), dtype=str, 
 		skiprows=1)
-	lambda_Re_gals, ellipticity_gals, pa_gals =  np.loadtxt(galaxiesFile2, unpack=True, 
-		skiprows=1, usecols=(1,2,3))
+	lambda_Re_gals, ellipticity_gals, pa_gals, star_kine_pa_gals, gas_kine_pa_gals  =  \
+		np.loadtxt(galaxiesFile2, unpack=True, skiprows=1, usecols=(1,2,3,4,5))
 	i_gal2 = np.where(galaxy_gals2==galaxy)[0][0]
-	star_kine_pa_gals = np.zeros(len(galaxy_gals2))
-	gas_kine_pa_gals = np.zeros(len(galaxy_gals2))
 
 	R_e = get_R_e(galaxy)
 # ------------=============== Photometry =================----------
