@@ -169,11 +169,11 @@ def add_(overplot, color, ax, galaxy, header, close=False):
 		x -= max(x)/2
 		y -= max(y)/2
 
-		# Coordinates of VIMOS pointing
+		# Coordinates of MUSE pointing
 		mcoord = SkyCoord(header['CRVAL1'], header['CRVAL2'],
 			unit=(u.deg, u.deg))
 
-		# Coordinates of ALMA pointing
+		# Coordinates of overplot pointing
 		imcoord = SkyCoord(f.header['CRVAL1'], f.header['CRVAL2'],
 			unit=(u.deg, u.deg))
 
@@ -194,7 +194,7 @@ def add_(overplot, color, ax, galaxy, header, close=False):
 			unit=(u.deg, u.deg))
 
 		# Centered by eye
-		if galaxy == 'ngc1316':
+		if galaxy == 'ngc1316' and overplot == 'radio':
 			f.header['CRPIX1'] = 272
 			f.header['CRPIX2'] = 457
 
@@ -206,9 +206,11 @@ def add_(overplot, color, ax, galaxy, header, close=False):
 	# Plot and save
 	if os.path.exists(image_dir):
 		#remove random extra dimenisons.
-		s = f.data.shape
-		image = np.sum(f.data, axis=(0,1))
-		# image = np.sum(f.data, axis=np.where(np.array(s)==1)[0])
+		s = np.array(f.data.shape)
+		if any(s==1):
+			image = np.sum(f.data, axis=tuple(np.where(s==1)[0]))
+		else:
+			image = f.data
 		xlim = ax.get_xlim()
 		ylim = ax.get_ylim()
 
@@ -224,7 +226,7 @@ def add_(overplot, color, ax, galaxy, header, close=False):
 		ax.set_xlim(xlim)
 		ax.set_ylim(ylim)
 
-		plt.legend(facecolor='w')
+		ax.legend(facecolor='w')
 
 		saveTo = os.path.dirname(ax.saveTo)+"/Overplot/" + \
 			os.path.basename(ax.saveTo)
@@ -338,9 +340,6 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 			vmin=fmin, vmax=fmax, nodots=True, show_bin_num=show_bin_num, colorbar=True, 
 			label=CBLabel, title=title, cmap='gist_yarg', ax=ax, res=res,
 			flux_unbinned=D.unbinned_flux, header=header)
-		if overplot:
-			for o, c in overplot.iteritems():
-				add_(o, c, ax, galaxy, header, close=True)
 		ax_array.append(ax)
 		f.delaxes(ax)
 		f.delaxes(ax.cax)
@@ -382,7 +381,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 			ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, 
 				D.e_line[c].flux, vmin=f_min, vmax=f_max, colorbar=True, nodots=True, 
 				label=fCBtitle, title=f_title, cmap = 'gist_yarg', ax=ax, res=res,
-				flux_unbinned=D.unbinned_flux)
+				flux_unbinned=D.unbinned_flux, header=header)
 			ax_array.append(ax)
 			f.delaxes(ax)
 			f.delaxes(ax.cax)
@@ -412,7 +411,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 				D.e_line[c].equiv_width, vmin=eq_min, vmax=eq_max, colorbar=True, 
 				nodots=True, label=eqCBtitle, title=eq_title, ax=ax, res=res,
 				flux_unbinned=D.unbinned_flux, signal_noise=D.SNRatio,
-				signal_noise_target=SN_target)
+				signal_noise_target=SN_target, header=header)
 			ax_array.append(ax)
 			f.delaxes(ax)
 			f.delaxes(ax.cax)
@@ -429,10 +428,10 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 				D.e_line[c].amp_noise, vmin=amp_min, vmax=amp_max, colorbar=True, 
 				nodots=True, title=amp_title, save=saveTo, close=not overplot=={}, 
 				res=res, flux_unbinned=D.unbinned_flux)
-			if overplot:
-				ax1.saveTo = saveTo
-				for o, c in overplot.iteritems():
-					add_(o, c, ax1, galaxy, header, close=True)
+			# if overplot:
+			# 	ax1.saveTo = saveTo
+			# 	for o, c in overplot.iteritems():
+			# 		add_(o, c, ax1, galaxy, header, close=True)
 # ------------=========== Setting titles etc ============----------
 	if mapping.kinematics or mapping is None:
 		print '    Kinematics'
@@ -528,9 +527,6 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 					label=CBLabel,galaxy = galaxy.upper(), redshift = z,
 					title=title, ax=ax, res=res, signal_noise=D.SNRatio,
 					signal_noise_target=SN_target, header=header)
-				if overplot:
-					for o, c in overplot.iteritems():
-						add_(o, c, ax, galaxy, header, close=True)
 				# add_R_e(ax, galaxy, pa=pa)
 				if plots:
 					plt.show()
@@ -588,10 +584,10 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 			save=saveTo, close=not overplot=={}, res=res)#, header=header)
 		if plots:
 			plt.show()
-		if overplot:
-			ax1.saveTo = saveTo
-			for o, c in overplot.iteritems():
-				add_(o, c, ax1, galaxy, header, close=True)
+		# if overplot:
+		# 	ax1.saveTo = saveTo
+		# 	for o, c in overplot.iteritems():
+		# 		add_(o, c, ax1, galaxy, header, close=True)
 # # ------------=============== Plot Chi2/DOF =============----------
 	# print "    chi2"
 
@@ -672,7 +668,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 				line_ratio, vmin=lr_min, vmax=lr_max, colorbar=True,
 				nodots=True, title=lr_title, label=lrCBtitle, ax=ax,
 				show_bin_num=show_bin_num, galaxy = galaxy.upper(), redshift = z, 
-				res=res)#,	header=header)
+				res=res, header=header)
 
 			ax_array.append(ax)
 			f.delaxes(ax)
@@ -691,11 +687,11 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 		if not os.path.exists(os.path.dirname(a.saveTo)):
 			os.makedirs(os.path.dirname(a.saveTo))
 		print a.get_title()
-		plt.savefig(a.saveTo)#, bbox_inches="tight")
+		# plt.savefig(a.saveTo)#, bbox_inches="tight")
 
-		# if overplot:
-		# 	for o, c in overplot.iteritems():
-		# 		add_(o, c, a, galaxy, header, close=True)
+		if overplot:
+			for o, c in overplot.iteritems():
+				add_(o, c, a, galaxy, header)
 
 		f.delaxes(a)
 		f.delaxes(a.cax)

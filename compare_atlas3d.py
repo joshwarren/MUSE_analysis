@@ -57,7 +57,7 @@ def compare_atlas3d():
 		lambda_Re_altas[counter_rot_atlas*~E], c='lightgrey', alpha=0.5, lw=0)
 	ax.scatter(ellipticity_atlas[regular_rot_atlas*~E], 
 		lambda_Re_altas[regular_rot_atlas*~E], c='lightgrey', alpha=0.5, lw=0, 
-		label=r'Atlas3D S0 $t>-3.5$')
+		label=r'Atlas3D S0: $T>-3.5$')
 
 	# Ellipticals
 	ax.scatter(ellipticity_atlas[no_rot_altas*E], lambda_Re_altas[no_rot_altas*E], 
@@ -70,7 +70,7 @@ def compare_atlas3d():
 		lambda_Re_altas[counter_rot_atlas*E], c='k', alpha=0.5, lw=0)
 	ax.scatter(ellipticity_atlas[regular_rot_atlas*E], 
 		lambda_Re_altas[regular_rot_atlas*E], c='k', alpha=0.5, lw=0, 
-		label=r'Atlas3D $T \leq -3.5$')
+		label=r'Atlas3D E: $T \leq -3.5$')
 	
 	# Plot scatter
 	for i_muse, g in enumerate(galaxies_muse):
@@ -86,6 +86,7 @@ def compare_atlas3d():
 
 	ax.scatter(ellipticity_muse, lambda_Re_muse, c='b', lw=0, zorder=2, label='MUSE')
 	ax.scatter(ellipticity_vimos, lambda_Re_vimos, c='r', lw=0, zorder=2, label='VIMOS')
+	ax.set_title('Atlas3D Fast/Slow Rotator Classification scheme')
 	ax.set_xlabel(r'$\epsilon$')
 	ax.set_ylabel(r'$\lambda_R (R_e)$')
 	ax.set_xlim([0, 0.9])
@@ -93,7 +94,7 @@ def compare_atlas3d():
 
 	# Plot Slow Rotator bounds
 	ax.plot([0,0.4,0.4], [0.08, 0.18, 0], 'k', label='FR/SR boundary')
-	plt.legend(facecolor='w')
+	ax.legend(facecolor='w')
 
 	# Save plot
 	fig.savefig('%s/Data/muse/analysis/lambda_R_ellipticity.png' % (cc.base_dir))

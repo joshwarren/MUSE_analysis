@@ -470,7 +470,7 @@ def get_dataCubeDirectory(galaxy):
 	elif cc.device == 'glamdring':
 		dir = '%s/muse_cubes' % (cc.base_dir)
 	elif 'home' in cc.device:
-		dir = '%s/cygdrive/x/Data/muse' % (cc.base_dir)
+		dir = '%s/Data/muse' % (cc.base_dir)
 
 	dataCubeDirectory = mystring('%s/%s/%s.clipped.fits' %  (dir, galaxy, galaxy))
 	dataCubeDirectory.CO = "%s/Data/alma/%s-mom0.fits" % (cc.base_dir, galaxy)
@@ -484,7 +484,8 @@ def get_dataCubeDirectory(galaxy):
 	elif galaxy == 'ngc1316':
 		dataCubeDirectory.original = '%s/%s/ADP.2016-06-20T15:14:47.831.fits' % (
 			dir, galaxy)
-		dataCubeDirectory.radio = '%s/Data/VLA/%s_4.9GHz.fits' % (cc.base_dir, galaxy)
+		dataCubeDirectory.radio = '%s/Data/VLA/%s/%s_4.9GHz.fits' % (cc.base_dir, galaxy,
+			galaxy)
 	elif galaxy == 'ngc1399':
 		dataCubeDirectory.original = '%s/%s/ADP.2016-06-21T08:50:02.757.fits' % (
 			dir, galaxy)
