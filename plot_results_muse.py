@@ -226,7 +226,7 @@ def add_(overplot, color, ax, galaxy, header, close=False):
 		ax.set_xlim(xlim)
 		ax.set_ylim(ylim)
 
-		ax.legend(facecolor='w')
+		leg = ax.legend(facecolor='w')
 
 		saveTo = os.path.dirname(ax.saveTo)+"/Overplot/" + \
 			os.path.basename(ax.saveTo)
@@ -238,9 +238,10 @@ def add_(overplot, color, ax, galaxy, header, close=False):
 			plt.close()
 		else:
 			# Make lines thinner for pdf by finding the line objects
-			for o in ax.get_children():
-				if type(o) is LineCollection:
-					o.set_linewidth(0.3)
+			leg.remove()
+			# for o in ax.get_children():
+			# 	if type(o) is LineCollection:
+			# 		o.set_linewidth(0.3)
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
@@ -687,7 +688,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 		if not os.path.exists(os.path.dirname(a.saveTo)):
 			os.makedirs(os.path.dirname(a.saveTo))
 		print a.get_title()
-		# plt.savefig(a.saveTo)#, bbox_inches="tight")
+		plt.savefig(a.saveTo)#, bbox_inches="tight")
 
 		if overplot:
 			for o, c in overplot.iteritems():
