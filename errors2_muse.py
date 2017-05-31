@@ -457,13 +457,18 @@ def remove_anomalies(spec, window=201, repeats=3, lam=None, set_range=None,
 
 #-----------------------------------------------------------------------------
 def get_dataCubeDirectory(galaxy):
-	# str Subclass to add 'original' attribute.
+	class mystring2(str):
+		def __init__(self, s):
+			str.__init__(s)
+			self.RAoffset = 0 # offset in arcsec
+			self.decoffset = 0
+
 	class mystring(str):
 		def __init__(self, s):
 			str.__init__(s)
 			self.original = ''
-			self.radio = ''
-			self.CO = ''
+			self.radio = mystring2('')
+			self.CO = mystring2('')
 
 	if cc.device == 'uni':
 		dir = '%s/Data/muse' % (cc.base_dir)
@@ -473,7 +478,7 @@ def get_dataCubeDirectory(galaxy):
 		dir = '%s/Data/muse' % (cc.base_dir)
 
 	dataCubeDirectory = mystring('%s/%s/%s.clipped.fits' %  (dir, galaxy, galaxy))
-	dataCubeDirectory.CO = "%s/Data/alma/%s-mom0.fits" % (cc.base_dir, galaxy)
+	dataCubeDirectory.CO = mystring2("%s/Data/alma/%s-mom0.fits" % (cc.base_dir, galaxy))
 
 	if galaxy == 'ic1459':
 		dataCubeDirectory.original = '%s/%s/ADP.2016-06-21T08:30:08.251.fits' % (
@@ -484,8 +489,10 @@ def get_dataCubeDirectory(galaxy):
 	elif galaxy == 'ngc1316':
 		dataCubeDirectory.original = '%s/%s/ADP.2016-06-20T15:14:47.831.fits' % (
 			dir, galaxy)
-		dataCubeDirectory.radio = '%s/Data/VLA/%s/%s_4.9GHz.fits' % (cc.base_dir, galaxy,
-			galaxy)
+		dataCubeDirectory.radio = mystring2('%s/Data/VLA/%s/%s_4.9GHz.fits' % (
+			cc.base_dir, galaxy, galaxy))
+		dataCubeDirectory.radio.RAoffset = -48.0
+		dataCubeDirectory.radio.decoffset = 11.2
 	elif galaxy == 'ngc1399':
 		dataCubeDirectory.original = '%s/%s/ADP.2016-06-21T08:50:02.757.fits' % (
 			dir, galaxy)

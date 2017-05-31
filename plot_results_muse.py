@@ -193,15 +193,10 @@ def add_(overplot, color, ax, galaxy, header, close=False):
 		imcoord = SkyCoord(f.header['CRVAL1'], f.header['CRVAL2'],
 			unit=(u.deg, u.deg))
 
-		# Centered by eye
-		if galaxy == 'ngc1316' and overplot == 'radio':
-			f.header['CRPIX1'] = 272
-			f.header['CRPIX2'] = 457
-
 		x = (np.arange(f.header['NAXIS1']) - f.header['CRPIX1']) *\
-			f.header['CDELT1'] + imcoord.ra.degree
+			f.header['CDELT1'] + imcoord.ra.degree + image_dir.RAoffset/(60**2)
 		y = (np.arange(f.header['NAXIS2'])-f.header['CRPIX2']) *\
-			f.header['CDELT2'] + imcoord.dec.degree
+			f.header['CDELT2'] + imcoord.dec.degree + image_dir.decoffset/(60**2)
 
 	# Plot and save
 	if os.path.exists(image_dir):
@@ -239,9 +234,6 @@ def add_(overplot, color, ax, galaxy, header, close=False):
 		else:
 			# Make lines thinner for pdf by finding the line objects
 			leg.remove()
-			# for o in ax.get_children():
-			# 	if type(o) is LineCollection:
-			# 		o.set_linewidth(0.3)
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
