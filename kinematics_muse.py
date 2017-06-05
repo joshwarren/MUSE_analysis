@@ -159,7 +159,7 @@ def kinematics(galaxy, opt='kin', discard=0, plots=False, D=None):
 
 
 
-	temp = "{0:12}{1:10}{2:6}{3:7}{4:14}{5:14}\n"
+	temp = "{0:12}{1:10}{2:6}{3:9}{4:14}{5:14}\n"
 	with open(galaxiesFile2, 'w') as f:
 		f.write(temp.format("Galaxy", "lambda_Re", "eps", "pa", "star_kine_pa", 
 			"gas_kine_pa"))
