@@ -333,14 +333,14 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 			vmin=fmin, vmax=fmax, nodots=True, show_bin_num=show_bin_num, colorbar=True, 
 			label=CBLabel, title=title, cmap='gist_yarg', ax=ax, res=res,
 			flux_unbinned=D.unbinned_flux, header=header)
+		if plots:
+			plt.show()
+
 		ax_array.append(ax)
 		f.delaxes(ax)
 		f.delaxes(ax.cax)
 		if hasattr(ax,'ax2'): f.delaxes(ax.ax2)
 		if hasattr(ax,'ax3'): f.delaxes(ax.ax3)
-		
-		if plots:
-			plt.show()
 # ------------========= Plot intensity (& EW) ===========----------
 	if mapping.equivalent_width or mapping is None:
 		print "    gas map(s) and equivalent widths"
