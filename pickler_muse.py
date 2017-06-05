@@ -29,7 +29,7 @@ out_dir = '%s/Data/muse/analysis' % (cc.base_dir)
 
 
 #-----------------------------------------------------------------------------
-def pickler(galaxy, discard=0, norm="lwv", opt="kin", kinemetry=True, override=False):
+def pickler(galaxy, discard=0, norm="lwv", opt="kin", override=False):
 	print "    Loading D"
 
 	tessellation_File = "%s/%s/%s/setup/voronoi_2d_binning_output.txt" % (vin_dir, 
@@ -202,14 +202,7 @@ def pickler(galaxy, discard=0, norm="lwv", opt="kin", kinemetry=True, override=F
 	pickleFile = open("%s/dataObj.pkl" % (out_pickle), 'wb')
 	pickle.dump(D,pickleFile)
 	pickleFile.close()
-# ------------======== Save flux for KINEMTRY (IDL) =====----------
-	if 'kin' in opt and kinemetry:
-		print "    Saving flux for KINEMETRY (IDL)"
-		with open('%s/flux.dat' % (output), 'wb') as f:
-			for i in range(D.number_of_bins):
-				f.write(str(D.flux[i]) + '\n')
 
-	return D
 ##############################################################################
 
 # Use of pickler.py

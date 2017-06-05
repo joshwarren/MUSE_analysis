@@ -57,6 +57,8 @@ def rotation_curve(galaxy, opt='kin', D=None):
 	fig.savefig('%s/Data/muse/analysis/%s/%s/plots/rotation_curve2.png' % (cc.base_dir,
 		galaxy, opt))
 
+	return D
+
 
 
 
