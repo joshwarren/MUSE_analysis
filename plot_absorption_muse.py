@@ -16,8 +16,8 @@ def plot_absorption(galaxy, opt='pop', D=None, uncert=True):
 		'H_beta', 'Fe5015', 
 		# 'Mg_1', 'Mg_2', 
 		'Mg_b', 'Fe5270', 'Fe5335', 'Fe5406', 'Fe5709', 'Fe5782', 'NaD', 'TiO1', 'TiO2']
-	limits = {#'G4300', 'Fe4383', 'Ca4455', 'Fe4531', 
-		'H_beta':[1.0,2.9], 'Fe5015':[3.5,5.9], 'Mg_b':[3.1,4.7]}
+	# limits = {#'G4300', 'Fe4383', 'Ca4455', 'Fe4531', 
+	# 	'H_beta':[1.0,2.9], 'Fe5015':[3.5,5.9], 'Mg_b':[3.1,4.7]}
 
 	print 'Absorption lines'
 
@@ -50,9 +50,9 @@ def plot_absorption(galaxy, opt='pop', D=None, uncert=True):
 
 		abmin, abmax = set_lims(ab_line, positive=True)
 
-		if line in limits.keys():
-			abmin = limits[line][0]
-			abmax = limits[line][1]
+		# if line in limits.keys():
+		# 	abmin = limits[line][0]
+		# 	abmax = limits[line][1]
 
 		ax_array[int(np.floor(i/2)),i%2] = plot_velfield_nointerp(D.x, D.y, D.bin_num, 
 			D.xBar, D.yBar, D.absorption_line(line), vmin=abmin, vmax=abmax,
@@ -71,7 +71,7 @@ def plot_absorption(galaxy, opt='pop', D=None, uncert=True):
 				signal_noise_target=30)
 
 
-	f.set_size_inches(8.5,int(np.ceil(len(lines)/2.0))*1.8)
+	# f.set_size_inches(8.5,int(np.ceil(len(lines)/2.0))*1.8)
 
 	print 'Saving plot'
 
@@ -86,7 +86,7 @@ def plot_absorption(galaxy, opt='pop', D=None, uncert=True):
 
 
 	if uncert:
-		f_uncert.set_size_inches(8.5,int(np.ceil(len(lines)/2.0))*1.8)
+		# f_uncert.set_size_inches(8.5,int(np.ceil(len(lines)/2.0))*1.8)
 
 		saveTo = "%s/absorption_uncert.pdf" % (out_plots)
 		f_uncert.tight_layout()

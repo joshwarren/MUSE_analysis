@@ -59,11 +59,11 @@ for galaxy in galaxies:
 		# 	residual="median", norm=norm, D=D, show_bin_num=True, mapping=m, 
 		# 	opt='kin'+MC_dir)
 		# plt.close("all")
-		D = kinematics(galaxy, discard=discard, D=D, opt='kin') # Only run 
-																# for opt='kin'
-		D = rotation_curve(galaxy, D=D, opt='kin'+MC_dir) 
-		BPT(galaxy, D=D, opt='kin'+MC_dir)
-		plt.close("all")
+		# D = kinematics(galaxy, discard=discard, D=D, opt='kin') # Only run 
+		# 														# for opt='kin'
+		# D = rotation_curve(galaxy, D=D, opt='kin'+MC_dir) 
+		# BPT(galaxy, D=D, opt='kin'+MC_dir)
+		# plt.close("all")
 
 		# Requires the IDL kinemetry routine to have been run. 
 		use_kinemetry(galaxy)
@@ -71,8 +71,8 @@ for galaxy in galaxies:
 
 		D = None
 		# D = pickler(galaxy, discard=discard, norm=norm, opt='pop'+MC_dir)
-		# D = plot_absorption(galaxy, D=D, opt='pop'+MC_dir, uncert=False)
-		# D = plot_stellar_pop(galaxy, opt='pop'+MC_dir, D=D)
+		D = plot_absorption(galaxy, D=D, opt='pop'+MC_dir, uncert=False)
+		# plot_stellar_pop(galaxy, opt='pop'+MC_dir, D=D)
 	except Exception as e:
 		gal_err.append(galaxy)
 		err.append(e)
@@ -80,7 +80,7 @@ for galaxy in galaxies:
 		# traceback.print_exc()
 		 
 # # v_vd_ellip(wav_range=wav_range)
-compare_atlas3d()
+# compare_atlas3d()
 
 # Display errors
 for i in range(len(gal_err)):
