@@ -542,15 +542,6 @@ def errors2(i_gal=None, opt=None, bin=None):
 	vel = vel_gals[i_gal]
 	sig = sig_gals[i_gal]
 	z = z_gals[i_gal]
-
-
-	FWHM_gal = params.FWHM_gal/(1+z) # Adjust resolution in Angstrom
-
-## ----------===============================================---------
-## ----------=============== Run analysis  =================---------
-## ----------===============================================---------
-	stellar_templates = get_stellar_templates(galaxy, FWHM_gal)
-	velscale = stellar_templates.velscale
 ## ----------========= Reading Tessellation  ===============---------
 
 	## Reads the txt file containing the output of the binning_spaxels
@@ -589,6 +580,59 @@ def errors2(i_gal=None, opt=None, bin=None):
 	lamRange = np.array([lam[0],lam[-1]])/(1+z)
 	bin_lin_noise = bin_lin_noise[cut]
 
+
+	pp = run_ppxf(bin_lin, bin_lin_noise, lamRange, vel, sig, z, gas, opt, 
+		params)
+	if cc.device == 'glamdring':
+		saveTo="%s/analysis_muse/%s/%s/MC/bestfit/plots/%s.png" % (dir, galaxy, 
+			opt, str(bin))	
+	else:
+		saveTo="%s/analysis/%s/%s/MC/bestfit/plots/%s.png" % (dir, galaxy, opt, str(bin))
+
+	# pp.fig.savefig(saveTo, bbox_inches="tight")
+
+## ----------===============================================---------
+## ----------================= The MC part =================---------
+## ----------===============================================---------
+	stellar_output = np.zeros((params.reps, params.stellar_moments))
+	stellar_errors = np.zeros((params.reps, params.stellar_moments))
+	if params.gas:
+		gas_output = np.zeros((max(component), params.reps, params.gas_moments))
+		gas_errors = np.zeros((max(component), params.reps, params.gas_moments))
+
+	for rep in range(params.reps):
+		random = np.random.randn(len(noise))
+		add_noise = random*np.abs(noise)
+		bin_log = pp.bestfit + add_noise
+	
+		ppMC = ppxf(templates, bin_log, noise, velscale, start, 
+			goodpixels=goodPixels, moments=moments, degree=params.degree, vsyst=dv, 
+			lam=lambdaq, plot=not params.quiet, quiet=params.quiet, bias=0.1, 
+			component=component, mdegree=params.mdegree)
+
+		stellar_output[rep,:] = ppMC.sol[0][0:params.stellar_moments]
+		stellar_errors[rep,:] = ppMC.error[0][0:params.stellar_moments]
+		for g in range(len(element)-1):
+			gas_output[g,rep,:] = ppMC.sol[g+1][0:params.gas_moments]
+			gas_errors[g,rep,:] = ppMC.error[g+1][0:params.gas_moments]
+
+
+## ----------============ Write ouputs to file =============---------
+	# saveAll(galaxy, bin, pp, lambdaq, stellar_output, stellar_errors, bin_log_sav, 
+	# 	noise_sav, element, templatesToUse, gas_output=gas_output, 
+	# 	gas_errors=gas_errors, opt=opt)
+
+
+## ----------===============================================---------
+## ----------=============== Run analysis  =================---------
+## ----------===============================================---------
+def run_ppxf(bin_lin, bin_lin_noise, lamRange, vel, sig, z, gas, opt, 
+	parms):
+	FWHM_gal = params.FWHM_gal/(1+z) # Adjust resolution in Angstrom
+
+	stellar_templates = get_stellar_templates(galaxy, FWHM_gal)
+	velscale = stellar_templates.velscale
+	
 	## smooth spectrum to fit with templates resolution
 	if FWHM_gal < stellar_templates.FWHM_tem:
 		sigma = stellar_templates.FWHM_dif/2.355/CDELT_spec # Change in px
@@ -637,51 +681,16 @@ def errors2(i_gal=None, opt=None, bin=None):
 	bin_log_sav = bin_log
 	noise_sav = noise
 
-	if cc.device == 'glamdring':
-		saveTo="%s/analysis_muse/%s/%s/MC/bestfit/plots/%s.png" % (dir, galaxy, 
-			opt, str(bin))	
-	else:
-		saveTo="%s/analysis/%s/%s/MC/bestfit/plots/%s.png" % (dir, galaxy, opt, str(bin))
-
 	pp = ppxf(templates, bin_log, noise, velscale, start, 
 		goodpixels=goodPixels, mdegree=params.mdegree, moments=moments, 
 		degree=params.degree, vsyst=dv, component=component, lam=lambdaq, 
-		plot=not params.quiet, quiet=params.quiet, save=saveTo)
+		plot=not params.quiet, quiet=params.quiet, produce_plot=True)
 	# ax=plt.gca()
 	# for p in e_templates.line_wav:
 	# 	ax.axvline(p, color='c')
 	# plt.savefig(saveTo)
-## ----------===============================================---------
-## ----------================= The MC part =================---------
-## ----------===============================================---------
-	stellar_output = np.zeros((params.reps, params.stellar_moments))
-	stellar_errors = np.zeros((params.reps, params.stellar_moments))
-	if params.gas:
-		gas_output = np.zeros((max(component), params.reps, params.gas_moments))
-		gas_errors = np.zeros((max(component), params.reps, params.gas_moments))
 
-	for rep in range(params.reps):
-		random = np.random.randn(len(noise))
-		add_noise = random*np.abs(noise)
-		bin_log = pp.bestfit + add_noise
-	
-		ppMC = ppxf(templates, bin_log, noise, velscale, start, 
-			goodpixels=goodPixels, moments=moments, degree=params.degree, vsyst=dv, 
-			lam=lambdaq, plot=not params.quiet, quiet=params.quiet, bias=0.1, 
-			component=component, mdegree=params.mdegree)
-
-		stellar_output[rep,:] = ppMC.sol[0][0:params.stellar_moments]
-		stellar_errors[rep,:] = ppMC.error[0][0:params.stellar_moments]
-		for g in range(len(element)-1):
-			gas_output[g,rep,:] = ppMC.sol[g+1][0:params.gas_moments]
-			gas_errors[g,rep,:] = ppMC.error[g+1][0:params.gas_moments]
-
-
-## ----------============ Write ouputs to file =============---------
-	saveAll(galaxy, bin, pp, lambdaq, stellar_output, stellar_errors, bin_log_sav, 
-		noise_sav, element, templatesToUse, gas_output=gas_output, 
-		gas_errors=gas_errors, opt=opt)
-	
+	return pp
 ##############################################################################
 
 
