@@ -77,27 +77,34 @@ class population(object):
 			bestfit = np.loadtxt("%s/bestfit/%d.dat" %(vin_dir_gasMC, self.bin))
 			# convolved = bestfit - np.nansum(e_line_spec, axis=0)
 			mpweight = np.loadtxt("%s/mpweights/%d.dat" %(vin_dir_gasMC, self.bin))
+			e_lines = np.array([not s.isdigit() for s in matrix[:,0]])
+			e_line_spec = matrix[e_lines,1:].astype(float)
+			stellar_temps = matrix[~e_lines,0]
 
 
 		else:
 			lam = self.pp.lam
 			spectrum = self.pp.galaxy
-			matrix = self.pp.matrix[:,len(self.pp.polyweights):]
+			matrix = self.pp.matrix.T.astype(str)
 			temp_weights = self.pp.weights
 			noise = self.pp.noise 
 			bestfit = self.pp.bestfit
 			mpweight = self.pp.mpolyweights
 
+			e_lines = self.pp.component != 0
+			e_line_spec =  matrix[e_lines,:].astype(float)
 
-		e_lines = np.array([not s.isdigit() for s in matrix[:,0]])
-		e_line_spec = matrix[e_lines,1:].astype(float)
+			stellar_temps = self.pp.templatesToUse[~e_lines]
+
+
+		
 		e_line_spec = np.einsum('ij,i->ij',e_line_spec,temp_weights[e_lines])
 
 		continuum = spectrum - np.nansum(e_line_spec,axis=0)
 		convolved = bestfit - np.nansum(e_line_spec, axis=0)
 
 		if cc.getDevice() == 'uni':
-			files = glob('%s/Data/idl_libraries/self.ppxf/MILES_library/' % (cc.base_dir) +
+			files = glob('%s/Data/idl_libraries/ppxf/MILES_library/' % (cc.base_dir) +
 				'm0[0-9][0-9][0-9]V')
 		else:
 			files = glob("%s/models/miles_library/m0[0-9][0-9][0-9]V" % (cc.home_dir))
@@ -106,11 +113,11 @@ class population(object):
 		a = [min(np.where(wav>=lam[0])[0]), max(np.where(wav<=lam[-1])[0])]
 		unconvolved_spectrum = np.zeros(a[1]-a[0])
 
-		for i, n in enumerate(matrix[~e_lines,0]):
+		for i, n in enumerate(stellar_temps):
 			template =  np.loadtxt(files[int(n)], usecols=(1,), unpack=True)
 			unconvolved_spectrum += template[a[0]:a[1]]*temp_weights[i]
 		unconvolved_spectrum *= np.polynomial.legendre.legval(np.linspace(-1,1,
-			len(unconvolved_spectrum)), np.aself.ppend(1, mpweight))
+			len(unconvolved_spectrum)), np.append(1, mpweight))
 		unconvolved_lam =  wav[a[0]:a[1]]
 
 		self.ab_lines = {}
@@ -178,48 +185,61 @@ class population(object):
 
 #############################################################################
 
-	def plot_probability_distribution(self):
+	def plot_probability_distribution(self, save=True, f=None, ax_array=None):
 		import matplotlib.pyplot as plt
 
-		f, ax_array = plt.subplots(2,2)
+		if f is None:
+			f, ax_array = plt.subplots(2,2)
+			alpha = 1
+		else: alpha = 0.5
+
 		if self.galaxy is not None:
-			f.suptitle('%s Probability Distribution' % (self.galaxy.uself.pper()))
+			f.suptitle('%s Probability Distribution' % (self.galaxy.upper()))
 		else:
 			f.suptitle('Probability Distribution')
-		ax_array[0,0].hist(self.samples[:,0],bins=40,histtype='step',normed=True)
-		ax_array[0,1].hist(self.samples[:,1],bins=40,histtype='step',normed=True)
-		ax_array[1,0].hist(self.samples[:,2],bins=40,histtype='step',normed=True)
+		ax_array[0,0].hist(self.samples[:,0],bins=40,histtype='step',normed=True, 
+			alpha=alpha)
+		ax_array[0,1].hist(self.samples[:,1],bins=40,histtype='step',normed=True, 
+			alpha=alpha)
+		ax_array[1,0].hist(self.samples[:,2],bins=40,histtype='step',normed=True, 
+			alpha=alpha)
 
-		ax_array[0,0].axvline(self.age - self.unc_age, color='r')
-		ax_array[0,0].axvline(self.age + self.unc_age, color='r')
-		ax_array[0,0].axvline(self.age)
-		ax_array[0,1].axvline(self.metallicity - self.unc_met, color='r')
-		ax_array[0,1].axvline(self.metallicity + self.unc_met, color='r')
-		ax_array[0,1].axvline(self.metallicity)
-		ax_array[1,0].axvline(self.alpha - self.unc_alp, color='r')
-		ax_array[1,0].axvline(self.alpha + self.unc_alp, color='r')
-		ax_array[1,0].axvline(self.alpha)
+		ax_array[0,0].axvline(self.age - self.unc_age, color='r', alpha=alpha)
+		ax_array[0,0].axvline(self.age + self.unc_age, color='r', alpha=alpha)
+		ax_array[0,0].axvline(self.age, alpha=alpha)
+		ax_array[0,1].axvline(self.metallicity - self.unc_met, color='r', alpha=alpha)
+		ax_array[0,1].axvline(self.metallicity + self.unc_met, color='r', alpha=alpha)
+		ax_array[0,1].axvline(self.metallicity, alpha=alpha)
+		ax_array[1,0].axvline(self.alpha - self.unc_alp, color='r', alpha=alpha)
+		ax_array[1,0].axvline(self.alpha + self.unc_alp, color='r', alpha=alpha)
+		ax_array[1,0].axvline(self.alpha, alpha=alpha)
 		ax_array[0,0].set_title('Age')
 		ax_array[0,1].set_title('Metallicity')
 		ax_array[1,0].set_title('Alpha/Fe ratio')
 		ax_array[1,1].axis('off')
 		plt.tight_layout()
 
-		if self.pp is None:
-			if not os.path.exists("%s/plots/" % (self.vout_dir)):
-				os.makedirs("%s/plots/" % (self.vout_dir))
-			file = "%s/plots/%i.png" % (self.vout_dir, self.bin)
-			f.savefig(file)
-		else:
-			if self.galaxy is None:
-				raise('Galaxy keyword must be supplied to save the probability '+\
-					'distribution plot.')
-			f.suptitle('%s Probability Distribution within inner 1 arcsec' % (
-				self.galaxy.upper()))
-			f.savefig('%s/Data/muse/analysis/%s/' % (cc.base_dir, self.galaxy))
+		if save:
+			if self.pp is None:
+				if not os.path.exists("%s/plots/" % (self.vout_dir)):
+					os.makedirs("%s/plots/" % (self.vout_dir))
+				file = "%s/plots/%i.png" % (self.vout_dir, self.bin)
+				f.savefig(file)
+			else:
+				if self.galaxy is None:
+					raise('Galaxy keyword must be supplied to save the probability '+\
+						'distribution plot.')
+				f.suptitle('%s Probability Distribution within inner 1 arcsec' % (
+					self.galaxy.upper()))
+				f.savefig('%s/Data/muse/analysis/%s/pop_1arcsec.png' % (cc.base_dir, 
+					self.galaxy))
+
+		self.fig = f
+		self.ax = ax_array
 
 		if not cc.remote:
 			plt.show()
+			
 
 #############################################################################
 

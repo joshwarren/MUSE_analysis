@@ -23,6 +23,9 @@ else:
 	import matplotlib.pyplot as plt # used for plotting
 import ppxf_util as util
 from rolling_stats import *
+from ppxf import ppxf
+
+c = 299792.458 # speed of light in km/s
 
 #-----------------------------------------------------------------------------
 class set_params(object):
@@ -233,8 +236,6 @@ def determine_goodpixels(logLam, lamRangeTemp, vel, z, gas=False, mask=False):
 	line)
 	20160816 warrenj Added NI doublet 5199.36 and 5201.86
 	"""
-
-	c = 299792.458 # speed of light in km/s
  
 	# dv = lines*0+800d # width/2 of masked gas emission region in km/s
 	dv = 800 # width/2 of masked gas emission region in km/s
@@ -512,7 +513,6 @@ def errors2(i_gal=None, opt=None, bin=None):
 	if i_gal is None: i_gal=int(sys.argv[1])
 	if opt is None: opt=sys.argv[2]
 	if bin is None: bin=int(sys.argv[3])
-	from ppxf import ppxf
 ## ----------===============================================---------
 ## ----------============= Input parameters  ===============---------
 ## ----------===============================================---------
@@ -520,8 +520,6 @@ def errors2(i_gal=None, opt=None, bin=None):
 	
 	galaxies = ['ic1459', 'ic4296', 'ngc1316', 'ngc1399']
 	galaxy = galaxies[i_gal]
-
-	c = 299792.458
 
 	if cc.device == 'glamdring':
 		dir = cc.base_dir
@@ -581,8 +579,8 @@ def errors2(i_gal=None, opt=None, bin=None):
 	bin_lin_noise = bin_lin_noise[cut]
 
 
-	pp = run_ppxf(bin_lin, bin_lin_noise, lamRange, vel, sig, z, gas, opt, 
-		params)
+	pp = run_ppxf(galaxy, bin_lin, bin_lin_noise, lamRange, CDELT_spec, vel, sig, z, 
+		gas, opt, params)
 	if cc.device == 'glamdring':
 		saveTo="%s/analysis_muse/%s/%s/MC/bestfit/plots/%s.png" % (dir, galaxy, 
 			opt, str(bin))	
@@ -626,8 +624,8 @@ def errors2(i_gal=None, opt=None, bin=None):
 ## ----------===============================================---------
 ## ----------=============== Run analysis  =================---------
 ## ----------===============================================---------
-def run_ppxf(bin_lin, bin_lin_noise, lamRange, vel, sig, z, gas, opt, 
-	parms):
+def run_ppxf(galaxy, bin_lin, bin_lin_noise, lamRange, CDELT, vel, sig, z, gas, opt, 
+	params, produce_plot=True):
 	FWHM_gal = params.FWHM_gal/(1+z) # Adjust resolution in Angstrom
 
 	stellar_templates = get_stellar_templates(galaxy, FWHM_gal)
@@ -635,7 +633,7 @@ def run_ppxf(bin_lin, bin_lin_noise, lamRange, vel, sig, z, gas, opt,
 	
 	## smooth spectrum to fit with templates resolution
 	if FWHM_gal < stellar_templates.FWHM_tem:
-		sigma = stellar_templates.FWHM_dif/2.355/CDELT_spec # Change in px
+		sigma = stellar_templates.FWHM_dif/2.355/CDELT # Change in px
 		bin_lin = ndimage.gaussian_filter1d(bin_lin, sigma)
 		bin_lin_noise = np.sqrt(ndimage.gaussian_filter1d(bin_lin_noise**2, 
 			sigma))
@@ -684,12 +682,13 @@ def run_ppxf(bin_lin, bin_lin_noise, lamRange, vel, sig, z, gas, opt,
 	pp = ppxf(templates, bin_log, noise, velscale, start, 
 		goodpixels=goodPixels, mdegree=params.mdegree, moments=moments, 
 		degree=params.degree, vsyst=dv, component=component, lam=lambdaq, 
-		plot=not params.quiet, quiet=params.quiet, produce_plot=True)
+		plot=not params.quiet, quiet=params.quiet, produce_plot=produce_plot)
 	# ax=plt.gca()
 	# for p in e_templates.line_wav:
 	# 	ax.axvline(p, color='c')
 	# plt.savefig(saveTo)
 
+	pp.templatesToUse = templatesToUse
 	return pp
 ##############################################################################
 
