@@ -1,4 +1,7 @@
-
+## ==================================================================
+## 		Stellar population within inner 1 arcsec
+## ==================================================================
+# The entire pipeline - making use of error2_muse and pop_muse routines.
 
 
 from checkcomp import checkcomp
@@ -6,6 +9,8 @@ cc = checkcomp()
 import numpy as np 
 from astropy.io import fits
 from errors2_muse import get_dataCubeDirectory, run_ppxf, set_params
+from pop_muse import population
+
 res = 0.2 # MUSE spatial resolution
 
 def get_specWithin(galaxy, app_size=1.0):
@@ -46,13 +51,7 @@ def KDC_pop(galaxy):
 
 	pp = run_ppxf(spec, noise, lamRange, vel, sig, z, 1, 'kin', params)
 
-
-	
-
-
-
-
-
+	pop = population(pp=pp, galaxy=galaxy)
 
 if __name__ == '__main__':
 	KDC_pop('ic4296')

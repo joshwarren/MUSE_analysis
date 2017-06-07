@@ -37,42 +37,67 @@ else: vin_dir = '%s/Data/muse/analysis' % (cc.base_dir)
 
 class population(object):
 
-	def __init__(self):#, i_gal=None, bin=None):
+	def __init__(self, pp=None, galaxy=None):#, i_gal=None, bin=None):
 		#ab_lines, uncerts, interp=None, grid_length=40, previous=False, self.galaxy=None):
-		self.i_gal=int(sys.argv[1])
-		self.opt = sys.argv[2]
-		self.bin=int(sys.argv[3])
-
+		self.pp = pp
+		self.galaxy = galaxy
 		self.lines = ['H_beta', 'Fe5015', #'Mg_1', 'Mg_2', 
 			'Mg_b', 'Fe5270', 'Fe5335', 
 			'Fe5406', 'Fe5709', 'Fe5782', 'NaD', 'TiO1', 'TiO2']
-
-		galaxies = ['ic1459', 'ic4296', 'ngc1316', 'ngc1399']
-		self.galaxy = galaxies[self.i_gal]
-
-		self.vout_dir = '%s/%s/%s/pop' % (vin_dir, self.galaxy, self.opt)
-		if not os.path.exists(self.vout_dir): os.makedirs(self.vout_dir)
-
 		grid_length = 40
 
-		vin_dir_gasMC = "%s/%s/%s/MC" % (vin_dir, self.galaxy, self.opt)
-		
-		lam = np.loadtxt("%s/lambda/%d.dat" % (vin_dir_gasMC, self.bin))
-		spectrum = np.loadtxt("%s/input/%d.dat" % (vin_dir_gasMC, self.bin))
-		matrix = np.loadtxt("%s/bestfit/matrix/%d.dat" % (vin_dir_gasMC, self.bin), 
-			dtype=str)
+
+		if self.pp is None:
+			self.i_gal=int(sys.argv[1])
+			self.opt = sys.argv[2]
+			self.bin=int(sys.argv[3])
+
+			
+
+			galaxies = ['ic1459', 'ic4296', 'ngc1316', 'ngc1399']
+			self.galaxy = galaxies[self.i_gal]
+
+			self.vout_dir = '%s/%s/%s/pop' % (vin_dir, self.galaxy, self.opt)
+			if not os.path.exists(self.vout_dir): os.makedirs(self.vout_dir)
+
+
+			vin_dir_gasMC = "%s/%s/%s/MC" % (vin_dir, self.galaxy, self.opt)
+			
+			lam = np.loadtxt("%s/lambda/%d.dat" % (vin_dir_gasMC, self.bin))
+			spectrum = np.loadtxt("%s/input/%d.dat" % (vin_dir_gasMC, self.bin))
+			matrix = np.loadtxt("%s/bestfit/matrix/%d.dat" % (vin_dir_gasMC, self.bin), 
+				dtype=str)
+			# e_lines = np.array([not s.isdigit() for s in matrix[:,0]])
+			# e_line_spec = matrix[e_lines,1:].astype(float)
+			temp_weights =  np.loadtxt("%s/temp_weights/%d.dat" % (vin_dir_gasMC, 
+				self.bin), unpack=True, usecols=(1,))
+			# e_line_spec = np.einsum('ij,i->ij',e_line_spec,temp_weights[e_lines])
+			# continuum = spectrum - np.nansum(e_line_spec,axis=0)
+			noise = np.loadtxt("%s/noise_input/%d.dat" % (vin_dir_gasMC, self.bin))
+			bestfit = np.loadtxt("%s/bestfit/%d.dat" %(vin_dir_gasMC, self.bin))
+			# convolved = bestfit - np.nansum(e_line_spec, axis=0)
+			mpweight = np.loadtxt("%s/mpweights/%d.dat" %(vin_dir_gasMC, self.bin))
+
+
+		else:
+			lam = self.pp.lam
+			spectrum = self.pp.galaxy
+			matrix = self.pp.matrix[:,len(self.pp.polyweights):]
+			temp_weights = self.pp.weights
+			noise = self.pp.noise 
+			bestfit = self.pp.bestfit
+			mpweight = self.pp.mpolyweights
+
+
 		e_lines = np.array([not s.isdigit() for s in matrix[:,0]])
 		e_line_spec = matrix[e_lines,1:].astype(float)
-		temp_weights =  np.loadtxt("%s/temp_weights/%d.dat" % (vin_dir_gasMC, self.bin), 
-			unpack=True, usecols=(1,))
 		e_line_spec = np.einsum('ij,i->ij',e_line_spec,temp_weights[e_lines])
+
 		continuum = spectrum - np.nansum(e_line_spec,axis=0)
-		noise = np.loadtxt("%s/noise_input/%d.dat" % (vin_dir_gasMC, self.bin))
-		bestfit = np.loadtxt("%s/bestfit/%d.dat" %(vin_dir_gasMC, self.bin))
-		convolved = bestfit - np.nansum(e_line_spec, axis=0) 
+		convolved = bestfit - np.nansum(e_line_spec, axis=0)
 
 		if cc.getDevice() == 'uni':
-			files = glob('%s/Data/idl_libraries/ppxf/MILES_library/' % (cc.base_dir) +
+			files = glob('%s/Data/idl_libraries/self.ppxf/MILES_library/' % (cc.base_dir) +
 				'm0[0-9][0-9][0-9]V')
 		else:
 			files = glob("%s/models/miles_library/m0[0-9][0-9][0-9]V" % (cc.home_dir))
@@ -84,9 +109,8 @@ class population(object):
 		for i, n in enumerate(matrix[~e_lines,0]):
 			template =  np.loadtxt(files[int(n)], usecols=(1,), unpack=True)
 			unconvolved_spectrum += template[a[0]:a[1]]*temp_weights[i]
-		mpweight = np.loadtxt("%s/mpweights/%d.dat" %(vin_dir_gasMC, self.bin))
 		unconvolved_spectrum *= np.polynomial.legendre.legval(np.linspace(-1,1,
-				len(unconvolved_spectrum)), np.append(1, mpweight))
+			len(unconvolved_spectrum)), np.aself.ppend(1, mpweight))
 		unconvolved_lam =  wav[a[0]:a[1]]
 
 		self.ab_lines = {}
@@ -143,7 +167,12 @@ class population(object):
 		self.alpha = np.nanmean(self.samples[:,2])
 		self.unc_alp = np.nanstd(self.samples[:,2])
 		
-		self.save()
+		if self.pp is None:
+			self.save()
+		else:
+			print 'Age: ', self.age, '+/-', self.unc_age
+			print 'Metallicity: ', self.metallicity, '+/-', self.unc_met
+			print 'Alpha-enhancement: ', self.alpha, '+/-', self.unc_alp
 		self.plot_probability_distribution()
 
 
@@ -154,7 +183,7 @@ class population(object):
 
 		f, ax_array = plt.subplots(2,2)
 		if self.galaxy is not None:
-			f.suptitle('%s Probability Distribution' % (self.galaxy.upper()))
+			f.suptitle('%s Probability Distribution' % (self.galaxy.uself.pper()))
 		else:
 			f.suptitle('Probability Distribution')
 		ax_array[0,0].hist(self.samples[:,0],bins=40,histtype='step',normed=True)
@@ -176,10 +205,18 @@ class population(object):
 		ax_array[1,1].axis('off')
 		plt.tight_layout()
 
-		if not os.path.exists("%s/plots/" % (self.vout_dir)):
-			os.makedirs("%s/plots/" % (self.vout_dir))
-		file = "%s/plots/%i.png" % (self.vout_dir, self.bin)
-		f.savefig(file)
+		if self.pp is None:
+			if not os.path.exists("%s/plots/" % (self.vout_dir)):
+				os.makedirs("%s/plots/" % (self.vout_dir))
+			file = "%s/plots/%i.png" % (self.vout_dir, self.bin)
+			f.savefig(file)
+		else:
+			if self.galaxy is None:
+				raise('Galaxy keyword must be supplied to save the probability '+\
+					'distribution plot.')
+			f.suptitle('%s Probability Distribution within inner 1 arcsec' % (
+				self.galaxy.upper()))
+			f.savefig('%s/Data/muse/analysis/%s/' % (cc.base_dir, self.galaxy))
 
 		if not cc.remote:
 			plt.show()
