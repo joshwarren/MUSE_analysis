@@ -176,16 +176,17 @@ class population(object):
 		
 		if self.pp is None:
 			self.save()
+			self.plot_probability_distribution(
+				saveTo="%s/plots/%i.png" % (self.vout_dir, self.bin))
 		else:
 			print 'Age: ', self.age, '+/-', self.unc_age
 			print 'Metallicity: ', self.metallicity, '+/-', self.unc_met
 			print 'Alpha-enhancement: ', self.alpha, '+/-', self.unc_alp
-		self.plot_probability_distribution()
 
 
 #############################################################################
 
-	def plot_probability_distribution(self, save=True, f=None, ax_array=None):
+	def plot_probability_distribution(self, saveTo=None, f=None, ax_array=None):
 		import matplotlib.pyplot as plt
 
 		if f is None:
@@ -219,20 +220,10 @@ class population(object):
 		ax_array[1,1].axis('off')
 		plt.tight_layout()
 
-		if save:
-			if self.pp is None:
-				if not os.path.exists("%s/plots/" % (self.vout_dir)):
-					os.makedirs("%s/plots/" % (self.vout_dir))
-				file = "%s/plots/%i.png" % (self.vout_dir, self.bin)
-				f.savefig(file)
-			else:
-				if self.galaxy is None:
-					raise('Galaxy keyword must be supplied to save the probability '+\
-						'distribution plot.')
-				f.suptitle('%s Probability Distribution within inner 1 arcsec' % (
-					self.galaxy.upper()))
-				f.savefig('%s/Data/muse/analysis/%s/pop_1arcsec.png' % (cc.base_dir, 
-					self.galaxy))
+		if saveTo is not None and self.pp is None:
+			if not os.path.exists(saveTo):
+				os.makedirs(saveTo)
+			f.savefig(saveTo)
 
 		self.fig = f
 		self.ax = ax_array

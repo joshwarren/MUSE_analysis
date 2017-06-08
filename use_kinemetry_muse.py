@@ -1,4 +1,6 @@
 ## Routine to plot the output from use_kinemetry_muse.pro
+# Uses a rolling median to smooth the data
+
 from checkcomp import checkcomp
 cc=checkcomp()
 if 'home' not in cc.device:
@@ -9,6 +11,7 @@ Prefig(transparent=False)
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+from rolling_stats import rollmed
 
 def use_kinemetry(gal, opt='kin'):
 	out_dir = '%s/Data/muse/analysis' % (cc.base_dir)
@@ -23,6 +26,8 @@ def use_kinemetry(gal, opt='kin'):
 		if os.path.exists(f):
 			rad, pa, er_pa, q, er_q, k1, erk1, k51, erk51 = np.loadtxt(f, unpack=True, 
 				skiprows=1)
+			pa = rollmed(pa, 5)
+			k1 = rollmed(k1, 5)
 			rad*=0.2 # Change to arcsec
 
 			# Align pa[0] as closely as possible with flux pa[0] by +/- 360 deg
@@ -108,7 +113,7 @@ def use_kinemetry(gal, opt='kin'):
 
 		# Moves title clear of upper x axis
 		plt.subplots_adjust(top=0.85)
-		ax.set_title('KINEMETRY output', y=1.12)
+		ax.set_title('KINEMETRY output (smoothed)', y=1.12)
 
 		fig.savefig('%s/%s/%s/kinemetry/kinemetry.png'%(out_dir, gal, opt))
 	
@@ -117,4 +122,5 @@ def use_kinemetry(gal, opt='kin'):
 # Use of plot_absorption.py
 
 if __name__ == '__main__':
-	use_kinemetry('ic1459')
+	# use_kinemetry('ic1459')
+	use_kinemetry('ic4296')

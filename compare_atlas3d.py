@@ -10,9 +10,21 @@ import matplotlib.pyplot as plt
 from prefig import Prefig
 Prefig(transparent=False)
 
+def angle_to_pc(galaxy, angle):
+	c = 299792 #km/s
+	#H = 67.8 #(km/s)/Mpc # From Planck
+	H = 70.0 # value used by Bolonga group.
+	file = "%s/Data/vimos/analysis/galaxies.txt" % (cc.base_dir)
+	z = np.loadtxt(file, usecols=(1,), skiprows=1, unpack=True)
+	gals = np.loadtxt(file, usecols=(0,), skiprows=1, unpack=True, dtype=str)
+	i_gal = np.where(gals == galaxy)[0][0]
+	z=z[i_gal]
+	return np.radians(angle/(60.0*60.0)) * z*c/H*10**6 # pc
+
 def compare_atlas3d():
 	print 'Compare to Atlas3d/SAURON'
 
+## ----------============== Ellipticity vs lambda_Re ==============----------
 	museGalaxiesFile = "%s/Data/muse/analysis/galaxies2.txt" % (cc.base_dir)
 	vimosGalaxiesFile = "%s/Data/vimos/analysis/galaxies2.txt" % (cc.base_dir)
 
@@ -98,6 +110,59 @@ def compare_atlas3d():
 
 	# Save plot
 	fig.savefig('%s/Data/muse/analysis/lambda_R_ellipticity.png' % (cc.base_dir))
+	plt.close()
+## ----------================ Core age vs KDC size ================----------
+	muse_core_file = "%s/Data/muse/analysis/galaxies_core.txt" % (cc.base_dir)
+	muse_classify_file = "%s/Data/muse/analysis/galaxies_classify.txt" % (cc.base_dir)
+	# vimosGalaxiesFile = "%s/Data/vimos/analysis/galaxies_core.txt" % (cc.base_dir)
+	sauron_file = '%s/Data/sauron/VIII_table8.dat' % (cc.base_dir)
+	
+	fig, ax = plt.subplots()
+	# Sauron
+	size_sauron, size_unc_sauron, age_sauron, age_unc_sauron = np.loadtxt(sauron_file,
+		unpack=True, usecols=(4,5,6,7), skiprows=2) 
+	fast_sauron = np.loadtxt(sauron_file, unpack=True, usecols=(8,), skiprows=2, dtype=str)
+	fast_sauron = fast_sauron == 'F'
+
+	ax.errorbar(size_sauron[fast_sauron], age_sauron[fast_sauron], fmt='.',
+		xerr=size_unc_sauron[fast_sauron], yerr=age_unc_sauron[fast_sauron], color='b',
+		label='Fast rotating SAURON')
+	ax.errorbar(size_sauron[~fast_sauron], age_sauron[~fast_sauron], fmt='.',
+		xerr=size_unc_sauron[~fast_sauron], yerr=age_unc_sauron[~fast_sauron], color='r',
+		label='Slow rotating SAURON')
+
+	# MUSE
+	age_muse, age_unc_muse = np.loadtxt(muse_core_file, unpack=True, usecols=(1,2), 
+		skiprows=2)
+	gals_muse1 = np.loadtxt(muse_core_file, unpack=True, usecols=(0,), 
+		skiprows=2, dtype=str)
+	gals_muse2, size_muse = np.loadtxt(muse_classify_file, unpack=True, usecols=(0,6), 
+		dtype=str, skiprows=1)
+	has_KDC = size_muse!='-'
+	gals_muse2 = gals_muse2[has_KDC]
+	size_muse = size_muse[has_KDC].astype(float)
+	size_unc_muse = size_muse*0
+	
+
+	for i2, g in enumerate(gals_muse2):
+		i1 = np.where(gals_muse1==g)[0][0]
+		size_unc_muse[i2] = angle_to_pc(g, 0.5) # estimate size at 0.5" accuracy.
+		size_muse[i2] = angle_to_pc(g, size_muse[i2])
+		if i2 == 0:
+			ax.errorbar(size_muse[i2], age_muse[i1], fmt='.',xerr=size_unc_muse[i2], 
+				yerr=age_unc_muse[i1], color='g', label='MUSE')
+		else:
+			ax.errorbar(size_muse[i2], age_muse[i1], fmt='.',xerr=size_unc_muse[i2], 
+				yerr=age_unc_muse[i1], color='g')
+
+
+	ax.legend(facecolor='w')
+	ax.set_yscale('log')#, nonposy='clip', subsy=[1,2,3,4,5,6,7,8,9])
+	ax.set_xlabel('KDC size (pc)')
+	ax.set_ylabel('Luminosity-weighted Age of central 1 arcsec (Gyrs)')
+
+
+	fig.savefig('%s/Data/muse/analysis/KDC_size_age.png' % (cc.base_dir))
 
 if __name__=='__main__':
 	compare_atlas3d()

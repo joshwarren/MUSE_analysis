@@ -9,8 +9,7 @@ from checkcomp import checkcomp
 cc = checkcomp()
 import re # for regex expressions
 from classify import get_R_e
-
-
+from rolling_stats import rollmed
 
 def classify(galaxy, opt='kin'):
 	analysis_dir = "%s/Data/muse/analysis" % (cc.base_dir)
@@ -36,7 +35,7 @@ def classify(galaxy, opt='kin'):
 		NR = np.array(['-'], dtype='S3')
 		KT = np.array(['-'], dtype='S3')
 		M2 = np.array(['-'], dtype='S3')
-		KDC = np.array(['-'], dtype='S3')
+		KDC = np.array(['-'], dtype='S5')
 		i_gal = np.array([0])
 
 	R_e = get_R_e(galaxy)
@@ -44,6 +43,8 @@ def classify(galaxy, opt='kin'):
 	file = '%s/%s/%s/kinemetry/kinemetry_vel.txt' % (analysis_dir,galaxy,opt)
 	rad, pa, k1, k51 = np.loadtxt(file, usecols=(0,1,5,7), skiprows=1, unpack=True)
 	rad *= 0.2 # Pix to arcsec
+	pa = rollmed(pa, 5)
+	k1 = rollmed(k1, 5)
 
 
 	# Finding smoothest pa by add or subtracting 360 deg	
@@ -96,7 +97,7 @@ def classify(galaxy, opt='kin'):
 	sharp = np.abs(difference) > 30
 	kdc_location = np.logical_and(sharp, k1 < 0.15*max(k1))
 	if any(kdc_location) and any(difference[0:int(np.median(np.where(kdc_location)[0]))]<3):
-		KDC[i_gal] = 'KDC'
+		KDC[i_gal] = str(round(np.median(rad[kdc_location]), 3))
 		feature = True
 	else: KDC[i_gal] = '-'
 
@@ -116,9 +117,9 @@ def classify(galaxy, opt='kin'):
 
 
 # ------------============== Save outputs ================----------
-	template3 = "{0:13}{1:7}{2:5}{3:5}{4:5}{5:5}{6:5}\n"	
+	template3 = "{0:13}{1:7}{2:5}{3:5}{4:5}{5:5}{6:13}\n"	
 	f3 = open(classify_file, 'wb')
-	f3.write(template3.format('Galaxy', 'RR/NRR', 'NF', 'NR', 'KT', '2M', 'KDC'))
+	f3.write(template3.format('Galaxy', 'RR/NRR', 'NF', 'NR', 'KT', '2M', 'KDC (arcsec)'))
 
 	for i in range(len(galaxy_gals)):
 		f3.write(template3.format(galaxy_gals[i], RR[i], NF[i], NR[i], KT[i], 
@@ -132,6 +133,7 @@ def classify(galaxy, opt='kin'):
 # Use of kinematics.py
 
 if __name__ == '__main__':
+	galaxy = 'ic4296'
 	galaxy = 'ic1459'
 
 	classify(galaxy)
