@@ -46,13 +46,10 @@ class population(object):
 			'Fe5406', 'Fe5709', 'Fe5782', 'NaD', 'TiO1', 'TiO2']
 		grid_length = 40
 
-
 		if self.pp is None:
 			self.i_gal=int(sys.argv[1])
 			self.opt = sys.argv[2]
 			self.bin=int(sys.argv[3])
-
-			
 
 			galaxies = ['ic1459', 'ic4296', 'ngc1316', 'ngc1399']
 			self.galaxy = galaxies[self.i_gal]
@@ -178,6 +175,7 @@ class population(object):
 			self.save()
 			self.plot_probability_distribution(
 				saveTo="%s/plots/%i.png" % (self.vout_dir, self.bin))
+			
 		else:
 			print 'Age: ', self.age, '+/-', self.unc_age
 			print 'Metallicity: ', self.metallicity, '+/-', self.unc_met
@@ -228,9 +226,8 @@ class population(object):
 		self.fig = f
 		self.ax = ax_array
 
-		if not cc.remote:
-			plt.show()
-			
+		# if not cc.remote:
+		# 	plt.show()
 
 #############################################################################
 
@@ -252,6 +249,9 @@ class population(object):
 
 
 	def save(self):
+		if self.pp is not None:
+			raise('population was run using the ppxf output object and therefore has no' +
+				' obvious place to save the output')
 		file = "%s/%i.dat" % (self.vout_dir, self.bin)
 		with open(file, 'w') as f:
 			f.write('%f   %f   %f \n' % (self.age, self.metallicity, self.alpha))
@@ -272,29 +272,3 @@ class population(object):
 
 if __name__=="__main__":
 	p = population()
-
-
-
-	# import cPickle as pickle
-
-	# gal='ngc3100'
-	# self.bin=25
-	# wav_range='4200-'
-
-	# out_pickle = '%s/Data/vimos/analysis/%s/results/%s/pickled' % (cc.base_dir,gal,
-	# wav_range)
-	# pickleFile = open("%s/dataObj_%s_pop.pkl" % (out_pickle, wav_range), 'rb')
-	# D = pickle.load(pickleFile)
-	# pickleFile.close()
-
-	# lines = ['G4300', 'Fe4383', 'Ca4455', 'Fe4531', 'H_beta', 'Fe5015', 
-	# 	'Mg_b']
-
-	# line_dir = {}
-	# uncert_dir = {}
-	# for l in lines:
-	# 	ab, uncert = D.absorption_line(l, uncert=True)
-	# 	line_dir[l] = np.array([ab[self.bin]])
-	# 	uncert_dir[l] = np.array([uncert[self.bin]])
-
-	# pop = population(line_dir, uncert_dir, grid_length=40)
