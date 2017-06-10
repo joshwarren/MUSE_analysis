@@ -29,10 +29,13 @@ def get_specFromAperture(galaxy, app_size=1.0, inside=True, res=0.2):
 
 	area = get_areaInAperture(s[1], s[2], x_cent, y_cent, app_size/res)
 
+	if not inside:
+		area = 1 - area
+
 	# Deal with NaN
-	d = f[0].data
+	d = f[1].data
 	d[np.isnan(d)] = 0
-	n = f[1].data
+	n = f[2].data
 	n[np.isnan(n)] = 0
 	return np.einsum('ijk,jk->i', d, area), np.einsum('ijk,jk->i', n, area), \
 		np.arange(s[0])*f[1].header['CD3_3'] + f[1].header['CRVAL3']
@@ -58,7 +61,7 @@ def KDC_pop(galaxy):
 	noise = noise[cut]
 	lamRange = np.array([lam[0],lam[-1]])/(1+z)
 
-	pp = run_ppxf(galaxy, spec, noise, lamRange, CD, vel, sig, z, 1, 'kin', params, 
+	pp = run_ppxf(galaxy, spec, noise, lamRange, CD, vel, sig, z, 'kin', params, 
 		produce_plot=False)
 
 	pop = population(pp=pp, galaxy=galaxy)
@@ -94,7 +97,7 @@ def KDC_pop(galaxy):
 
 	
 
-	pp_outside = run_ppxf(galaxy, spec, noise, lamRange, CD, vel, sig, z, 1, 'kin', params,
+	pp_outside = run_ppxf(galaxy, spec, noise, lamRange, CD, vel, sig, z, 'kin', params,
 		produce_plot=False)
 	pop_outside = population(pp=pp_outside, galaxy=galaxy)
 	pop_outside.plot_probability_distribution(f=f, ax_array=ax)
@@ -132,6 +135,7 @@ def KDC_pop(galaxy):
 
 if __name__ == '__main__':
 	for gal in ['ic1459', 'ic4296', 'ngc1316', 'ngc1399']:
+		print gal
 		KDC_pop(gal)
 	# KDC_pop('ic4296')
 
