@@ -10,6 +10,7 @@ import numpy as np
 from astropy.io import fits
 from errors2_muse import get_dataCubeDirectory, run_ppxf, set_params, remove_anomalies
 from pop_muse import population
+from KDC_pop import get_areaInAperture
 
 def get_specFromAperture(galaxy, app_size=1.0, inside=True, res=0.2):
 	f = fits.open(get_dataCubeDirectory(galaxy))
@@ -26,15 +27,14 @@ def get_specFromAperture(galaxy, app_size=1.0, inside=True, res=0.2):
 	x_cent = x_cent[i_gal]
 	y_cent = y_cent[i_gal]
 
-	# Distance in arcsec from central spaxel
-	d = np.sqrt((x - x_cent)**2 + (y - y_cent)**2) * res
-	if inside:
-		mask = d <= app_size
-	else:
-		mask = d > app_size
+	area = get_areaInAperture(s[1], s[2], x_cent, y_cent, app_size/res)
 
-	return np.nansum(f[1].data[:, mask], axis=1), \
-		np.sqrt(np.nansum(f[2].data[:, mask]**2, axis=1)), \
+	# Deal with NaN
+	d = f[0].data
+	d[np.isnan(d)] = 0
+	n = f[1].data
+	n[np.isnan(n)] = 0
+	return np.einsum('ijk,jk->i', d, area), np.einsum('ijk,jk->i', n, area), \
 		np.arange(s[0])*f[1].header['CD3_3'] + f[1].header['CRVAL3']
 
 

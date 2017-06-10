@@ -114,6 +114,8 @@ def compare_atlas3d():
 ## ----------================ Core age vs KDC size ================----------
 	muse_core_file = "%s/Data/muse/analysis/galaxies_core.txt" % (cc.base_dir)
 	muse_classify_file = "%s/Data/muse/analysis/galaxies_classify.txt" % (cc.base_dir)
+	vimos_core_file = "%s/Data/vimos/analysis/galaxies_core.txt" % (cc.base_dir)
+	vimos_classify_file = "%s/Data/vimos/analysis/galaxies_classify.txt" % (cc.base_dir)
 	# vimosGalaxiesFile = "%s/Data/vimos/analysis/galaxies_core.txt" % (cc.base_dir)
 	sauron_file = '%s/Data/sauron/VIII_table8.dat' % (cc.base_dir)
 	
@@ -155,11 +157,49 @@ def compare_atlas3d():
 			ax.errorbar(size_muse[i2], age_muse[i1], fmt='.',xerr=size_unc_muse[i2], 
 				yerr=age_unc_muse[i1], color='g')
 
+	# VIMOS
+	age_vimos, age_unc_vimos = np.loadtxt(vimos_core_file, unpack=True, usecols=(1,2), 
+		skiprows=2)
+	gals_vimos1 = np.loadtxt(vimos_core_file, unpack=True, usecols=(0,), 
+		skiprows=2, dtype=str)
+	gals_vimos2, size_vimos = np.loadtxt(vimos_classify_file, unpack=True, usecols=(0,6), 
+		dtype=str, skiprows=1)
+	has_KDC = size_vimos!='-'
+	gals_vimos2 = gals_vimos2[has_KDC]
+	size_vimos = size_vimos[has_KDC].astype(float)
+	size_unc_vimos = size_vimos*0
+	
+	count = 0
+	for i2, g in enumerate(gals_vimos2):
+		i1 = np.where(gals_vimos1==g)[0][0]
+		size_unc_vimos[i2] = angle_to_pc(g, 0.5) # estimate size at 0.5" accuracy.
+		size_vimos[i2] = angle_to_pc(g, size_vimos[i2])
+		if i2 == 0:
+			ax.errorbar(size_vimos[i2], age_vimos[i1], fmt='.',xerr=size_unc_vimos[i2], 
+				yerr=age_unc_vimos[i1], color='c', label='VIMOS')
+		else:
+			ax.errorbar(size_vimos[i2], age_vimos[i1], fmt='.',xerr=size_unc_vimos[i2], 
+				yerr=age_unc_vimos[i1], color='c')
+		if g in gals_muse2 and count==0:
+			count += 1
+			i_muse1 = np.where(gals_muse1==g)[0][0]
+			i_muse2 = np.where(gals_muse2==g)[0][0]
+			ax.plot([size_vimos[i2], size_muse[i_muse2]], 
+				[age_vimos[i1], age_muse[i_muse1]], 'k--', 
+				label='same galaxy in MUSE and VIMOS')
+		elif g in gals_muse2:
+			count += 1
+			i_muse1 = np.where(gals_muse1==g)[0][0]
+			i_muse2 = np.where(gals_muse2==g)[0][0]
+			ax.plot([size_vimos[i2], size_muse[i_muse2]], 
+				[age_vimos[i1], age_muse[i_muse1]], 'k--', 
+				label='same galaxy in MUSE and VIMOS')
 
 	ax.legend(facecolor='w')
 	ax.set_yscale('log')#, nonposy='clip', subsy=[1,2,3,4,5,6,7,8,9])
 	ax.set_xlabel('KDC size (pc)')
 	ax.set_ylabel('Luminosity-weighted Age of central 1 arcsec (Gyrs)')
+	ax.set_title('Age and size of KDCs')
 
 
 	fig.savefig('%s/Data/muse/analysis/KDC_size_age.png' % (cc.base_dir))
