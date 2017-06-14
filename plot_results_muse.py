@@ -419,7 +419,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 
 			ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, 
 				D.e_line[c].amp_noise, vmin=amp_min, vmax=amp_max, colorbar=True, 
-				nodots=True, title=amp_title, save=saveTo, close=not overplot=={}, 
+				nodots=True, title=amp_title, save=saveTo, close=True, 
 				res=res, flux_unbinned=D.unbinned_flux)
 			# if overplot:
 			# 	ax1.saveTo = saveTo
@@ -530,18 +530,14 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 				if hasattr(ax,'ax3'): f.delaxes(ax.ax3)
 				
 				# Uncertainty plot
-				# saveTo = "%s/%s_%s_uncert_field.png" % (out_nointerp, c, k)
-				# ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar,
-				# 	D.components[pl].plot[k].uncert, vmin=v_uncert_min, 
-				# 	vmax=v_uncert_max, #flux_type='notmag', 
-				# 	nodots=True, show_bin_num=show_bin_num, colorbar=True, 
-				# 	label=CBLabel, galaxy = galaxy.upper(), redshift = z, 
-				# 	title=utitle, save=saveTo, close=not overplot=={}, res=res)
-				# 	#, header=header)
-				# if overplot:
-				# 	ax1.saveTo = saveTo
-				# 	for o, c in overplot.iteritems():
-				# 		add_(o, c, ax1, galaxy, header, close=True)
+				saveTo = "%s/%s_%s_uncert_field.png" % (out_nointerp, c, k)
+				ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar,
+					D.components[pl].plot[k].uncert, vmin=v_uncert_min, 
+					vmax=v_uncert_max, flux_unbinned=D.unbinned_flux, 
+					nodots=True, show_bin_num=show_bin_num, colorbar=True, 
+					label=CBLabel, galaxy = galaxy.upper(), redshift = z, 
+					title=utitle, save=saveTo, close=True, res=res,
+					header=header)
 				if plots:
 					plt.show()
 # ------------============= Plot residuals ==============----------
@@ -574,13 +570,9 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 			nodots=True, show_bin_num=show_bin_num, colorbar=True, 
 			label=CBLabel, #flux_unbinned=D.unbinned_flux, 
 			galaxy = galaxy.upper(), redshift = z, title=title, 
-			save=saveTo, close=not overplot=={}, res=res)#, header=header)
+			save=saveTo, close=True, res=res)#, header=header)
 		if plots:
 			plt.show()
-		# if overplot:
-		# 	ax1.saveTo = saveTo
-		# 	for o, c in overplot.iteritems():
-		# 		add_(o, c, ax1, galaxy, header, close=True)
 # # ------------=============== Plot Chi2/DOF =============----------
 	# print "    chi2"
 

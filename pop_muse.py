@@ -90,10 +90,10 @@ class population(object):
 
 
 		
-		self.e_line_spec = np.einsum('ij,i->ij',e_line_spec,temp_weights[e_lines])
+		self.e_line_spec = np.einsum('ij,i->j',e_line_spec,temp_weights[e_lines])
 
-		self.continuum = spectrum - np.nansum(self.e_line_spec,axis=0)
-		convolved = bestfit - np.nansum(self.e_line_spec, axis=0)
+		self.continuum = spectrum - self.e_line_spec # np.nansum(self.e_line_spec,axis=0)
+		convolved = bestfit - self.e_line_spec # np.nansum(self.e_line_spec, axis=0)
 
 		if cc.getDevice() == 'uni':
 			files = glob('%s/Data/idl_libraries/ppxf/MILES_library/' % (cc.base_dir) +

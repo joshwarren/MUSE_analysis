@@ -29,23 +29,23 @@ galaxies = [
 			'ngc1316',
 			'ngc1399'
 			]
-# galaxies = ['ic1459']
+galaxies = ['ic1459']
 # galaxies = ['ic4296']
 # galaxies = ['ngc1316']
 # galaxies = ['ngc1399']
 
 m=mapping()
-# m.SNR = False
-# m.image = False
-# m.equivalent_width = False
-# m.amp_noise = False
+m.SNR = False
+m.image = False
+m.equivalent_width = False
+m.amp_noise = False
 # m.kinematics = False
-# m.plot_resid = False
-# m.line_ratios = False
+m.plot_resid = False
+m.line_ratios = False
 
 discard = 0
 norm = 'lws' #'lwv'
-MC_dir=''#'_low_res'
+MC_dir='_gas2'#'_low_res'
 
 # Arrays for error catching
 gal_err, err, trace =[], [], []
@@ -55,9 +55,9 @@ for galaxy in galaxies:
 	try:
 		# D = pickler(galaxy, discard=discard, norm=norm, opt='kin'+MC_dir)
 		# D = sav_for_kinemetry(galaxy, opt='kin'+MC_dir)
-		# D = plot_results(galaxy, discard=discard, overplot = {'radio':'r', 'xray':'c'}, 
-		# 	residual="median", norm=norm, D=D, show_bin_num=True, mapping=m, 
-		# 	opt='kin'+MC_dir)
+		D = plot_results(galaxy, discard=discard, overplot = {'radio':'r'},#, 'xray':'c'}, 
+			residual="median", norm=norm, D=D, show_bin_num=True, mapping=m, 
+			opt='kin'+MC_dir)
 		# plt.close("all")
 		# D = kinematics(galaxy, discard=discard, D=D, opt='kin') # Only run 
 		# 														# for opt='kin'
@@ -66,12 +66,12 @@ for galaxy in galaxies:
 		# plt.close("all")
 
 		# Requires the IDL kinemetry routine to have been run. 
-		use_kinemetry(galaxy)
-		classify(galaxy)
+		# use_kinemetry(galaxy)
+		# classify(galaxy)
 
 		D = None
 		# D = pickler(galaxy, discard=discard, norm=norm, opt='pop'+MC_dir)
-		D = plot_absorption(galaxy, D=D, opt='pop'+MC_dir, uncert=False)
+		# D = plot_absorption(galaxy, D=D, opt='pop'+MC_dir, uncert=False)
 		# plot_stellar_pop(galaxy, opt='pop'+MC_dir, D=D)
 	except Exception as e:
 		gal_err.append(galaxy)

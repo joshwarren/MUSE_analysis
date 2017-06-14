@@ -8,7 +8,7 @@ then
 	exit	
 fi
 
-cd /Data/muse/analysis/$1/$2/$3/
+cd /Data/muse/analysis/$1/$2/MC/$3/
 
 
 max=$( awk '{print $3}' /Data/muse/analysis/$1/$2/setup/voronoi_2d_binning_output.txt | sort -n | tail -1 )
