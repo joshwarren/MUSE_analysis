@@ -126,7 +126,7 @@ def KDC_pop(galaxy):
 			f.write(temp.format(galaxy_gals[i], str(round(age_gals[i],2)), 
 				str(round(age_unc_gals[i],2)), str(round(met_gals[i],2)), 
 				str(round(met_unc_gals[i],2)), str(round(alp_gals[i],2)), 
-				str(round(alp_unc_gals[i],2)), str(round(OIII_eqw_gals[i],4))
+				str(round(alp_unc_gals[i],2)), str(round(OIII_eqw_gals[i],4)),
 				str(round(age_gals_outer[i],2)), str(round(age_unc_gals_outer[i],2)), 
 				str(round(met_gals_outer[i],2)), str(round(met_unc_gals_outer[i],2)),
 				str(round(alp_gals_outer[i],2)), str(round(alp_unc_gals_outer[i],2))))

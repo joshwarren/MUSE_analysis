@@ -219,6 +219,25 @@ def compare_atlas3d():
 	ax.scatter(np.log10(OIII_eqw_muse), radio_power[m_gals], c='r', marker='x', 
 		label='MUSE')
 
+	# VIMOS
+	v_gals = np.array([np.where(galaxies==g)[0][0] for g in galaxies_vimos])
+	ax.scatter(np.log10(OIII_eqw_vimos), radio_power[v_gals], c='r', marker='x', 
+		label='VIMOS')
+
+	first = True
+	for i_muse, g in enumerate(galaxies_muse):
+		if g in galaxies_vimos:
+			i_vimos = np.where(galaxies_vimos==g)[0][0]
+			if first: # add just one label to legend
+				ax.plot(np.log10([OIII_eqw_muse[i_muse], OIII_eqw_vimos[i_vimos]]), 
+					[radio_power[m_gals[i_muse]],radio_power[v_gals[i_vimos]]], 'k--', 
+					zorder=1, label='same galaxy in MUSE and VIMOS')
+				first = False
+			else:
+				ax.plot(np.log10([OIII_eqw_muse[i_muse], OIII_eqw_vimos[i_vimos]]), 
+					[radio_power[m_gals[i_muse]],radio_power[v_gals[i_vimos]]], 'k--', 
+					zorder=1)
+				
 	ax.legend(facecolor='w')
 	ax.set_xlabel(r'log(EW [OIII]/$\mathrm{\AA}$)')
 	ax.set_ylabel(r'$\log(P_{1.4 \mathrm{G Hz}} / \mathrm{W \, Hz^{-1}})$')
