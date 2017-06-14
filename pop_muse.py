@@ -64,15 +64,10 @@ class population(object):
 			spectrum = np.loadtxt("%s/input/%d.dat" % (vin_dir_gasMC, self.bin))
 			matrix = np.loadtxt("%s/bestfit/matrix/%d.dat" % (vin_dir_gasMC, self.bin), 
 				dtype=str)
-			# e_lines = np.array([not s.isdigit() for s in matrix[:,0]])
-			# e_line_spec = matrix[e_lines,1:].astype(float)
 			temp_weights =  np.loadtxt("%s/temp_weights/%d.dat" % (vin_dir_gasMC, 
 				self.bin), unpack=True, usecols=(1,))
-			# e_line_spec = np.einsum('ij,i->ij',e_line_spec,temp_weights[e_lines])
-			# continuum = spectrum - np.nansum(e_line_spec,axis=0)
 			noise = np.loadtxt("%s/noise_input/%d.dat" % (vin_dir_gasMC, self.bin))
 			bestfit = np.loadtxt("%s/bestfit/%d.dat" %(vin_dir_gasMC, self.bin))
-			# convolved = bestfit - np.nansum(e_line_spec, axis=0)
 			mpweight = np.loadtxt("%s/mpweights/%d.dat" %(vin_dir_gasMC, self.bin))
 			e_lines = np.array([not s.isdigit() for s in matrix[:,0]])
 			e_line_spec = matrix[e_lines,1:].astype(float)
@@ -95,10 +90,10 @@ class population(object):
 
 
 		
-		e_line_spec = np.einsum('ij,i->ij',e_line_spec,temp_weights[e_lines])
+		self.e_line_spec = np.einsum('ij,i->ij',e_line_spec,temp_weights[e_lines])
 
-		continuum = spectrum - np.nansum(e_line_spec,axis=0)
-		convolved = bestfit - np.nansum(e_line_spec, axis=0)
+		self.continuum = spectrum - np.nansum(self.e_line_spec,axis=0)
+		convolved = bestfit - np.nansum(self.e_line_spec, axis=0)
 
 		if cc.getDevice() == 'uni':
 			files = glob('%s/Data/idl_libraries/ppxf/MILES_library/' % (cc.base_dir) +
@@ -120,7 +115,7 @@ class population(object):
 		self.ab_lines = {}
 		self.uncerts = {}
 		for l in self.lines:
-			ab, uncert = absorption(l, lam, continuum, noise=noise,
+			ab, uncert = absorption(l, lam, self.continuum, noise=noise,
 				unc_lam=unconvolved_lam, unc_spec=unconvolved_spectrum, 
 				conv_spec=convolved)
 			self.ab_lines[l], self.uncerts[l] = ab[0], uncert[0]

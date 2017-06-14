@@ -25,6 +25,7 @@ def compare_atlas3d():
 	print 'Compare to Atlas3d/SAURON'
 
 ## ----------============== Ellipticity vs lambda_Re ==============----------
+	print 'FR/SR'
 	museGalaxiesFile = "%s/Data/muse/analysis/galaxies2.txt" % (cc.base_dir)
 	vimosGalaxiesFile = "%s/Data/vimos/analysis/galaxies2.txt" % (cc.base_dir)
 
@@ -112,6 +113,7 @@ def compare_atlas3d():
 	fig.savefig('%s/Data/muse/analysis/lambda_R_ellipticity.png' % (cc.base_dir))
 	plt.close()
 ## ----------================ Core age vs KDC size ================----------
+	print 'KDC size/age'
 	muse_core_file = "%s/Data/muse/analysis/galaxies_core.txt" % (cc.base_dir)
 	muse_classify_file = "%s/Data/muse/analysis/galaxies_classify.txt" % (cc.base_dir)
 	vimos_core_file = "%s/Data/vimos/analysis/galaxies_core.txt" % (cc.base_dir)
@@ -134,8 +136,8 @@ def compare_atlas3d():
 		label='Slow rotating SAURON')
 
 	# MUSE
-	age_muse, age_unc_muse = np.loadtxt(muse_core_file, unpack=True, usecols=(1,2), 
-		skiprows=2)
+	age_muse, age_unc_muse, OIII_eqw_muse = np.loadtxt(muse_core_file, unpack=True, 
+		usecols=(1,2,7), skiprows=2)
 	gals_muse1 = np.loadtxt(muse_core_file, unpack=True, usecols=(0,), 
 		skiprows=2, dtype=str)
 	gals_muse2, size_muse = np.loadtxt(muse_classify_file, unpack=True, usecols=(0,6), 
@@ -158,8 +160,8 @@ def compare_atlas3d():
 				yerr=age_unc_muse[i1], color='g')
 
 	# VIMOS
-	age_vimos, age_unc_vimos = np.loadtxt(vimos_core_file, unpack=True, usecols=(1,2), 
-		skiprows=2)
+	age_vimos, age_unc_vimos, OIII_eqw_vimos = np.loadtxt(vimos_core_file, unpack=True, 
+		usecols=(1,2,7), skiprows=2)
 	gals_vimos1 = np.loadtxt(vimos_core_file, unpack=True, usecols=(0,), 
 		skiprows=2, dtype=str)
 	gals_vimos2, size_vimos = np.loadtxt(vimos_classify_file, unpack=True, usecols=(0,6), 
@@ -198,11 +200,33 @@ def compare_atlas3d():
 	ax.legend(facecolor='w')
 	ax.set_yscale('log')#, nonposy='clip', subsy=[1,2,3,4,5,6,7,8,9])
 	ax.set_xlabel('KDC size (pc)')
-	ax.set_ylabel('Luminosity-weighted Age of central 1 arcsec (Gyrs)')
+	ax.set_ylabel('Age of central 1 arcsec (Gyrs)')
 	ax.set_title('Age and size of KDCs')
 
 
-	fig.savefig('%s/Data/muse/analysis/KDC_size_age.png' % (cc.base_dir))
+	fig.savefig('%s/Data/muse/analysis/KDC_size_age.png' % (cc.base_dir))	
+	plt.close()
+## ----------=========== Core OIII vs radio power ============----------
+	print '[OIII] vs radio power'
+	GalaxiesFile = '%s/Data/galaxies_properties.txt' % (cc.base_dir)
+	radio_power =  np.loadtxt(GalaxiesFile, unpack=True, skiprows=2, usecols=(1))
+	galaxies =  np.loadtxt(GalaxiesFile, unpack=True, skiprows=2, usecols=(0,), dtype=str)
+
+	fig, ax = plt.subplots()
+
+	# MUSE
+	m_gals = np.array([np.where(galaxies==g)[0][0] for g in galaxies_muse])
+	ax.scatter(np.log10(OIII_eqw_muse), radio_power[m_gals], c='r', marker='x', 
+		label='MUSE')
+
+	ax.legend(facecolor='w')
+	ax.set_xlabel(r'log(EW [OIII]/$\mathrm{\AA}$)')
+	ax.set_ylabel(r'$\log(P_{1.4 \mathrm{G Hz}} / \mathrm{W \, Hz^{-1}})$')
+
+	fig.savefig('%s/Data/muse/analysis/OIIIew_radio.png' % (cc.base_dir))	
+	plt.close()
+
+	
 
 if __name__=='__main__':
 	compare_atlas3d()

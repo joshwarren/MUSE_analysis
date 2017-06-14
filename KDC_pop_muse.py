@@ -68,10 +68,10 @@ def KDC_pop(galaxy):
 	pop.plot_probability_distribution()
 
 	data_file = "%s/Data/muse/analysis/galaxies_core.txt" % (cc.base_dir)
-	age_gals, age_unc_gals, met_gals, met_unc_gals, alp_gals, alp_unc_gals, \
+	age_gals, age_unc_gals, met_gals, met_unc_gals, alp_gals, alp_unc_gals, OIII_eqw_gals,\
 		age_gals_outer, age_unc_gals_outer, met_gals_outer, met_unc_gals_outer, \
 		alp_gals_outer, alp_unc_gals_outer = np.loadtxt(data_file, unpack=True, 
-		skiprows=2, usecols=(1,2,3,4,5,6,7,8,9,10,11,12))
+		skiprows=2, usecols=(1,2,3,4,5,6,7,8,9,10,11,12,13))
 	galaxy_gals = np.loadtxt(data_file, skiprows=2, usecols=(0,),dtype=str)
 	i_gal = np.where(galaxy_gals==galaxy)[0][0]
 
@@ -85,6 +85,8 @@ def KDC_pop(galaxy):
 	# Save plot from pop before clearing from memory
 	f = pop.fig
 	ax = pop.ax
+	OIII_pos = np.argmin(np.abs(pp.lam - 5007))
+	OIII_eqw_gals[i_gal] = pop.continuum[OIII_pos]/pop.e_line_spec[OIII_pos]
 	del pop
 
 	# Outside apperture
@@ -115,19 +117,19 @@ def KDC_pop(galaxy):
 	alp_unc_gals_outer[i_gal] = pop_outside.unc_alp
 	del pop_outside
 
-	temp = "{0:10}{1:6}{2:6}{3:6}{4:6}{5:6}{6:9}{7:6}{8:6}{9:6}{10:6}{11:6}{12:6}\n"
+	temp = "{0:10}{1:6}{2:6}{3:6}{4:6}{5:6}{6:6}{7:10}{8:6}{9:6}{10:6}{11:6}{12:6}{13:6}\n"
 	with open(data_file, 'w') as f:
-		f.write('          Core (inner 1arcsec)                   Outer \n')
+		f.write('          Core (inner 1arcsec)                              Outer \n')
 		f.write(temp.format('Galaxy', 'Age', 'error', 'Metal', 'error', 'Alpha', 'error', 
-			'Age', 'error', 'Metal', 'error', 'Alpha', 'error'))
+			'OIII_eqw', 'Age', 'error', 'Metal', 'error', 'Alpha', 'error'))
 		for i in range(len(galaxy_gals)):
 			f.write(temp.format(galaxy_gals[i], str(round(age_gals[i],2)), 
 				str(round(age_unc_gals[i],2)), str(round(met_gals[i],2)), 
 				str(round(met_unc_gals[i],2)), str(round(alp_gals[i],2)), 
-				str(round(alp_unc_gals[i],2)), str(round(age_gals_outer[i],2)), 
-				str(round(age_unc_gals_outer[i],2)), str(round(met_gals_outer[i],2)), 
-				str(round(met_unc_gals_outer[i],2)), str(round(alp_gals_outer[i],2)), 
-				str(round(alp_unc_gals_outer[i],2))))
+				str(round(alp_unc_gals[i],2)), str(round(OIII_eqw_gals[i],4))
+				str(round(age_gals_outer[i],2)), str(round(age_unc_gals_outer[i],2)), 
+				str(round(met_gals_outer[i],2)), str(round(met_unc_gals_outer[i],2)),
+				str(round(alp_gals_outer[i],2)), str(round(alp_unc_gals_outer[i],2))))
 
 
 
