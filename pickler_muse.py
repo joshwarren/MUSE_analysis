@@ -10,9 +10,9 @@
 ##					(pop).
 ## ************************************************************** ##
 
-import numpy as np # for array handling
-import glob # for searching for files
-from astropy.io import fits as pyfits # reads fits files (is from astropy)
+import numpy as np
+import glob
+from astropy.io import fits
 import os
 import cPickle as pickle
 import warnings
@@ -61,7 +61,7 @@ def pickler(galaxy, discard=0, norm="lwv", opt="kin", override=False):
 	D = Data(np.loadtxt(tessellation_File, unpack=True, skiprows = 1, 
 			usecols=(0,1,2)))
 
-	galaxy_data, header = pyfits.getdata(dataCubeDirectory, 0, header=True)
+	galaxy_data = fits.getdata(dataCubeDirectory, 0)
 	
 	s = galaxy_data.shape
 	rows_to_remove = range(discard)
@@ -73,9 +73,7 @@ def pickler(galaxy, discard=0, norm="lwv", opt="kin", override=False):
 	galaxy_data = np.delete(galaxy_data, cols_to_remove, axis=2)
 	
 	D.unbinned_flux = np.nansum(galaxy_data, axis=0)
-	
-	temp_wav = np.loadtxt('%s/models/miles_library/m0001V' % (cc.home_dir),
-		usecols=(0,), unpack=True)
+
 	for i in range(D.number_of_bins):
 		D.bin[i].spectrum = np.loadtxt("%s/input/%d.dat" % (vin_dir_gasMC,i), 
 			unpack=True)
@@ -136,8 +134,6 @@ def pickler(galaxy, discard=0, norm="lwv", opt="kin", override=False):
 			glamdring_file = "%s/%i.dat" % (vin_dir_gasMC, bin)
 			c_in_bin = np.loadtxt(glamdring_file, unpack=True, usecols=(0,), 
 				dtype=str)
-			# vel, sig, h3s, h4s = np.loadtxt(glamdring_file, unpack=True, 
-			# 	usecols=(1,2,3,4))
 
 			if gas == 1 and c != 'stellar':
 				c_type = 'gas'
@@ -160,11 +156,6 @@ def pickler(galaxy, discard=0, norm="lwv", opt="kin", override=False):
 						dynamics[d][bin] = float(row[j+1])
 					except IndexError:
 						pass
-					# 	dynamics[d][bin] = 0
-				# dynamics['vel'][bin] = vel[i]				
-				# dynamics['sigma'][bin] = sig[i]
-				# dynamics['h3'][bin] = h3s[i]
-				# dynamics['h4'][bin] = h4s[i]
 
 				# Calculating uncertainties
 				if c_type != "stellar": MC_dir = "%s/gas" % (vin_dir_gasMC) 
@@ -189,13 +180,12 @@ def pickler(galaxy, discard=0, norm="lwv", opt="kin", override=False):
 			if np.isnan(dynamics[kine]).all():
 				D.components[c].unset(kine)
 			else:
-				# if c in D.list_components:
 				D.components[c].setkin(kine, dynamics[kine])
 				D.components[c].setkin_uncert(kine, dynamics_uncert[kine])
 
 	D.find_restFrame()
 # ------------================ Pickling =================----------
-
+	hkjdas
 	print "    Pickling D"
 	if not os.path.exists(out_pickle):
 		os.makedirs(out_pickle) 

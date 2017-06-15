@@ -289,7 +289,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 
 	for bin in D.bin:
 		for e in bin.e_line.itervalues():
-			e.__threshold__ = 3
+			e.__threshold__ = 0
 
 	if D.norm_method != norm:
 		D.norm_method = norm
@@ -313,8 +313,8 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 	if mapping.SNR or mapping is None:	
 		saveTo = "%s/SNR.png" % (out_nointerp)
 		ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, D.SNRatio, 
-			colorbar=True, nodots=True, title='SNR', save=saveTo, close=not overplot=={}, 
-			res=res)
+			colorbar=True, nodots=True, title='SNR', save=saveTo, close=True, 
+			res=res, flux_unbinned=D.unbinned_flux)
 # ------------=============== Plot image ================----------
 	if mapping.image or mapping is None:
 		print "    Image"
@@ -421,10 +421,6 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 				D.e_line[c].amp_noise, vmin=amp_min, vmax=amp_max, colorbar=True, 
 				nodots=True, title=amp_title, save=saveTo, close=True, 
 				res=res, flux_unbinned=D.unbinned_flux)
-			# if overplot:
-			# 	ax1.saveTo = saveTo
-			# 	for o, c in overplot.iteritems():
-			# 		add_(o, c, ax1, galaxy, header, close=True)
 # ------------=========== Setting titles etc ============----------
 	if mapping.kinematics or mapping is None:
 		print '    Kinematics'
@@ -669,9 +665,9 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 		f.add_axes(a.cax)
 		if hasattr(a,'ax2'): f.add_axes(a.ax2)
 		if hasattr(a,'ax3'): f.add_axes(a.ax3)
+		
 		if not os.path.exists(os.path.dirname(a.saveTo)):
 			os.makedirs(os.path.dirname(a.saveTo))
-		print a.get_title()
 		plt.savefig(a.saveTo)#, bbox_inches="tight")
 
 		if overplot:

@@ -221,7 +221,7 @@ def compare_atlas3d():
 
 	# VIMOS
 	v_gals = np.array([np.where(galaxies==g)[0][0] for g in galaxies_vimos])
-	ax.scatter(np.log10(OIII_eqw_vimos), radio_power[v_gals], c='r', marker='x', 
+	ax.scatter(np.log10(OIII_eqw_vimos), radio_power[v_gals], c='b', marker='x', 
 		label='VIMOS')
 
 	first = True
