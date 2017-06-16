@@ -2,7 +2,7 @@ import numpy as np
 from checkcomp import checkcomp
 cc = checkcomp()
 
-opt = 'kin_gas2' 	# must contain kin or pop
+opt = 'kin' 	# must contain kin or pop
 
 galaxies = ['ic1459', 'ic4296', 'ngc1316', 'ngc1399']
 gals=[0]

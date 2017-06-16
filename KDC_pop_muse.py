@@ -61,7 +61,7 @@ def KDC_pop(galaxy):
 	noise = noise[cut]
 	lamRange = np.array([lam[0],lam[-1]])/(1+z)
 
-	pp = run_ppxf(galaxy, spec, noise, lamRange, CD, vel, sig, z, 'kin', params, 
+	pp = run_ppxf(galaxy, spec, noise, lamRange, CD, vel, sig, z, params,
 		produce_plot=False)
 
 	pop = population(pp=pp, galaxy=galaxy)
@@ -102,7 +102,7 @@ def KDC_pop(galaxy):
 
 	
 
-	pp_outside = run_ppxf(galaxy, spec, noise, lamRange, CD, vel, sig, z, 'kin', params,
+	pp_outside = run_ppxf(galaxy, spec, noise, lamRange, CD, vel, sig, z, params,
 		produce_plot=False)
 	pop_outside = population(pp=pp_outside, galaxy=galaxy)
 	pop_outside.plot_probability_distribution(f=f, ax_array=ax)

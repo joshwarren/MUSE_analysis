@@ -418,6 +418,11 @@ def saveAll(galaxy, bin, pp, stellar_output, stellar_errors, gas_output=None,
 	with open(lambda_file, 'w') as l:
 		for i in range(len(pp.lam)):
 			l.write(str(pp.lam[i]) + '\n')
+
+	## save plot
+	check_directory("%s/bestfit/plots" % (dir))
+	plot_file="%s/bestfit/plots/%i.png" % (dir, bin)
+	pp.fig.savefig(plot_file, bbox_inches="tight")
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
@@ -523,23 +528,12 @@ def errors2(i_gal=None, opt=None, bin=None):
 
 	if cc.device == 'glamdring':
 		dir = cc.base_dir
-		data_file = "%s/analysis/galaxies.txt" % (dir)
 		tessellation_File = "%s/analysis_muse/%s/" % (dir, galaxy) + \
 			"%s/setup/voronoi_2d_binning_output.txt" % (opt)
 	else:
 		dir = '%s/Data/muse' % (cc.base_dir)
-		data_file = "%s/Data/vimos/analysis/galaxies.txt" % (cc.base_dir)
 		tessellation_File = "%s/analysis/%s/" % (dir, galaxy) + \
 			"%s/setup/voronoi_2d_binning_output.txt" % (opt)
-
-	# different data types need to be read separetly
-	z_gals, vel_gals, sig_gals = np.loadtxt(data_file, unpack=True, skiprows=1, 
-		usecols=(1,2,3))
-	galaxy_gals = np.loadtxt(data_file, skiprows=1, usecols=(0,),dtype=str)
-	i_gal = np.where(galaxy_gals==galaxy)[0][0]
-	vel = vel_gals[i_gal]
-	sig = sig_gals[i_gal]
-	z = z_gals[i_gal]
 ## ----------========= Reading Tessellation  ===============---------
 
 	## Reads the txt file containing the output of the binning_spaxels
@@ -572,21 +566,13 @@ def errors2(i_gal=None, opt=None, bin=None):
 	bin_lin_noise = np.sqrt(bin_lin_noise)
 ## ----------========= Calibrating the spectrum  ===========---------
 	lam = np.arange(s[0])*CDELT_spec + CRVAL_spec
-	bin_lin, lam, cut = remove_anomalies(bin_lin, window=201, repeats=3, 
+	bin_lin, lam, cut = remove_anomalies(bin_lin, window=201, repeats=0, 
 		lam=lam, return_cuts=True, set_range=params.set_range, n_sigma=2)
-	lamRange = np.array([lam[0],lam[-1]])/(1+z)
+	lamRange = np.array([lam[0],lam[-1]])
 	bin_lin_noise = bin_lin_noise[cut]
 
 
-	pp = run_ppxf(galaxy, bin_lin, bin_lin_noise, lamRange, CDELT_spec, vel, sig, z, 
-		opt, params)
-	if cc.device == 'glamdring':
-		saveTo="%s/analysis_muse/%s/%s/MC/bestfit/plots/%s.png" % (dir, galaxy, 
-			opt, str(bin))	
-	else:
-		saveTo="%s/analysis/%s/%s/MC/bestfit/plots/%s.png" % (dir, galaxy, opt, str(bin))
-
-	pp.fig.savefig(saveTo, bbox_inches="tight")
+	pp = run_ppxf(galaxy, bin_lin, bin_lin_noise, lamRange, CDELT_spec, params)
 ## ----------===============================================---------
 ## ----------================= The MC part =================---------
 ## ----------===============================================---------
@@ -619,11 +605,25 @@ def errors2(i_gal=None, opt=None, bin=None):
 ## ----------===============================================---------
 ## ----------=============== Run analysis  =================---------
 ## ----------===============================================---------
-def run_ppxf(galaxy, bin_lin, bin_lin_noise, lamRange, CDELT, vel, sig, z, opt, 
-	params, produce_plot=True):
+def run_ppxf(galaxy, bin_lin, bin_lin_noise, lamRange, CDELT, params, produce_plot=True, 
+	use_all_temp=False):
+	if cc.device == 'glamdring':
+		data_file = "%s/analysis/galaxies.txt" % (cc.base_dir)
+	else:
+		data_file = "%s/Data/vimos/analysis/galaxies.txt" % (cc.base_dir)
+	# different data types need to be read separetly
+	z_gals, vel_gals, sig_gals = np.loadtxt(data_file, unpack=True, skiprows=1, 
+		usecols=(1,2,3))
+	galaxy_gals = np.loadtxt(data_file, skiprows=1, usecols=(0,),dtype=str)
+	i_gal = np.where(galaxy_gals==galaxy)[0][0]
+	vel = vel_gals[i_gal]
+	sig = sig_gals[i_gal]
+	z = z_gals[i_gal]
+
+	lamRange /= (1+z)
 	FWHM_gal = params.FWHM_gal/(1+z) # Adjust resolution in Angstrom
 ## ----------============= Stellar templates ===============---------
-	stellar_templates = get_stellar_templates(galaxy, FWHM_gal)
+	stellar_templates = get_stellar_templates(galaxy, FWHM_gal, use_all_temp=use_all_temp)
 	velscale = stellar_templates.velscale
 	
 	## smooth spectrum to fit with templates resolution
@@ -645,7 +645,7 @@ def run_ppxf(galaxy, bin_lin, bin_lin_noise, lamRange, CDELT, vel, sig, z, opt,
 	lambdaq = np.exp(logLam_bin)
 ## ----------=============== Emission lines ================---------
 	goodPixels = determine_goodpixels(logLam_bin,stellar_templates.lamRange_template, 
-		vel, z, gas=params.gas!=0, mask=True)#galaxy=='ic1459')
+		vel, z, gas=params.gas!=0)#galaxy=='ic1459')
 
 	e_templates = get_emission_templates(params.gas, lamRange, 
 		stellar_templates.logLam_template, FWHM_gal, goodWav=lambdaq[goodPixels])

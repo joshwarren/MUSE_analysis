@@ -125,19 +125,25 @@ def binning_spaxels(galaxy, targetSN=None, opt='kin', auto_override=False, debug
 		noise = np.sqrt(np.abs(galaxy_data[int(np.mean(set_range_pix)),:,:])).flatten()
 	else:
 		signal = np.zeros((s[1],s[2]))
+		# flux = np.zeros((s[1],s[2]))
 		noise = np.zeros((s[1],s[2]))
 		blocks = 10
 		bl_delt1 = int(np.ceil(s[1]/float(blocks)))
 		bl_delt2 = int(np.ceil(s[2]/float(blocks)))
 		for i in xrange(blocks):
 			for j in xrange(blocks):
+				# flux[bl_delt1*i:bl_delt1*(i+1),bl_delt2*j:bl_delt2*(j+1)] = np.trapz(
+				# 	galaxy_data[set_range_pix[0]:set_range_pix[1], 
+				# 	bl_delt1*i:bl_delt1*(i+1), bl_delt2*j:bl_delt2*(j+1)], axis=0, 
+				# 	dx=CDELT_spec) 
 				signal[bl_delt1*i:bl_delt1*(i+1),bl_delt2*j:bl_delt2*(j+1)] = \
 					np.nanmedian(galaxy_data[set_range_pix[0]:set_range_pix[1], 
 					bl_delt1*i:bl_delt1*(i+1), bl_delt2*j:bl_delt2*(j+1)], axis=0)
 				noise[bl_delt1*i:bl_delt1*(i+1),bl_delt2*j:bl_delt2*(j+1)] = \
 					np.nanmedian(np.abs(galaxy_noise[set_range_pix[0]:set_range_pix[1], 
 					bl_delt1*i:bl_delt1*(i+1), bl_delt2*j:bl_delt2*(j+1)]), axis=0)
-		
+		# signal_sav = np.array(signal)
+		# noise_sav = np.array(noise)
 		signal = signal.flatten()
 		noise = noise.flatten()
 
@@ -176,8 +182,26 @@ def binning_spaxels(galaxy, targetSN=None, opt='kin', auto_override=False, debug
 	# y = y[mask]
 	# n_spaxels = np.sum(mask)
 	
+	# import matplotlib.pyplot as plt 
+	# fig,ax=plt.subplots()
+	# s1=signal_sav/(flux/s[0])
+	# s_order = np.sort(s1).flatten()
+	# s1[s1>s_order[-15]] = s_order[-16]
+	# a= ax.imshow(s1)
+	# ax.set_title("'signal'/flux")
+	# fig.colorbar(a)
+	
+	# fig2,ax2=plt.subplots()
+	# a = ax2.imshow(noise_sav/(flux/s[0]))
+	# fig2.colorbar(a)
+	# ax2.set_title("'noise'/flux")
 
 
+	# fig3,ax3=plt.subplots()
+	# a = ax3.imshow(noise_sav/np.sqrt(flux/s[0]))
+	# fig3.colorbar(a)
+	# ax3.set_title("'noise'/sqrt(flux)")
+	# plt.show()
 
 	if not os.path.exists("%s/analysis/%s/%s/setup" % (dir,galaxy,opt)):
 		os.makedirs("%s/analysis/%s/%s/setup" % (dir, galaxy,opt))
