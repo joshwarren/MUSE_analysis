@@ -237,7 +237,28 @@ def compare_atlas3d():
 				ax.plot(np.log10([OIII_eqw_muse[i_muse], OIII_eqw_vimos[i_vimos]]), 
 					[radio_power[m_gals[i_muse]],radio_power[v_gals[i_vimos]]], 'k--', 
 					zorder=1)
-				
+
+	# Atlas3D
+	atlas3d_file = '%s/Data/atlas3d/XXXI_tableA1.dat' % (cc.base_dir)
+	galaxies_altas, radio_atlas = np.loadtxt(atlas3d_file, unpack=True, usecols=(0,10), 
+		skiprows=2, dtype=str)
+	m = np.array(['<' not in r for r in radio_atlas])
+	atlas3d_file = '%s/Data/atlas3d/XXXI_tableA6.dat' % (cc.base_dir)
+	galaxies_altas2, OIII_eqw_atlas = np.loadtxt(atlas3d_file, unpack=True, 
+		usecols=(0,8), skiprows=2, dtype=str)#(str,float), missing_values='-')
+	m2 = np.array([r!='-' for r in OIII_eqw_atlas])
+
+	a_gals = np.array([np.where(galaxies_altas==g)[0][0] for g in galaxies_altas2[m2] 
+		if g in galaxies_altas[m]])
+	a_gals2 = np.array([np.where(galaxies_altas2==g)[0][0] for g in galaxies_altas2[m2]
+		if g in galaxies_altas[m]])
+
+	ax.scatter(OIII_eqw_atlas[a_gals2].astype(float), radio_atlas[a_gals].astype(float), 
+		marker='x', c='grey', label='Atlas3D')
+
+
+	ax.axvline(np.log(0.8), color='k', linestyle=':', label='AGN limit')
+
 	ax.legend(facecolor='w')
 	ax.set_xlabel(r'log(EW [OIII]/$\mathrm{\AA}$)')
 	ax.set_ylabel(r'$\log(P_{1.4 \mathrm{G Hz}} / \mathrm{W \, Hz^{-1}})$')
