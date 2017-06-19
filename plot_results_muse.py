@@ -403,8 +403,8 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 			ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, 
 				D.e_line[c].equiv_width, vmin=eq_min, vmax=eq_max, colorbar=True, 
 				nodots=True, label=eqCBtitle, title=eq_title, ax=ax, res=res,
-				flux_unbinned=D.unbinned_flux, signal_noise=D.SNRatio,
-				signal_noise_target=SN_target, header=header)
+				flux_unbinned=D.unbinned_flux, signal_noise=D.e_line[c].amp_noise,
+				signal_noise_target=5, header=header)
 			ax_array.append(ax)
 			f.delaxes(ax)
 			f.delaxes(ax.cax)

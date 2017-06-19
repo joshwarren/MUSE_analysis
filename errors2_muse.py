@@ -669,6 +669,9 @@ def run_ppxf(galaxy, bin_lin, bin_lin_noise, lamRange, CDELT, params, produce_pl
 		degree=params.degree, vsyst=dv, component=component, lam=lambdaq, 
 		plot=not params.quiet, quiet=params.quiet, produce_plot=produce_plot)
 
+	# Add noise to plot
+	pp.ax.plot(lambdaq, noise+np.min(pp.bestfit[pp.goodpixels]), 'purple')
+
 	pp.templatesToUse = templatesToUse
 	pp.element = element
 	return pp

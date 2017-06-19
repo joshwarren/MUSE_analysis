@@ -185,7 +185,6 @@ def pickler(galaxy, discard=0, norm="lwv", opt="kin", override=False):
 
 	D.find_restFrame()
 # ------------================ Pickling =================----------
-	hkjdas
 	print "    Pickling D"
 	if not os.path.exists(out_pickle):
 		os.makedirs(out_pickle) 

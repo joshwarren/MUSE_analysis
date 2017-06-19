@@ -7,6 +7,7 @@ if 'home' not in cc.device:
 	matplotlib.use('Agg') 
 import numpy as np 
 import matplotlib.pyplot as plt
+from markers_atlas3d import marker_atlas3d
 from prefig import Prefig
 Prefig(transparent=False)
 
@@ -61,31 +62,36 @@ def compare_atlas3d():
 
 	# S0s
 	ax.scatter(ellipticity_atlas[no_rot_altas*~E], lambda_Re_altas[no_rot_altas*~E], 
-		marker='o', c='lightgrey', alpha=0.5, lw=0)
+		marker=marker_atlas3d(0), c='lightgrey', alpha=0.5, lw=0)
 	ax.scatter(ellipticity_atlas[complex_rot_atlas*~E], 
-		lambda_Re_altas[complex_rot_atlas*~E], c='lightgrey', alpha=0.5, lw=0)
+		lambda_Re_altas[complex_rot_atlas*~E], marker=marker_atlas3d(1),
+		c='lightgrey', alpha=0.5, lw=0)
 	ax.scatter(ellipticity_atlas[KDC_atlas*~E], lambda_Re_altas[KDC_atlas*~E], 
-		marker='^', c='lightgrey', alpha=0.5, lw=0)
+		marker=marker_atlas3d(2), c='lightgrey', alpha=0.5, lw=0)
 	ax.scatter(ellipticity_atlas[counter_rot_atlas*~E], 
-		lambda_Re_altas[counter_rot_atlas*~E], c='lightgrey', alpha=0.5, lw=0)
-	ax.scatter(ellipticity_atlas[regular_rot_atlas*~E], 
-		lambda_Re_altas[regular_rot_atlas*~E], c='lightgrey', alpha=0.5, lw=0, 
-		label=r'Atlas3D S0: $T>-3.5$')
+		lambda_Re_altas[counter_rot_atlas*~E], marker=marker_atlas3d(3),
+		c='lightgrey', alpha=0.5, lw=0)
+	ax.plot(ellipticity_atlas[regular_rot_atlas*~E], 
+		lambda_Re_altas[regular_rot_atlas*~E], marker=marker_atlas3d(4),
+		c='lightgrey', alpha=0.5, lw=0, label=r'Atlas3D S0: $T>-3.5$', 
+		markerfacecolor='none')
 
 	# Ellipticals
 	ax.scatter(ellipticity_atlas[no_rot_altas*E], lambda_Re_altas[no_rot_altas*E], 
-		marker='o', c='k', alpha=0.5, lw=0)
+		marker=marker_atlas3d(0), c='k', alpha=0.5, lw=0)
 	ax.scatter(ellipticity_atlas[complex_rot_atlas*E], 
-		lambda_Re_altas[complex_rot_atlas*E], c='k', alpha=0.5, lw=0)
-	ax.scatter(ellipticity_atlas[KDC_atlas*E], lambda_Re_altas[KDC_atlas*E], marker='^', 
-		c='k', alpha=0.5, lw=0)
+		lambda_Re_altas[complex_rot_atlas*E], marker=marker_atlas3d(1), c='k', alpha=0.5, 
+		lw=0)
+	ax.scatter(ellipticity_atlas[KDC_atlas*E], lambda_Re_altas[KDC_atlas*E], 
+		marker=marker_atlas3d(2), c='k', alpha=0.5, lw=0)
 	ax.scatter(ellipticity_atlas[counter_rot_atlas*E], 
-		lambda_Re_altas[counter_rot_atlas*E], c='k', alpha=0.5, lw=0)
-	ax.scatter(ellipticity_atlas[regular_rot_atlas*E], 
-		lambda_Re_altas[regular_rot_atlas*E], c='k', alpha=0.5, lw=0, 
-		label=r'Atlas3D E: $T \leq -3.5$')
+		lambda_Re_altas[counter_rot_atlas*E], marker=marker_atlas3d(3), c='k', alpha=0.5, 
+		lw=0)
+	ax.plot(ellipticity_atlas[regular_rot_atlas*E], 
+		lambda_Re_altas[regular_rot_atlas*E], marker=marker_atlas3d(4), c='k', alpha=0.5, 
+		lw=0, label=r'Atlas3D E: $T \leq -3.5$', markerfacecolor='none')
 	
-	# Plot scatter
+	# Join MUSE and VIMOS
 	for i_muse, g in enumerate(galaxies_muse):
 		if g in galaxies_vimos:
 			i_vimos = np.where(galaxies_vimos==g)[0][0]
@@ -96,6 +102,40 @@ def compare_atlas3d():
 			else:
 				ax.plot([ellipticity_muse[i_muse], ellipticity_vimos[i_vimos]], 
 					[lambda_Re_muse[i_muse],lambda_Re_vimos[i_vimos]], 'k--', zorder=1)
+
+	ell = np.arange(0.01,0.99,0.01)
+
+	# Isotropic line
+	# vSigma = 0.831 * np.sqrt(ell/(1 - 0.896 * ell))
+	# k = 1.1
+	# lambda_R = k*vSigma/np.sqrt(1 + k**2 * vSigma**2)
+	# ax.plot(ell, lambda_R, 'g', label='Isotropic Line')
+
+	# Add envolope - from footnote, page 430, SAURON X
+	k = 1.1
+	alpha = 0.15
+	vSigma = np.sqrt((0.09 + 0.1 * ell) * ell/(1 - ell))
+	lambda_R = k*vSigma/np.sqrt(1 + k**2 * vSigma**2)
+	ax.plot(ell, lambda_R, 'm', label=r'$\delta = 0.7 \epsilon_\mathrm{intr}$')
+
+
+	# Lines of constant intrinsic ellipticity, from Cappellari ARAA 2016 Review
+	i = np.arange(0, np.pi/2, 0.01)
+	for j in np.arange(0.2,1.2, 0.2):
+		e_ob = ell[int(round(j*(len(ell)-1),0))]
+		vSigma_ob = vSigma[int(round(j*(len(ell)-1),0))]
+
+		ell_intr = 1 - np.sqrt(1 + e_ob * (e_ob - 2)*np.sin(i)**2)
+		e = np.sqrt(1 - (1 - ell_intr)**2)
+		Omega = 0.5*(np.arcsin(e) - e * np.sqrt(1 - e**2))/(
+			e * np.sqrt(1 - e**2) - (1 - e**2) * np.arcsin(e))
+		delta = 1 - (1 + vSigma_ob**2)/((1 - alpha * vSigma_ob**2) * Omega)
+		vSigma_ob = vSigma_ob * np.sin(i)/np.sqrt(1 - delta * np.cos(i)**2)
+		lambda_R = k*vSigma_ob/np.sqrt(1 + k**2 * vSigma_ob**2)
+		ax.plot(ell_intr, lambda_R, 'k:', linewidth=1)
+
+
+
 
 	ax.scatter(ellipticity_muse, lambda_Re_muse, c='b', lw=0, zorder=2, label='MUSE')
 	ax.scatter(ellipticity_vimos, lambda_Re_vimos, c='r', lw=0, zorder=2, label='VIMOS')

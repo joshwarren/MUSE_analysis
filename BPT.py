@@ -30,12 +30,12 @@ def BPT(galaxy, D=None, opt='kin'):
 			e.__threshold__ = 0
 # ------------=============== BPT diagram =================----------
 	fig, ax = plt.subplots()
-	x = np.log(D.e_line['[OIII]5007d'].flux/D.e_line['Halpha'].flux)
-	y = np.log(D.e_line['[SII]6716'].flux/D.e_line['Hbeta'].flux)
+	y = np.log(D.e_line['[OIII]5007d'].flux/D.e_line['Hbeta'].flux)
+	x = np.log(D.e_line['[SII]6716'].flux/D.e_line['Halpha'].flux)
 
 	Seyfert2 = (0.72/(x - 0.32) + 1.30 < y) * (1.89 * x + 0.76 < y)
-	LINER = ((0.72/(x - 0.32) + 1.30 < y) * (1.89 * x + 0.76 > y)) + (x > 0.32)
-	SF = (0.72/(x - 0.32) + 1.30 > y) - (x > 0.32)
+	LINER = ((0.72/(x - 0.32) + 1.30 < y) * (1.89 * x + 0.76 > y))# + (x > 0.32)
+	SF = (y < 0.72/(x - 0.32) + 1.30)# - (x > 0.32)
 	# o = (1.89 * x + 0.76 > y) * (x > 0.32)
 
 	ax.scatter(x[Seyfert2], y[Seyfert2], c='r')
@@ -60,8 +60,8 @@ def BPT(galaxy, D=None, opt='kin'):
 	ax.set_xlim([-1.2, 0.7])
 	ax.set_ylim([-1.2, 1.5])
 
-	ax.set_xlabel(r'log([OIII]/$H_\alpha$)')
-	ax.set_ylabel(r'log([SII]/$H_\beta$)')
+	ax.set_ylabel(r'log([OIII]/$H_\beta$)')
+	ax.set_xlabel(r'log([SII]/$H_\alpha$)')
 
 	saveTo = '%s/plots/BPT.png' % (output)
 	if not os.path.exists(os.path.dirname(saveTo)):
