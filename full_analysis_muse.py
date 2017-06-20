@@ -37,8 +37,8 @@ if __name__=="__main__":
 	galaxies = [
 		'ic1459',
 		'ic4296', 
-		# 'ngc1316',
-		# 'ngc1399'
+		'ngc1316',
+		'ngc1399'
 		]
 	for g in galaxies:
 		try: 

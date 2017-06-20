@@ -29,6 +29,9 @@ def compare_atlas3d():
 	print 'FR/SR'
 	museGalaxiesFile = "%s/Data/muse/analysis/galaxies2.txt" % (cc.base_dir)
 	vimosGalaxiesFile = "%s/Data/vimos/analysis/galaxies2.txt" % (cc.base_dir)
+	muse_classify_file = "%s/Data/muse/analysis/galaxies_classify.txt" % (cc.base_dir)
+	vimos_classify_file = "%s/Data/vimos/analysis/galaxies_classify.txt" % (cc.base_dir)
+
 
 	lambda_Re_muse, ellipticity_muse =  np.loadtxt(museGalaxiesFile, unpack=True, 
 		skiprows=1, usecols=(1,2))
@@ -44,52 +47,53 @@ def compare_atlas3d():
 
 	# Plot Atlas3d results NB: all atlas3d tables are in alphabetical order
 	atlas3d_file = '%s/Data/atlas3d/III_tableB1.dat' % (cc.base_dir)
-	ellipticity_atlas, lambda_Re_altas = np.loadtxt(atlas3d_file, unpack=True, 
+	ellipticity_atlas, lambda_Re_atlas = np.loadtxt(atlas3d_file, unpack=True, 
 		usecols=(2,7), dtype=float)
 	atlas3d_file = '%s/Data/atlas3d/II_tableD1.dat' % (cc.base_dir)
-	structure_altas = np.loadtxt(atlas3d_file, unpack=True, usecols=(13,), dtype=str)
+	structure_atlas = np.loadtxt(atlas3d_file, unpack=True, usecols=(13,), dtype=str)
 	atlas3d_file = '%s/Data/atlas3d/I_table3.dat' % (cc.base_dir)
 	T_type = np.loadtxt(atlas3d_file, unpack=True, usecols=(10,))
 	E = T_type < -3.5
 	
-	no_rot_altas = structure_altas=='NRR/LV'
-	complex_rot_atlas = structure_altas=='NRR/NF'
-	KDC_atlas = (structure_altas=='NRR/KDC') + (structure_altas=='NRR/CRC') + \
-		(structure_altas=='RR/CRC')
-	counter_rot_atlas = (structure_altas=='NRR/2s') + (structure_altas=='RR/2s')
-	regular_rot_atlas = (structure_altas=='RR/NF') + (structure_altas=='RR/2m') + \
-		(structure_altas=='RR/KT')
+	no_rot_muse = structure_atlas=='NRR/LV'
+	complex_rot_muse = structure_atlas=='NRR/NF'
+	KDC_atlas = (structure_atlas=='NRR/KDC') + (structure_atlas=='NRR/CRC') + \
+		(structure_atlas=='RR/CRC')
+	counter_rot_muse = (structure_atlas=='NRR/2s') + (structure_atlas=='RR/2s')
+	regular_rot_muse = (structure_atlas=='RR/NF') + (structure_atlas=='RR/2m') + \
+		(structure_atlas=='RR/KT')
 
 	# S0s
-	ax.scatter(ellipticity_atlas[no_rot_altas*~E], lambda_Re_altas[no_rot_altas*~E], 
-		marker=marker_atlas3d(0), c='lightgrey', alpha=0.5, lw=0)
-	ax.scatter(ellipticity_atlas[complex_rot_atlas*~E], 
-		lambda_Re_altas[complex_rot_atlas*~E], marker=marker_atlas3d(1),
+	ax.scatter(ellipticity_atlas[no_rot_muse*~E], lambda_Re_atlas[no_rot_muse*~E], 
+		marker=marker_atlas3d(0), c='lightgrey', alpha=0.5, lw=0,
+		label=r'Atlas3D S0: $T>-3.5$')
+	ax.scatter(ellipticity_atlas[complex_rot_muse*~E], 
+		lambda_Re_atlas[complex_rot_muse*~E], marker=marker_atlas3d(1),
 		c='lightgrey', alpha=0.5, lw=0)
-	ax.scatter(ellipticity_atlas[KDC_atlas*~E], lambda_Re_altas[KDC_atlas*~E], 
+	ax.scatter(ellipticity_atlas[KDC_atlas*~E], lambda_Re_atlas[KDC_atlas*~E], 
 		marker=marker_atlas3d(2), c='lightgrey', alpha=0.5, lw=0)
-	ax.scatter(ellipticity_atlas[counter_rot_atlas*~E], 
-		lambda_Re_altas[counter_rot_atlas*~E], marker=marker_atlas3d(3),
+	ax.scatter(ellipticity_atlas[counter_rot_muse*~E], 
+		lambda_Re_atlas[counter_rot_muse*~E], marker=marker_atlas3d(3),
 		c='lightgrey', alpha=0.5, lw=0)
-	ax.plot(ellipticity_atlas[regular_rot_atlas*~E], 
-		lambda_Re_altas[regular_rot_atlas*~E], marker=marker_atlas3d(4),
-		c='lightgrey', alpha=0.5, lw=0, label=r'Atlas3D S0: $T>-3.5$', 
-		markerfacecolor='none')
+	ax.plot(ellipticity_atlas[regular_rot_muse*~E], 
+		lambda_Re_atlas[regular_rot_muse*~E], marker=marker_atlas3d(4),
+		c='lightgrey', alpha=0.5, lw=0, markerfacecolor='none')
 
 	# Ellipticals
-	ax.scatter(ellipticity_atlas[no_rot_altas*E], lambda_Re_altas[no_rot_altas*E], 
-		marker=marker_atlas3d(0), c='k', alpha=0.5, lw=0)
-	ax.scatter(ellipticity_atlas[complex_rot_atlas*E], 
-		lambda_Re_altas[complex_rot_atlas*E], marker=marker_atlas3d(1), c='k', alpha=0.5, 
+	ax.scatter(ellipticity_atlas[no_rot_muse*E], lambda_Re_atlas[no_rot_muse*E], 
+		marker=marker_atlas3d(0), c='k', alpha=0.5, lw=0, 
+		label=r'Atlas3D E: $T \leq -3.5$')
+	ax.scatter(ellipticity_atlas[complex_rot_muse*E], 
+		lambda_Re_atlas[complex_rot_muse*E], marker=marker_atlas3d(1), c='k', alpha=0.5, 
 		lw=0)
-	ax.scatter(ellipticity_atlas[KDC_atlas*E], lambda_Re_altas[KDC_atlas*E], 
+	ax.scatter(ellipticity_atlas[KDC_atlas*E], lambda_Re_atlas[KDC_atlas*E], 
 		marker=marker_atlas3d(2), c='k', alpha=0.5, lw=0)
-	ax.scatter(ellipticity_atlas[counter_rot_atlas*E], 
-		lambda_Re_altas[counter_rot_atlas*E], marker=marker_atlas3d(3), c='k', alpha=0.5, 
+	ax.scatter(ellipticity_atlas[counter_rot_muse*E], 
+		lambda_Re_atlas[counter_rot_muse*E], marker=marker_atlas3d(3), c='k', alpha=0.5, 
 		lw=0)
-	ax.plot(ellipticity_atlas[regular_rot_atlas*E], 
-		lambda_Re_altas[regular_rot_atlas*E], marker=marker_atlas3d(4), c='k', alpha=0.5, 
-		lw=0, label=r'Atlas3D E: $T \leq -3.5$', markerfacecolor='none')
+	ax.plot(ellipticity_atlas[regular_rot_muse*E], 
+		lambda_Re_atlas[regular_rot_muse*E], marker=marker_atlas3d(4), c='k', alpha=0.5, 
+		lw=0, markerfacecolor='none')
 	
 	# Join MUSE and VIMOS
 	for i_muse, g in enumerate(galaxies_muse):
@@ -135,10 +139,51 @@ def compare_atlas3d():
 		ax.plot(ell_intr, lambda_R, 'k:', linewidth=1)
 
 
+	# MUSE
+	gals_muse2, regular_rot_muse, no_rot_muse, complex_rot_muse, counter_rot_muse, \
+		KDC_muse = np.loadtxt(muse_classify_file, unpack=True, usecols=(0,2,3,4,5,6), 
+		dtype=str, skiprows=1)
+	gal_order = [np.where(galaxies_muse==g)[0][0] for g in gals_muse2]
+	regular_rot_muse = (regular_rot_muse!='-')[gal_order]
+	no_rot_muse = (no_rot_muse!='-')[gal_order]
+	complex_rot_muse = (complex_rot_muse!='-')[gal_order]
+	counter_rot_muse = (counter_rot_muse!='-')[gal_order]
+	KDC_muse = (KDC_muse!='-')[gal_order]
+
+	ax.scatter(ellipticity_muse[no_rot_muse], lambda_Re_muse[no_rot_muse], 
+		marker=marker_atlas3d(0), c='b', alpha=0.5, lw=0, label='MUSE')
+	ax.scatter(ellipticity_muse[complex_rot_muse], lambda_Re_muse[complex_rot_muse], 
+		marker=marker_atlas3d(1), c='b', alpha=0.5, lw=0)
+	ax.scatter(ellipticity_muse[KDC_muse], lambda_Re_muse[KDC_muse], 
+		marker=marker_atlas3d(2), c='b', alpha=0.5, lw=0)
+	ax.scatter(ellipticity_muse[counter_rot_muse], lambda_Re_muse[counter_rot_muse], 
+		marker=marker_atlas3d(3), c='b', alpha=0.5, lw=0)
+	ax.plot(ellipticity_muse[regular_rot_muse], lambda_Re_muse[regular_rot_muse], 
+		marker=marker_atlas3d(4), c='b', alpha=0.5, lw=0, markerfacecolor='none')
 
 
-	ax.scatter(ellipticity_muse, lambda_Re_muse, c='b', lw=0, zorder=2, label='MUSE')
-	ax.scatter(ellipticity_vimos, lambda_Re_vimos, c='r', lw=0, zorder=2, label='VIMOS')
+	# VIMOS
+	gals_vimos2, regular_rot_vimos, no_rot_vimos, complex_rot_vimos, counter_rot_vimos, \
+		KDC_vimos = np.loadtxt(vimos_classify_file, unpack=True, usecols=(0,2,3,4,5,6), 
+		dtype=str, skiprows=1)
+	gal_order = [np.where(galaxies_vimos==g)[0][0] for g in gals_vimos2]
+	regular_rot_vimos = (regular_rot_vimos!='-')[gal_order]
+	no_rot_vimos = (no_rot_vimos!='-')[gal_order]
+	complex_rot_vimos = (complex_rot_vimos!='-')[gal_order]
+	counter_rot_vimos = (counter_rot_vimos!='-')[gal_order]
+	KDC_vimos = (KDC_vimos!='-')[gal_order]
+
+	ax.scatter(ellipticity_vimos[no_rot_vimos], lambda_Re_vimos[no_rot_vimos], 
+		marker=marker_atlas3d(0), c='r', alpha=0.5, lw=0, label='MUSE')
+	ax.scatter(ellipticity_vimos[complex_rot_vimos], lambda_Re_vimos[complex_rot_vimos], 
+		marker=marker_atlas3d(1), c='r', alpha=0.5, lw=0)
+	ax.scatter(ellipticity_vimos[KDC_vimos], lambda_Re_vimos[KDC_vimos], 
+		marker=marker_atlas3d(2), c='r', alpha=0.5, lw=0)
+	ax.scatter(ellipticity_vimos[counter_rot_vimos], lambda_Re_vimos[counter_rot_vimos], 
+		marker=marker_atlas3d(3), c='r', alpha=0.5, lw=0)
+	ax.plot(ellipticity_vimos[regular_rot_vimos], lambda_Re_vimos[regular_rot_vimos], 
+		marker=marker_atlas3d(4), c='r', alpha=0.5, lw=0, markerfacecolor='none')
+
 	ax.set_title('Atlas3D Fast/Slow Rotator Classification scheme')
 	ax.set_xlabel(r'$\epsilon$')
 	ax.set_ylabel(r'$\lambda_R (R_e)$')
@@ -280,18 +325,18 @@ def compare_atlas3d():
 
 	# Atlas3D
 	atlas3d_file = '%s/Data/atlas3d/XXXI_tableA1.dat' % (cc.base_dir)
-	galaxies_altas, radio_atlas = np.loadtxt(atlas3d_file, unpack=True, usecols=(0,10), 
+	galaxies_atlas, radio_atlas = np.loadtxt(atlas3d_file, unpack=True, usecols=(0,10), 
 		skiprows=2, dtype=str)
 	m = np.array(['<' not in r for r in radio_atlas])
 	atlas3d_file = '%s/Data/atlas3d/XXXI_tableA6.dat' % (cc.base_dir)
-	galaxies_altas2, OIII_eqw_atlas = np.loadtxt(atlas3d_file, unpack=True, 
+	galaxies_atlas2, OIII_eqw_atlas = np.loadtxt(atlas3d_file, unpack=True, 
 		usecols=(0,8), skiprows=2, dtype=str)#(str,float), missing_values='-')
 	m2 = np.array([r!='-' for r in OIII_eqw_atlas])
 
-	a_gals = np.array([np.where(galaxies_altas==g)[0][0] for g in galaxies_altas2[m2] 
-		if g in galaxies_altas[m]])
-	a_gals2 = np.array([np.where(galaxies_altas2==g)[0][0] for g in galaxies_altas2[m2]
-		if g in galaxies_altas[m]])
+	a_gals = np.array([np.where(galaxies_atlas==g)[0][0] for g in galaxies_atlas2[m2] 
+		if g in galaxies_atlas[m]])
+	a_gals2 = np.array([np.where(galaxies_atlas2==g)[0][0] for g in galaxies_atlas2[m2]
+		if g in galaxies_atlas[m]])
 
 	ax.scatter(OIII_eqw_atlas[a_gals2].astype(float), radio_atlas[a_gals].astype(float), 
 		marker='x', c='grey', label='Atlas3D')
