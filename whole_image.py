@@ -33,7 +33,7 @@ def whole_image(galaxy):
 		with open("%s/galaxies.txt" % (saveTo), 'w') as f:
 			f.write(galaxies[0]+"   SN_kin_whole_gal \n")
 			for i in xrange(1, len(galaxies)):
-				f.write(galaxies[i] + "   1000 \n")
+				f.write(galaxies[i] + "   10000 \n")
 
 
 

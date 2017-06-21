@@ -25,9 +25,9 @@ from compare_atlas3d import compare_atlas3d
 
 galaxies = [
 			'ic1459', 
-			# 'ic4296'#,
-			# 'ngc1316',
-			# 'ngc1399'
+			'ic4296',
+			'ngc1316',
+			'ngc1399'
 			]
 # galaxies = ['ic1459']
 # galaxies = ['ic4296']
@@ -35,13 +35,13 @@ galaxies = [
 # galaxies = ['ngc1399']
 
 m=mapping()
-# m.SNR = False
-# m.image = False
-# m.equivalent_width = False
+m.SNR = False
+m.image = False
+m.equivalent_width = False
 # m.amp_noise = False
-# m.kinematics = False
-# m.plot_resid = False
-# m.line_ratios = False
+m.kinematics = False
+m.plot_resid = False
+m.line_ratios = False
 
 discard = 0
 norm = 'lws' #'lwv'
@@ -53,17 +53,17 @@ for galaxy in galaxies:
 	D = None
 	print galaxy
 	try:
-		D = pickler(galaxy, discard=discard, norm=norm, opt='kin'+MC_dir)
-		D = sav_for_kinemetry(galaxy, opt='kin'+MC_dir, D=D)
+		# D = pickler(galaxy, discard=discard, norm=norm, opt='kin'+MC_dir)
+		# D = sav_for_kinemetry(galaxy, opt='kin'+MC_dir, D=D)
 		D = plot_results(galaxy, discard=discard, overplot = {'radio':'r'},#, 'xray':'c'}, 
 			residual="median", norm=norm, D=D, show_bin_num=True, mapping=m, 
 			opt='kin'+MC_dir)
-		plt.close("all")
-		D = kinematics(galaxy, discard=discard, D=D, opt='kin') # Only run 
+		# plt.close("all")
+		# D = kinematics(galaxy, discard=discard, D=D, opt='kin') # Only run 
 		# 														# for opt='kin'
-		D = rotation_curve(galaxy, D=D, opt='kin'+MC_dir) 
-		BPT(galaxy, D=D, opt='kin'+MC_dir)
-		plt.close("all")
+		# D = rotation_curve(galaxy, D=D, opt='kin'+MC_dir) 
+		# BPT(galaxy, D=D, opt='kin'+MC_dir)
+		# plt.close("all")
 
 		# Requires the IDL kinemetry routine to have been run. 
 		# use_kinemetry(galaxy)
@@ -80,7 +80,7 @@ for galaxy in galaxies:
 		# traceback.print_exc()
 		 
 # # v_vd_ellip(wav_range=wav_range)
-compare_atlas3d()
+# compare_atlas3d()
 
 # Display errors
 for i in range(len(gal_err)):

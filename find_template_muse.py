@@ -34,7 +34,7 @@ def find_template(galaxy, set_range=None):
 		gal_spec[i] = np.nansum(f[1].data[i, int(s[1]/2.0-50):int(s[1]/2.0+50), 
 			int(s[2]/2.0-50):int(s[2]/2.0+50)])
 		gal_noise[i] = np.sqrt(np.nansum(f[2].data[i, int(s[1]/2.0-50):int(s[1]/2.0+50), 
-			int(s[2]/2.0-50):int(s[2]/2.0+50)])**2)
+			int(s[2]/2.0-50):int(s[2]/2.0+50)]**2))
 
 	del f
 

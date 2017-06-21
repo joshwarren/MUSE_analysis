@@ -11,6 +11,7 @@ cc=checkcomp()
 if cc.remote:
 	import matplotlib # 20160202 JP to stop lack-of X-windows error
 	matplotlib.use('Agg') # 20160202 JP to stop lack-of X-windows error
+import matplotlib.pyplot as plt
 import numpy as np
 import glob
 from astropy.io import fits
@@ -182,7 +183,6 @@ def binning_spaxels(galaxy, targetSN=None, opt='kin', auto_override=False, debug
 	# y = y[mask]
 	# n_spaxels = np.sum(mask)
 	
-	# import matplotlib.pyplot as plt 
 	# fig,ax=plt.subplots()
 	# s1=signal_sav/(flux/s[0])
 	# s_order = np.sort(s1).flatten()
@@ -210,7 +210,7 @@ def binning_spaxels(galaxy, targetSN=None, opt='kin', auto_override=False, debug
 	binNum, xNode, yNode, xBar, yBar, sn, nPixels, scale = voronoi_2d_binning(
 		x, y, signal, noise, targetSN, quiet=True, plot=False,
 		saveTo='%s/analysis/%s/%s/setup/binning.png' %(dir, galaxy, opt))
-	matplotlib.pyplot.close('all')
+	plt.close('all')
 	# else:
 	# 	binNum = np.arange(len(x))
 	# 	xBar = x
