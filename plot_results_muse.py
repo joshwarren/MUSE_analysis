@@ -296,12 +296,12 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 		D.find_restFrame()
 
 	# Adjust by hand
-	if galaxy == 'ic1459' and norm == 'lws':
-		D.vel_norm -= 15
-	if galaxy == 'ic4296' and norm == 'lws':
-		D.vel_norm += 20
-	if galaxy == 'ngc1399' and norm =='lws':
-		D.vel_norm += 35
+	# if galaxy == 'ic1459' and norm == 'lws':
+	# 	D.vel_norm -= 15
+	# if galaxy == 'ic4296' and norm == 'lws':
+	# 	D.vel_norm += 20
+	# if galaxy == 'ngc1399' and norm =='lws':
+	# 	D.vel_norm += 35
 
 	# Create figure and array for axes
 	n_rows = 2+2*len(D.e_components) + int(np.ceil(len(D.e_components)*
@@ -448,6 +448,12 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 			else:
 				im_type=" (" + im_type + ")"
 
+			SNR = D.SNRatio
+			if pl != 'stellar':
+				SNR = D.gas_dynamics_SN
+				SN_target = 5
+
+
 			for k in D.components[pl].plot.keys():
 
 
@@ -514,7 +520,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 					flux_unbinned=D.unbinned_flux, #flux_type='notmag',
 					nodots=True, show_bin_num=show_bin_num, colorbar=True, 
 					label=CBLabel,galaxy = galaxy.upper(), redshift = z,
-					title=title, ax=ax, res=res, signal_noise=D.SNRatio,
+					title=title, ax=ax, res=res, signal_noise=SNR,
 					signal_noise_target=SN_target, header=header)
 				# add_R_e(ax, galaxy, pa=pa)
 				if plots:
