@@ -288,7 +288,7 @@ def saveAll(galaxy, bin, pp, opt='kin'):
 	else:
 		dir = '%s/Data/muse/analysis/%s/%s/MC' % (cc.base_dir, galaxy, opt)
 
-	reps = pp.stellar_output.shape[0]
+	reps = pp.MCstellar_kin.shape[0]
 	gas = len(pp.element) > 1
 
 	def check_directory(d):
@@ -306,25 +306,32 @@ def saveAll(galaxy, bin, pp, opt='kin'):
 	errors_file = "%s/stellar/errors/%s.dat" % (dir, str(bin))
 	with open(bin_file, 'w') as f,  open(errors_file, 'w') as e:
 		for i in range(reps):
-			f.write("   ".join([str(s) for s in pp.stellar_output[i,:]]) + '\n')
-			e.write("   ".join([str(s) for s in pp.stellar_errors[i,:]]) + '\n')
+			f.write("   ".join([str(s) for s in pp.MCstellar_kin[i,:]]) + '\n')
+			e.write("   ".join([str(s) for s in pp.MCstellar_kin_err[i,:]]) + '\n')
 
 	
-	# gas MC results
-	if gas: gas_dir = [e for e in pp.element if e != 'stellar']
-	else: gas_dir=[] 
-	for d in range(len(gas_dir)):
-		check_directory("%s/gas/%s/errors" % (dir, gas_dir[d]))
+	# gas MC kinematics results
+	for d, gas_dir in enumerate([e for e in pp.element if e != 'stellar']):
+		check_directory("%s/gas/%s/errors" % (dir, gas_dir))
 
-		gas_file = "%s/gas/%s/%s.dat" % (dir, gas_dir[d], str(bin))
-		gas_errors_file = "%s/gas/%s/errors/%s.dat" % (dir, gas_dir[d], str(bin))
+		gas_file = "%s/gas/%s/%s.dat" % (dir, gas_dir, str(bin))
+		gas_error_file = "%s/gas/%s/errors/%s.dat" % (dir, gas_dir, str(bin))
 
-		with open(gas_file, 'w') as g, open(gas_errors_file, 'w') as ger:
+		with open(gas_file, 'w') as g, open(gas_error_file, 'w') as ger:
 			for i in range(reps):
-				if pp.gas_output is not None:
-					g.write("   ".join([str(s) for s in pp.gas_output[d,i,:]]) + '\n')
-				if pp.gas_errors is not None:
-					ger.write("   ".join([str(s) for s in pp.gas_errors[d,i,:]]) + '\n')
+				if pp.MCgas_kin is not None:
+					g.write("   ".join([str(s) for s in pp.MCgas_kin[d,i,:]]) + '\n')
+				if pp.MCgas_kin_err is not None:
+					ger.write("   ".join([str(s) for s in pp.MCgas_kin_err[d,i,:]]) + '\n')
+
+	# gas MC uncertainty spectrum
+	for d, gas_dir in enumerate([e for e in pp.templatesToUse if e != 'stellar' and 
+		not e.isdigit()]):
+		check_directory("%s/uncert_spectrum/%s" %(dir, gas_dir))
+		gas_uncert_file = "%s/uncert_spectrum/%s/%s.dat" % (dir, gas_dir, str(bin))
+		with open(gas_uncert_file, 'w') as u:
+			for i in pp.MCgas_uncert_spec[d,:]:
+				u.write(str(i) + '\n')
 
 	## save bestfit spectrum
 	check_directory("%s/bestfit" % (dir)) 
@@ -429,7 +436,7 @@ def saveAll(galaxy, bin, pp, opt='kin'):
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
-def remove_anomalies(spec, window=201, repeats=3, lam=None, set_range=None, 
+def remove_anomalies(spec, window=201, repeats=0, lam=None, set_range=None, 
 	return_cuts=False, n_sigma=3):
 	if set_range is not None and lam is None:
 		raise ValueError('lam keyword must be supplied if set_range keyword'+\
@@ -667,14 +674,23 @@ def run_ppxf(galaxy, bin_lin, bin_lin_noise, lamRange, CDELT, params, produce_pl
 ## ----------===============================================---------
 ## ----------================= The MC part =================---------
 ## ----------===============================================---------
-	stellar_output = np.zeros((params.reps, params.stellar_moments))
-	stellar_errors = np.zeros((params.reps, params.stellar_moments))
+	pp.MCstellar_kin = np.zeros((params.reps, params.stellar_moments))
+	pp.MCstellar_kin_err = np.zeros((params.reps, params.stellar_moments))
 	if params.gas:
-		gas_output = np.zeros((max(component), params.reps, params.gas_moments))
-		gas_errors = np.zeros((max(component), params.reps, params.gas_moments))
+		pp.MCgas_kin = np.zeros((max(component), params.reps, params.gas_moments))
+		pp.MCgas_kin_err = np.zeros((max(component), params.reps, params.gas_moments))
 
-	if params.reps != 0:
-		pp.ppMC = []
+		n_lines = len(e_templates.templatesToUse)
+		# pp.MCgas_weights = np.zeros((n_lines, params.reps))
+
+		pp.MCgas_uncert_spec = np.zeros((n_lines, 3, len(pp.galaxy)))
+		MCgas_mean_spec = np.zeros((n_lines, len(pp.galaxy)))
+
+	else:
+		pp.MCgas_kin = None
+		pp.MCgas_kin_err = None
+		# pp.MCgas_weights = None
+
 	for rep in range(params.reps):
 		random = np.random.randn(len(noise))
 		add_noise = random*np.abs(noise)
@@ -684,22 +700,35 @@ def run_ppxf(galaxy, bin_lin, bin_lin_noise, lamRange, CDELT, params, produce_pl
 			goodpixels=goodPixels, moments=moments, degree=params.degree, vsyst=dv, 
 			lam=lambdaq, plot=not params.quiet, quiet=params.quiet, bias=0.1, 
 			component=component, mdegree=params.mdegree)
-		pp.ppMC.append(ppMC)
 
-		stellar_output[rep,:] = ppMC.sol[0][0:params.stellar_moments]
-		stellar_errors[rep,:] = ppMC.error[0][0:params.stellar_moments]
+		pp.MCstellar_kin[rep,:] = ppMC.sol[0][0:params.stellar_moments]
+		pp.MCstellar_kin_err[rep,:] = ppMC.error[0][0:params.stellar_moments]
 		for g in range(len(element)-1):
-			gas_output[g,rep,:] = ppMC.sol[g+1][0:params.gas_moments]
-			gas_errors[g,rep,:] = ppMC.error[g+1][0:params.gas_moments]
+			pp.MCgas_kin[g,rep,:] = ppMC.sol[g+1][0:params.gas_moments]
+			pp.MCgas_kin_err[g,rep,:] = ppMC.error[g+1][0:params.gas_moments]
 
-	pp.stellar_output = stellar_output
-	pp.stellar_errors = stellar_errors
-	if params.gas:
-		pp.gas_output = gas_output
-		pp.gas_errors = gas_errors
-	else:
-		pp.gas_output = None
-		pp.gas_errors = None
+		for i, n in enumerate(e_templates.templatesToUse):
+			e_line_spec = ppMC.matrix[:, -n_lines + i] * ppMC.weights[-n_lines + i]
+
+			new_mean_gas_spec = ((rep + 1) * MCgas_mean_spec[i, :] + e_line_spec)/(
+				rep + 2)
+
+			if rep < 3:
+				# Save spec until 3 reps have been completed
+				pp.MCgas_uncert_spec[i, rep, :] = e_line_spec
+			else:
+				# Finding sigma_N from x_N, mean_N, mean_N-1 and sigma_N-1
+				pp.MCgas_uncert_spec = ((e_line_spec - new_mean_gas_spec) * (
+					e_line_spec - MCgas_mean_spec) + rep * pp.MCgas_uncert_spec**2)/(
+					rep+1)
+
+			if rep == 2:
+				# Calc std at 3rd rep
+				pp.MCgas_uncert_spec = np.std(pp.MCgas_uncert_spec, axis=1)
+
+			MCgas_mean_spec[i, :] = np.array(new_mean_gas_spec)
+
+			# pp.MCgas_weights = [i,rep] = ppMC.weights[np.where(templatesToUse==n)[0][0]]
 
 	return pp
 ##############################################################################
