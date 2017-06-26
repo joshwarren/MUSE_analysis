@@ -53,8 +53,8 @@ for galaxy in galaxies:
 	D = None
 	print galaxy
 	try:
-		# D = pickler(galaxy, discard=discard, norm=norm, opt='kin'+MC_dir)
-		# D = sav_for_kinemetry(galaxy, opt='kin'+MC_dir, D=D)
+		D = pickler(galaxy, discard=discard, norm=norm, opt='kin'+MC_dir)
+		D = sav_for_kinemetry(galaxy, opt='kin'+MC_dir, D=D)
 		D = plot_results(galaxy, discard=discard, overplot = {'radio':'r'},#, 'xray':'c'}, 
 			residual="median", norm=norm, D=D, show_bin_num=True, mapping=m, 
 			opt='kin'+MC_dir)

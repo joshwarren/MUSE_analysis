@@ -45,8 +45,8 @@ def pickler(galaxy, discard=0, norm="lwv", opt="kin", override=False):
 	if not override:
 		if os.path.getmtime(tessellation_File) > os.path.getmtime('%s/0.dat' % (
 			vin_dir_gasMC)): 
-			bin_num = np.loadtxt(tessellation_File, unpack=True, skiprows = 1, usecols=(2,), 
-				dtype=int)
+			bin_num = np.loadtxt(tessellation_File, unpack=True, skiprows = 1, 
+				usecols=(2,), dtype=int)
 			if os.path.exists('%s/%i.dat' % (vin_dir_gasMC,max(bin_num))) and not \
 				os.path.exists('%s/%i.dat' % (vin_dir_gasMC, max(bin_num)+1)):
 				# Issue warning, but do not stop.
@@ -89,8 +89,17 @@ def pickler(galaxy, discard=0, norm="lwv", opt="kin", override=False):
 		ms = matrix.shape
 		for j in range(ms[0]):
 			if not matrix[j,0].isdigit():
+				line = matrix[j,0]
 				D.bin[i].components[matrix[j,0]] = emission_line(D.bin[i],
-					matrix[j,0],lines[matrix[j,0]],matrix[j,1:].astype(float))
+					line,lines[line],matrix[j,1:].astype(float))
+				# Skip step if file is empty.
+				with warnings.catch_warnings():
+					warnings.simplefilter('error')
+					try:
+						D.bin[i].components[line].uncert_spectrum = np.loadtxt(
+							'%s/gas_uncert_spectrum/%s/%i.dat' % (vin_dir_gasMC, line, i))
+					except Warning:
+						pass
 				D.add_e_line(matrix[j,0],lines[matrix[j,0]])
 
 		#Setting the weighting given to the gas templates 

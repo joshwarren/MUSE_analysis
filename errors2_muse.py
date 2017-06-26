@@ -36,7 +36,7 @@ class set_params(object):
 					# 2   Seperate gases heated by shocks (OIII and NI) and by SF gas
 					#     (Hb and Hd)
 					# 3   All gas seperate.
-		self.reps = 0 ## number of monte carlo reps per bin.
+		self.reps = 5 ## number of monte carlo reps per bin.
 		self.FWHM_gal = 2.3 # MUSE documentation
 		self.set_range = np.array([2000,7350])#5500])
 		self.stellar_moments = 2 # number of componants to calc with ppxf (see 
@@ -81,7 +81,13 @@ def use_templates(galaxy, glamdring=False):
 #-----------------------------------------------------------------------------
 class get_stellar_templates(object):
 
-	def __init__(self, galaxy, FWHM_gal, use_all_temp=False):
+	def __init__(self, FWHM_gal):
+		self.FWHM_tem = 2.5 # Miles library has FWHM of 2.5A.
+		self.FWHM_gal = FWHM_gal
+		self.FWHM_dif = np.sqrt(abs(FWHM_gal**2 - self.FWHM_tem**2))
+
+
+	def get_templates(self, galaxy, velscale, use_all_temp=False):
 		import glob # for searching for files
 		# Finding the template files
 		# There is some issue with the memory structure of the university macs (HFS+),
@@ -105,12 +111,9 @@ class get_stellar_templates(object):
 
 		self.lamRange_template = CRVAL_temp + [0, CDELT_temp*(NAXIS_temp-1)]
 
-		log_temp_template, self.logLam_template, self.velscale = \
-			util.log_rebin(self.lamRange_template, self.wav)
-
-		self.FWHM_tem = 2.5 # Miles library has FWHM of 2.5A.
-		self.FWHM_dif = np.sqrt(abs(FWHM_gal**2 - self.FWHM_tem**2))
-		
+		log_temp_template, self.logLam_template, _ = \
+			util.log_rebin(self.lamRange_template, self.wav, velscale=velscale)
+	
 		if use_all_temp:
 			self.ntemp = len(templateFiles)
 			self.templatesToUse = np.arange(1, self.ntemp + 1)
@@ -118,7 +121,7 @@ class get_stellar_templates(object):
 			self.templatesToUse = use_templates(galaxy, cc.device=='glamdring')
 			self.ntemp = len(self.templatesToUse)
 		self.templates = np.zeros((len(log_temp_template), self.ntemp))
-		self.lin_templates = np.zeros((len(log_temp_template), self.ntemp))
+		self.lin_templates = np.zeros((NAXIS_temp, self.ntemp))
 
 		## Reading the contents of the files into the array templates. 
 		## Including rebinning them.
@@ -128,14 +131,14 @@ class get_stellar_templates(object):
 			else:
 				_, self.lin_templates[:,i] = np.loadtxt(
 					templateFiles[self.templatesToUse[i]], unpack='True')
-			if self.FWHM_tem < FWHM_gal:
+			if self.FWHM_tem < self.FWHM_gal:
 				sigma = FWHM_dif/2.355/CDELT_temp # Sigma difference in pixels
 				conv_temp = ndimage.gaussian_filter1d(self.lin_templates[:,i],sigma)
 			else:
 				conv_temp = self.lin_templates[:,i]
 			## Rebinning templates logarthmically
 			log_temp_template, self.logLam_template, _ = util.log_rebin(
-				self.lamRange_template, conv_temp, velscale=self.velscale)
+				self.lamRange_template, conv_temp, velscale=velscale)
 			self.templates[:,i] = log_temp_template
 #-----------------------------------------------------------------------------
 
@@ -249,14 +252,15 @@ def determine_goodpixels(logLam, lamRangeTemp, vel, z, gas=False, mask=False):
 
 	if mask:
 		# flag |= (logLam > np.log(5500)) & (logLam < np.log(5650)) 
-		# flag |= (logLam > np.log(5800)) & (logLam < np.log(6650)) 
+		# flag |= (logLam > np.log(5800)) & (logLam < np.log(6500)) 
 		# flag |= (logLam > np.log(6780)) & (logLam < np.log(7050)) 
 		# flag |= (logLam > np.log(7150)) & (logLam < np.log(lamRangeTemp[1])) 
 
-		flag |= (logLam > np.log(5500)) & (logLam < np.log(5650)) 
-		flag |= (logLam > np.log(5800)) & (logLam < np.log(6500)) 
-		flag |= (logLam > np.log(6780)) & (logLam < np.log(7050)) 
-		flag |= (logLam > np.log(7150)) & (logLam < np.log(lamRangeTemp[1])) 
+		flag |= (logLam > np.log(5450)) & (logLam < np.log(5550)) 
+		flag |= (logLam > np.log(5780)) & (logLam < np.log(5950)) 
+		flag |= (logLam > np.log(6120)) & (logLam < np.log(6520)) 
+		flag |= (logLam > np.log(6720)) & (logLam < np.log(7000)) 
+		flag |= (logLam > np.log(7140)) & (logLam < np.log(lamRangeTemp[1])) 
 
 	if not gas:
 		#                 -----[OII]-----   Hdelta    Hgamma   Hbeta;
@@ -327,8 +331,8 @@ def saveAll(galaxy, bin, pp, opt='kin'):
 	# gas MC uncertainty spectrum
 	for d, gas_dir in enumerate([e for e in pp.templatesToUse if e != 'stellar' and 
 		not e.isdigit()]):
-		check_directory("%s/uncert_spectrum/%s" %(dir, gas_dir))
-		gas_uncert_file = "%s/uncert_spectrum/%s/%s.dat" % (dir, gas_dir, str(bin))
+		check_directory("%s/gas_uncert_spectrum/%s" %(dir, gas_dir))
+		gas_uncert_file = "%s/gas_uncert_spectrum/%s/%s.dat" % (dir, gas_dir, str(bin))
 		with open(gas_uncert_file, 'w') as u:
 			for i in pp.MCgas_uncert_spec[d,:]:
 				u.write(str(i) + '\n')
@@ -592,7 +596,7 @@ def errors2(i_gal=None, opt=None, bin=None):
 ## ----------=============== Run analysis  =================---------
 ## ----------===============================================---------
 def run_ppxf(galaxy, bin_lin, bin_lin_noise, lamRange, CDELT, params, produce_plot=True, 
-	use_all_temp=False):
+	use_all_temp=False, mask_sky=False):
 	if cc.device == 'glamdring':
 		data_file = "%s/analysis/galaxies.txt" % (cc.base_dir)
 	else:
@@ -609,30 +613,29 @@ def run_ppxf(galaxy, bin_lin, bin_lin_noise, lamRange, CDELT, params, produce_pl
 	lamRange /= (1+z)
 	FWHM_gal = params.FWHM_gal/(1+z) # Adjust resolution in Angstrom
 ## ----------============= Stellar templates ===============---------
-	stellar_templates = get_stellar_templates(galaxy, FWHM_gal, 
-		use_all_temp=use_all_temp)
-	velscale = stellar_templates.velscale
+	stellar_templates = get_stellar_templates(params.FWHM_gal)
 	
 	## smooth spectrum to fit with templates resolution
-	if FWHM_gal < stellar_templates.FWHM_tem:
+	if params.FWHM_gal < stellar_templates.FWHM_tem:
 		sigma = stellar_templates.FWHM_dif/2.355/CDELT # Change in px
 		bin_lin = ndimage.gaussian_filter1d(bin_lin, sigma)
 		bin_lin_noise = np.sqrt(ndimage.gaussian_filter1d(bin_lin_noise**2, 
 			sigma))
 	
 	## rebin spectrum logarthmically
-	bin_log, logLam_bin, _ = util.log_rebin(lamRange, bin_lin, velscale=velscale)
-	bin_log_noise, logLam_bin, _ = util.log_rebin(lamRange, bin_lin_noise**2, 
-		velscale=velscale)
+	bin_log, logLam_bin, velscale = util.log_rebin(lamRange, bin_lin)
+	bin_log_noise, logLam_bin, _ = util.log_rebin(lamRange, bin_lin_noise**2)
 	bin_log_noise = np.sqrt(bin_log_noise)
-
+	
 	noise = bin_log_noise+0.0000000000001
 
+	stellar_templates.get_templates(galaxy, velscale, use_all_temp=use_all_temp)
+	# velscale = stellar_templates.velscale
 	dv = (stellar_templates.logLam_template[0]-logLam_bin[0])*c # km/s	
 	lambdaq = np.exp(logLam_bin)
 ## ----------=============== Emission lines ================---------
 	goodPixels = determine_goodpixels(logLam_bin,stellar_templates.lamRange_template, 
-		vel, z, gas=params.gas!=0)#galaxy=='ic1459')
+		vel, z, gas=params.gas!=0, mask=mask_sky)#galaxy=='ic1459')
 
 	e_templates = get_emission_templates(params.gas, lamRange, 
 		stellar_templates.logLam_template, FWHM_gal, goodWav=lambdaq[goodPixels])
@@ -658,9 +661,9 @@ def run_ppxf(galaxy, bin_lin, bin_lin_noise, lamRange, CDELT, params, produce_pl
 
 	if produce_plot:
 		# Add noise to plot
-		pp.ax.plot(lambdaq, noise+np.min(pp.bestfit[goodPixels]), 'purple')
-		pp.ax.axhline(np.min(pp.bestfit[goodPixels]), linestyle='--', color='k', 
-			dashes=(5,5),zorder=10)
+		# pp.ax.plot(lambdaq, noise+np.min(pp.bestfit[goodPixels]), 'purple')
+		# pp.ax.axhline(np.min(pp.bestfit[goodPixels]), linestyle='--', color='k', 
+		# 	dashes=(5,5),zorder=10)
 
 		ax2 = pp.ax.twinx()
 		ax2.set_ylabel('Residuals, emission lines and Noise',rotation=270,labelpad=12)
@@ -668,14 +671,20 @@ def run_ppxf(galaxy, bin_lin, bin_lin_noise, lamRange, CDELT, params, produce_pl
 		mn = np.min(pp.bestfit[goodPixels]) - pp.ax.get_ylim()[0]
 		ax2.set_ylim([-mn, -mn+r])
 
+		ax2.plot(lambdaq, noise, 'purple')
+		pp.ax.plot(np.nan, 'purple', label='Noise') # Proxy for legend
+		ax2.axhline(0, linestyle='--', color='k', dashes=(5,5),zorder=10)
+
 	pp.templatesToUse = templatesToUse
 	pp.element = element
-
 ## ----------===============================================---------
 ## ----------================= The MC part =================---------
 ## ----------===============================================---------
 	pp.MCstellar_kin = np.zeros((params.reps, params.stellar_moments))
 	pp.MCstellar_kin_err = np.zeros((params.reps, params.stellar_moments))
+	pp.MCbestfit_uncert = np.zeros((3, len(pp.galaxy)))
+	MCbestfit_mean = np.zeros(len(pp.galaxy))
+
 	if params.gas:
 		pp.MCgas_kin = np.zeros((max(component), params.reps, params.gas_moments))
 		pp.MCgas_kin_err = np.zeros((max(component), params.reps, params.gas_moments))
@@ -695,7 +704,7 @@ def run_ppxf(galaxy, bin_lin, bin_lin_noise, lamRange, CDELT, params, produce_pl
 		random = np.random.randn(len(noise))
 		add_noise = random*np.abs(noise)
 		bin_log = pp.bestfit + add_noise
-	
+
 		ppMC = ppxf(templates, bin_log, noise, velscale, start, 
 			goodpixels=goodPixels, moments=moments, degree=params.degree, vsyst=dv, 
 			lam=lambdaq, plot=not params.quiet, quiet=params.quiet, bias=0.1, 
@@ -703,32 +712,50 @@ def run_ppxf(galaxy, bin_lin, bin_lin_noise, lamRange, CDELT, params, produce_pl
 
 		pp.MCstellar_kin[rep,:] = ppMC.sol[0][0:params.stellar_moments]
 		pp.MCstellar_kin_err[rep,:] = ppMC.error[0][0:params.stellar_moments]
+
+		# Find uncertainty in bestfit
+		new_mean_bestfit_spec = ((rep + 1) * MCbestfit_mean + ppMC.bestfit)/(
+			rep + 2)
+		if rep < 3:
+			# Save spec until 3 reps have been completed
+			pp.MCbestfit_uncert[rep, :] = ppMC.bestfit
+		else:
+			# Finding sigma_N from x_N, mean_N, mean_(N-1) and sigma_(N-1)
+			# NB: rep = N-1 due to being zero-based
+			pp.MCbestfit_uncert = np.sqrt(((ppMC.bestfit - new_mean_bestfit_spec) * (
+				ppMC.bestfit - MCbestfit_mean) + rep * pp.MCbestfit_uncert**2)/\
+				(rep + 1))
+		MCbestfit_mean = np.array(new_mean_bestfit_spec)
+		if rep == 2:
+			# Calc std at 3rd rep
+			pp.MCbestfit_uncert = np.std(pp.MCbestfit_uncert, axis=0)
+
+		# Gas kinematics from all reps
 		for g in range(len(element)-1):
 			pp.MCgas_kin[g,rep,:] = ppMC.sol[g+1][0:params.gas_moments]
 			pp.MCgas_kin_err[g,rep,:] = ppMC.error[g+1][0:params.gas_moments]
 
+		# Find uncertainty in fitted emission lines
 		for i, n in enumerate(e_templates.templatesToUse):
 			e_line_spec = ppMC.matrix[:, -n_lines + i] * ppMC.weights[-n_lines + i]
-
 			new_mean_gas_spec = ((rep + 1) * MCgas_mean_spec[i, :] + e_line_spec)/(
 				rep + 2)
 
 			if rep < 3:
-				# Save spec until 3 reps have been completed
 				pp.MCgas_uncert_spec[i, rep, :] = e_line_spec
 			else:
-				# Finding sigma_N from x_N, mean_N, mean_N-1 and sigma_N-1
-				pp.MCgas_uncert_spec = ((e_line_spec - new_mean_gas_spec) * (
-					e_line_spec - MCgas_mean_spec) + rep * pp.MCgas_uncert_spec**2)/(
-					rep+1)
-
-			if rep == 2:
-				# Calc std at 3rd rep
-				pp.MCgas_uncert_spec = np.std(pp.MCgas_uncert_spec, axis=1)
-
+				pp.MCgas_uncert_spec[i,:] = np.sqrt(((e_line_spec - new_mean_gas_spec) * (
+					e_line_spec - MCgas_mean_spec[i,:]) + 
+					rep * pp.MCgas_uncert_spec[i,:]**2)/(rep + 1))
 			MCgas_mean_spec[i, :] = np.array(new_mean_gas_spec)
 
+		if rep == 2:
+			pp.MCgas_uncert_spec = np.std(pp.MCgas_uncert_spec, axis=1)
+
 			# pp.MCgas_weights = [i,rep] = ppMC.weights[np.where(templatesToUse==n)[0][0]]
+		if (rep == params.reps-1) and params.gas and produce_plot:
+			ax2.plot(lambdaq, np.nansum(pp.MCgas_uncert_spec,axis=0), 'c')
+			pp.ax.plot(np.nan, 'c', label='Emission Line Uncertainty') # Proxy for legend
 
 	return pp
 ##############################################################################
