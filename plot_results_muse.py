@@ -158,6 +158,7 @@ def add_R_e(ax, galaxy, discard=0, pa=0):
 
 #-----------------------------------------------------------------------------
 def add_(overplot, color, ax, galaxy, header, close=False):
+# def add_(overplot, color, ax, galaxy, close=False):
 	image_dir=getattr(get_dataCubeDirectory(galaxy), overplot)
 	# Arcsec coords
 	if os.path.exists(image_dir) and not ax.RaDec:
@@ -216,6 +217,7 @@ def add_(overplot, color, ax, galaxy, header, close=False):
 		image = np.log(image)
 
 		cs = ax.contour(x, y, image, colors=color, linestyles='solid', linewidth=1)
+		# cs = ax.contour(image, colors=color, linestyles='solid', linewidth=1)
 		cs.collections[0].set_label(overplot)
 
 		ax.set_xlim(xlim)
@@ -250,11 +252,12 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 	file_headings = np.loadtxt(data_file, dtype=str)[0]
 	col = np.where(file_headings=='SN_%s' % (opt))[0][0]
 
-	SN_target_gals = np.loadtxt(data_file, unpack=True, skiprows=1, 
-		usecols=(col))
+	x_cent_gals, y_cent_gals, SN_target_gals = np.loadtxt(data_file, unpack=True, 
+		skiprows=1, usecols=(1,2,col), dtype='int,int,float')
 	galaxy_gals = np.loadtxt(data_file, skiprows=1, usecols=(0,),dtype=str)
 	i_gal = np.where(galaxy_gals==galaxy)[0][0]
 	SN_target=SN_target_gals[i_gal]-10
+	center = (x_cent_gals[i_gal], y_cent_gals[i_gal])
 
 	data_file =  "%s/Data/vimos/analysis/galaxies.txt" % (cc.base_dir)
 	z_gals = np.loadtxt(data_file, unpack=True, skiprows=1, 
@@ -276,9 +279,9 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 	vin_dir_gasMC = "%s/%s/%s/MC" % (vin_dir, galaxy, opt) # for chi2
 	out_pickle = '%s/pickled' % (output)
 
-	cubeFile = fits.open(dataCubeDirectory)
-	header = cubeFile[1].header
-	cubeFile.close()
+	# cubeFile = fits.open(dataCubeDirectory)
+	# header = cubeFile[1].header
+	# cubeFile.close()
 # ------------== Reading pickle file and create plot  ===----------
 
 	# Load pickle file from pickler.py
@@ -314,7 +317,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 		saveTo = "%s/SNR.png" % (out_nointerp)
 		ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, D.SNRatio, 
 			colorbar=True, nodots=True, title='SNR', save=saveTo, close=True, 
-			res=res, flux_unbinned=D.unbinned_flux)
+			res=res, flux_unbinned=D.unbinned_flux, center=center)
 # ------------=============== Plot image ================----------
 	if mapping.image or mapping is None:
 		print "    Image"
@@ -332,7 +335,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 		ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, D.flux, 
 			vmin=fmin, vmax=fmax, nodots=True, show_bin_num=show_bin_num, colorbar=True, 
 			label=CBLabel, title=title, cmap='gist_yarg', ax=ax, res=res,
-			flux_unbinned=D.unbinned_flux, header=header)
+			flux_unbinned=D.unbinned_flux, center=center)# header=header)
 		if plots:
 			plt.show()
 
@@ -373,8 +376,9 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 			
 			ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, 
 				D.e_line[c].flux, vmin=f_min, vmax=f_max, colorbar=True, nodots=True, 
-				label=fCBtitle, title=f_title, cmap = 'gist_yarg', ax=ax, res=res,
-				flux_unbinned=D.unbinned_flux, header=header)
+				label=fCBtitle, title=f_title, ax=ax, res=res,
+				flux_unbinned=D.unbinned_flux, center=center)
+				#cmap = 'gist_yarg', header=header)
 			ax_array.append(ax)
 			f.delaxes(ax)
 			f.delaxes(ax.cax)
@@ -382,8 +386,21 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 			if hasattr(ax,'ax3'): f.delaxes(ax.ax3)
 				
 			if plots: plt.show()
-			
 
+			# Uncertainy in flux
+			fu_title = "%s Flux Uncertainty" % (c_title)
+			f_uncert_min, f_uncert_max = set_lims(D.e_line[c].flux.uncert, 
+				positive=True)
+
+			saveTo = "%s/%s_img_uncert.png" % (out_nointerp, c)
+			ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar,
+				D.e_line[c].flux.uncert, vmin=f_uncert_min, vmax=f_uncert_max, 
+				flux_unbinned=D.unbinned_flux, nodots=True, 
+				show_bin_num=show_bin_num, colorbar=True, label=fCBtitle, 
+				galaxy = galaxy.upper(), redshift = z, title=fu_title, 
+				save=saveTo, close=True, res=res, center=center)
+			
+			# Equivalent Width
 			eq_title = "%s Equivalent Width" % (c_title)
 			eqh_title = "%s Equivalent Width Histogram" % (c_title)
 			eqCBtitle = r"Equivalent Width ($\AA$)"
@@ -404,12 +421,25 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 				D.e_line[c].equiv_width, vmin=eq_min, vmax=eq_max, colorbar=True, 
 				nodots=True, label=eqCBtitle, title=eq_title, ax=ax, res=res,
 				flux_unbinned=D.unbinned_flux, signal_noise=D.e_line[c].amp_noise,
-				signal_noise_target=5, header=header)
+				signal_noise_target=5, center=center)#header=header)
 			ax_array.append(ax)
 			f.delaxes(ax)
 			f.delaxes(ax.cax)
 			if hasattr(ax,'ax2'): f.delaxes(ax.ax2)
 			if hasattr(ax,'ax3'): f.delaxes(ax.ax3)
+
+			# Uncertainy in EW
+			equ_title = "%s Equivalent Width Uncertainty" % (c_title)
+			eq_uncert_min, eq_uncert_max = set_lims(D.e_line[c].equiv_width.uncert, 
+				positive=True)
+
+			saveTo = "%s/%s_equiv_width_uncert.png" % (out_nointerp, c)
+			ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar,
+				D.e_line[c].equiv_width.uncert, vmin=eq_uncert_min, 
+				vmax=eq_uncert_max, flux_unbinned=D.unbinned_flux, nodots=True, 
+				show_bin_num=show_bin_num, colorbar=True, label=eqCBtitle, 
+				galaxy = galaxy.upper(), redshift = z, title=equ_title, 
+				save=saveTo, close=True, res=res, center=center)
 # ------------============ Amplitude/Noise ==============----------
 	if mapping.amp_noise or mapping is None:
 		for c in D.e_components:
@@ -429,7 +459,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 			ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, 
 				D.e_line[c].amp_noise, vmin=amp_min, vmax=amp_max, colorbar=True, 
 				nodots=True, title=amp_title, save=saveTo, close=True, 
-				res=res, flux_unbinned=D.unbinned_flux)
+				res=res, flux_unbinned=D.unbinned_flux, center=center)
 # ------------=========== Setting titles etc ============----------
 	if mapping.kinematics or mapping is None:
 		print '    Kinematics'
@@ -530,7 +560,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 					nodots=True, show_bin_num=show_bin_num, colorbar=True, 
 					label=CBLabel,galaxy = galaxy.upper(), redshift = z,
 					title=title, ax=ax, res=res, signal_noise=SNR,
-					signal_noise_target=SN_target, header=header)
+					signal_noise_target=SN_target, center=center)# header=header)
 				# add_R_e(ax, galaxy, pa=pa)
 				if plots:
 					plt.show()
@@ -548,7 +578,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 					nodots=True, show_bin_num=show_bin_num, colorbar=True, 
 					label=CBLabel, galaxy = galaxy.upper(), redshift = z, 
 					title=utitle, save=saveTo, close=True, res=res,
-					header=header)
+					center=center)#header=header)
 				if plots:
 					plt.show()
 # ------------============= Plot residuals ==============----------
@@ -581,7 +611,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 			nodots=True, show_bin_num=show_bin_num, colorbar=True, 
 			label=CBLabel, #flux_unbinned=D.unbinned_flux, 
 			galaxy = galaxy.upper(), redshift = z, title=title, 
-			save=saveTo, close=True, res=res)#, header=header)
+			save=saveTo, close=True, res=res, center=center)#)#, header=header)
 		if plots:
 			plt.show()
 # # ------------=============== Plot Chi2/DOF =============----------
@@ -602,7 +632,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 	# 	nodots=True, show_bin_num=show_bin_num, colorbar=True, 
 	# 	label=CBLabel, flux_unbinned=D.unbinned_flux, 
 	# 	galaxy = galaxy.upper(), redshift = z, title=title, 
-	# 	save=saveTo, close=not overplot=={}, header=header)#, cmap=cm.blue)
+	# 	save=saveTo, close=not overplot=={}, center=center)#header=header)#, cmap=cm.blue)
 	# if plots:
 	# 	plt.show()
 	# if overplot:
@@ -664,7 +694,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 				line_ratio, vmin=lr_min, vmax=lr_max, colorbar=True,
 				nodots=True, title=lr_title, label=lrCBtitle, ax=ax,
 				show_bin_num=show_bin_num, galaxy = galaxy.upper(), redshift = z, 
-				res=res, header=header)
+				res=res, center=center)#header=header)
 
 			ax_array.append(ax)
 			f.delaxes(ax)

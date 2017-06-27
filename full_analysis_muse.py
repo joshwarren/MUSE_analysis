@@ -26,7 +26,7 @@ def full_analysis(galaxy=None, opt='kin'):
 	print galaxy, opt
 
 	targetSN = 60 #None# 200
-	set_range = None#, np.array([2000,5500])#7350])
+	set_range = np.array([2000,7410])
 
 	# binning_spaxels(galaxy, targetSN=targetSN, opt=opt, auto_override=True, 
 	# 	set_range=set_range) #, debug=True)

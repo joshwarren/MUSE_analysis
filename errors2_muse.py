@@ -38,7 +38,7 @@ class set_params(object):
 					# 3   All gas seperate.
 		self.reps = 5 ## number of monte carlo reps per bin.
 		self.FWHM_gal = 2.3 # MUSE documentation
-		self.set_range = np.array([2000,7350])#5500])
+		self.set_range = np.array([2000,7410])#5500])
 		self.stellar_moments = 2 # number of componants to calc with ppxf (see 
 							# keyword moments in ppxf.pro for more details)
 		self.gas_moments = 2

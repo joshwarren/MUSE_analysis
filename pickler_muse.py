@@ -183,7 +183,7 @@ def pickler(galaxy, discard=0, norm="lwv", opt="kin", override=False):
 						except IndexError:
 							pass
 				else:
-					dynamics_uncert = dynamics
+					dynamics_uncert = dynamics*np.nan
 
 		for kine in dynamics.keys():
 			if np.isnan(dynamics[kine]).all():
