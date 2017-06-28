@@ -515,8 +515,8 @@ def get_dataCubeDirectory(galaxy):
 		
 		dataCubeDirectory.radio = mystring2('%s/Data/VLA/%s/%s_4.9GHz.fits' % (
 			cc.base_dir, galaxy, galaxy))
-		dataCubeDirectory.radio.RAoffset = -48.0
-		dataCubeDirectory.radio.decoffset = 11.2
+		dataCubeDirectory.radio.RAoffset = 6.5
+		dataCubeDirectory.radio.decoffset = 11.5
 
 		dataCubeDirectory.xray = '%s/Data/Chandra/N1316_full.fits' % (cc.base_dir)
 	elif galaxy == 'ngc1399':

@@ -160,47 +160,16 @@ def add_R_e(ax, galaxy, discard=0, pa=0):
 def add_(overplot, color, ax, galaxy, header, close=False):
 # def add_(overplot, color, ax, galaxy, close=False):
 	image_dir=getattr(get_dataCubeDirectory(galaxy), overplot)
-	# Arcsec coords
-	if os.path.exists(image_dir) and not ax.RaDec:
-		f = fits.open(image_dir)[0]
-
-		x = np.arange(f.header['NAXIS1'])*abs(f.header['CDELT1'])*60*60
-		y = np.arange(f.header['NAXIS2'])*abs(f.header['CDELT2'])*60*60
-
-		x -= max(x)/2
-		y -= max(y)/2
-
-		# Coordinates of MUSE pointing
-		mcoord = SkyCoord(header['CRVAL1'], header['CRVAL2'],
-			unit=(u.deg, u.deg))
-
-		# Coordinates of overplot pointing
-		imcoord = SkyCoord(f.header['CRVAL1'], f.header['CRVAL2'],
-			unit=(u.deg, u.deg))
-
-		# Offset between the two pointings
-		x -= ((mcoord.ra.degree - header['CRPIX1']*header['CD1_1']/(60*60)) -
-			(imcoord.ra.degree +
-			f.header['CRPIX1']*f.header['CDELT1']/(60*60)))*60*60
-				
-		y += ((mcoord.dec.degree - header['CRPIX2']*header['CD2_2']/(60*60)) -
-			(imcoord.dec.degree +
-			f.header['CRPIX2']*f.header['CDELT2']/(60*60)))*60*60
-
-	# RA and dec coords
-	elif os.path.exists(image_dir):
-		f = fits.open(image_dir)[0]
-
-		imcoord = SkyCoord(f.header['CRVAL1'], f.header['CRVAL2'],
-			unit=(u.deg, u.deg))
-
-		x = (np.arange(f.header['NAXIS1']) - f.header['CRPIX1']) *\
-			f.header['CDELT1'] + imcoord.ra.degree + image_dir.RAoffset/(60**2)
-		y = (np.arange(f.header['NAXIS2'])-f.header['CRPIX2']) *\
-			f.header['CDELT2'] + imcoord.dec.degree + image_dir.decoffset/(60**2)
-
-	# Plot and save
+	
 	if os.path.exists(image_dir):
+		f = fits.open(image_dir)[0]
+
+		# ****** NB: NOTE THE -VE SIGN ON CDELT1 ******
+		x = (np.arange(f.header['NAXIS1']) - f.header['CRPIX1']) *\
+			-f.header['CDELT1'] + f.header['CRVAL1'] + image_dir.RAoffset/(60**2)
+		y = (np.arange(f.header['NAXIS2'])-f.header['CRPIX2']) *\
+			f.header['CDELT2'] + f.header['CRVAL2'] + image_dir.decoffset/(60**2)
+	
 		#remove random extra dimenisons.
 		s = np.array(f.data.shape)
 		if any(s==1):
@@ -214,8 +183,11 @@ def add_(overplot, color, ax, galaxy, header, close=False):
 		if overplot == 'radio':
 			lim = np.nanmean(image) + np.nanstd(image)
 			image[image < lim] = lim
+		else:
+			Warning('Are you sure the x axis has the correct sign?')
 		image = np.log(image)
 
+		# Plot
 		cs = ax.contour(x, y, image, colors=color, linestyles='solid', linewidth=1)
 		# cs = ax.contour(image, colors=color, linestyles='solid', linewidth=1)
 		cs.collections[0].set_label(overplot)
@@ -225,16 +197,17 @@ def add_(overplot, color, ax, galaxy, header, close=False):
 
 		leg = ax.legend(facecolor='w')
 
-		saveTo = os.path.dirname(ax.saveTo)+"/Overplot/" + \
-			os.path.basename(ax.saveTo)
-		if not os.path.exists(os.path.dirname(saveTo)):
-			os.makedirs(os.path.dirname(saveTo))
-		plt.savefig(saveTo, bbox_inches="tight")
+		# Save
+		if hasattr(ax, 'saveTo'):
+			saveTo = os.path.dirname(ax.saveTo)+"/Overplot/" + \
+				os.path.basename(ax.saveTo)
+			if not os.path.exists(os.path.dirname(saveTo)):
+				os.makedirs(os.path.dirname(saveTo))
+			plt.savefig(saveTo, bbox_inches="tight")
 
 		if close:
 			plt.close()
 		else:
-			# Make lines thinner for pdf by finding the line objects
 			leg.remove()
 #-----------------------------------------------------------------------------
 
@@ -279,9 +252,9 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 	vin_dir_gasMC = "%s/%s/%s/MC" % (vin_dir, galaxy, opt) # for chi2
 	out_pickle = '%s/pickled' % (output)
 
-	# cubeFile = fits.open(dataCubeDirectory)
-	# header = cubeFile[1].header
-	# cubeFile.close()
+	cubeFile = fits.open(dataCubeDirectory)
+	header = cubeFile[1].header
+	cubeFile.close()
 # ------------== Reading pickle file and create plot  ===----------
 
 	# Load pickle file from pickler.py
@@ -644,6 +617,19 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 	if len(D.list_components) > 2 and (mapping.line_ratios or mapping is None):
 		print "    line ratios"
 
+		CBtitle = r'$H_\alpha/H_\beta/2.8$'
+		saveTo = "%s/lineratio/Dust.png" % (out_nointerp)
+		dust = D.e_line['Halpha'].flux/D.e_line['Hbeta'].flux/2.8
+
+		d_min, d_max = set_lims(dust)
+
+		ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar,
+			dust, vmin=d_min, vmax=d_max, colorbar=True,
+			nodots=True, title='Balmer Decrement', label=CBtitle,
+			show_bin_num=show_bin_num, galaxy = galaxy.upper(), redshift = z, 
+			res=res, center=center, save=saveTo, close=True,
+			flux_unbinned=D.unbinned_flux)#header=header)
+
 		t_num = (len(D.e_components)-1)*len(D.e_components)/2
 		for n in range(t_num):
 			i = 0
@@ -694,13 +680,14 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 				line_ratio, vmin=lr_min, vmax=lr_max, colorbar=True,
 				nodots=True, title=lr_title, label=lrCBtitle, ax=ax,
 				show_bin_num=show_bin_num, galaxy = galaxy.upper(), redshift = z, 
-				res=res, center=center)#header=header)
+				res=res, center=center, flux_unbinned=D.unbinned_flux)#header=header)
 
 			ax_array.append(ax)
 			f.delaxes(ax)
 			f.delaxes(ax.cax)
 			if hasattr(ax,'ax2'): f.delaxes(ax.ax2)
 			if hasattr(ax,'ax3'): f.delaxes(ax.ax3)
+
 # ------------============= Plot and save ===============----------
 	print "    Plotting and saving"
 

@@ -7,6 +7,9 @@ import cPickle as pickle
 import matplotlib.pyplot as plt
 import numpy as np
 from plot_velfield_nointerp import plot_velfield_nointerp
+from plot_results import add_
+from fits.io import fits
+from errors2_muse import get_dataCubeDirectory
 import os
 
 
@@ -15,7 +18,12 @@ def BPT(galaxy, D=None, opt='kin'):
 	print '   BPT'
 
 	analysis_dir = "%s/Data/muse/analysis" % (cc.base_dir)
-	# galaxiesFile = "%s/galaxies.txt" % (analysis_dir)
+	galaxiesFile = "%s/galaxies.txt" % (analysis_dir)
+	x_cent_gals, y_cent_gals = np.loadtxt(galaxiesFile, unpack=True, skiprows=1, 
+		usecols=(1,2), dtype=int)
+	galaxy_gals = np.loadtxt(galaxiesFile, skiprows=1, usecols=(0,),dtype=str)
+	i_gal = np.where(galaxy_gals==galaxy)[0][0]
+	center = (x_cent_gals[i_gal], y_cent_gals[i_gal])
 
 	output = '%s/%s/%s' % (analysis_dir, galaxy, opt)
 
@@ -33,14 +41,23 @@ def BPT(galaxy, D=None, opt='kin'):
 	y = np.log(D.e_line['[OIII]5007d'].flux/D.e_line['Hbeta'].flux)
 	x = np.log(D.e_line['[SII]6716'].flux/D.e_line['Halpha'].flux)
 
+	y_err = np.sqrt((D.e_line['[OIII]5007d'].flux.uncert/D.e_line['[OIII]5007d'].flux)**2 +
+		(D.e_line['Hbeta'].flux.uncert/D.e_line['Hbeta'].flux)**2)
+	x_err = np.sqrt((D.e_line['[SII]6716'].flux.uncert/D.e_line['Halpha'].flux)**2 +
+		(D.e_line['Hbeta'].flux.uncert/D.e_line['Hbeta'].flux)**2)
+
 	Seyfert2 = (0.72/(x - 0.32) + 1.30 < y) * (1.89 * x + 0.76 < y)
 	LINER = ((0.72/(x - 0.32) + 1.30 < y) * (1.89 * x + 0.76 > y))# + (x > 0.32)
 	SF = (y < 0.72/(x - 0.32) + 1.30)# - (x > 0.32)
 	# o = (1.89 * x + 0.76 > y) * (x > 0.32)
 
-	ax.scatter(x[Seyfert2], y[Seyfert2], c='r')
-	ax.scatter(x[LINER], y[LINER], c='g')
-	ax.scatter(x[SF], y[SF], c='b')
+	# ax.scatter(x[Seyfert2], y[Seyfert2], c='r')
+	# ax.scatter(x[LINER], y[LINER], c='g')
+	# ax.scatter(x[SF], y[SF], c='b')
+	ax.errorbar(x[Seyfert2], y[Seyfert2], yerr=y_err[Seyfert2], xerr=x_err[Seyfert2], c='r',
+		fmt='.')
+	ax.errorbar(x[LINER], y[LINER], yerr=y_err[LINER], xerr=x_err[LINER], c='g', fmt='.')
+	ax.errorbar(x[SF], y[SF], yerr=y_err[SF], xerr=x_err[SF], c='b', fmt='.')
 	# ax.scatter(x[o],y[o],c='k')
 
 	x_line1 = np.arange(-2.0, 0.1, 0.001)
@@ -74,9 +91,14 @@ def BPT(galaxy, D=None, opt='kin'):
 	m[SF] = -1
 
 	saveTo = '%s/plots/AGN_map.png' % (output)
-	plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, m, vmin=-1.3, vmax=1.3,
-		nodots=True, title='Map of AGN', save=saveTo, res=0.2)
+	ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, m, vmin=-1.3, vmax=1.3,
+		nodots=True, title='Map of AGN', save=saveTo, res=0.2, 
+		flux_unbinned=D.unbinned_flux, center=center)
 
+	f = fits.open(get_dataCubeDirectory(galaxy))
+	header = f[1].header
+	f.close()
+	add_('radio', 'r', ax, galaxy, header)
 
 	return D
 
