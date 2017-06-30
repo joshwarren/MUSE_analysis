@@ -153,7 +153,6 @@ def binning_spaxels(galaxy, targetSN=None, opt='kin', auto_override=False, debug
 		noise[bad_pix] = 0
 		noise +=0.000001
 
-
 	galaxy_data = []
 	del galaxy_data
 	galaxy_noise = []

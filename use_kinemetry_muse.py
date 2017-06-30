@@ -12,6 +12,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 from rolling_stats import rollmed
+from plot_velfield_nointerp import plot_velfield_nointerp
+
 
 def use_kinemetry(gal, opt='kin'):
 	out_dir = '%s/Data/muse/analysis' % (cc.base_dir)
@@ -24,8 +26,8 @@ def use_kinemetry(gal, opt='kin'):
 	for i, type in enumerate(['flux','vel','sigma']):
 		f = '%s/%s/%s/kinemetry/kinemetry_%s.txt' % (out_dir, gal, opt, type)
 		if os.path.exists(f):
-			rad, pa, er_pa, q, er_q, k1, erk1, k51, erk51 = np.loadtxt(f, unpack=True, 
-				skiprows=1)
+			rad, pa, er_pa, q, er_q, k1, erk1, k51, erk51 = np.loadtxt(f, 
+				unpack=True, skiprows=1)
 			pa = rollmed(pa, 5)
 			k1 = rollmed(k1, 5)
 			rad*=0.2 # Change to arcsec
@@ -116,6 +118,38 @@ def use_kinemetry(gal, opt='kin'):
 		ax.set_title('KINEMETRY output (smoothed)', y=1.12)
 
 		fig.savefig('%s/%s/%s/kinemetry/kinemetry.png'%(out_dir, gal, opt))
+
+	plt.close()
+
+
+	Prefig(size=(16*3,12*2), transparent=False)
+	fig, ax = plt.subplots(2,3)
+	f = fits.open(get_dataCubeDirectory(galaxy))
+	header = f[1].header
+	f.close()
+
+	for i, type in enumerate(['flux','vel','sigma']):
+		f = '%s/%s/%s/kinemetry/kinemetry_%s_model.txt' % (out_dir, gal, opt, type)
+		xbin, ybin, velkin, velcirc  = np.loadtxt(f, unpack=True, skiprows=1)
+
+		f = '%s/%s/%s/kinemetry/flux.txt' % (out_dir, gal, opt, type)
+		flux = np.loadtxt(f)
+
+		plot_velfield_nointerp(xbin, ybin, np.arange(len(xbin)) xbin, ybin, 
+			velkin, header, nodots=True, title='KINEMETRY model', colorbar=True, 
+			res=0.2, flux=flux, ax=ax[0,i])
+
+		plot_velfield_nointerp(xbin, ybin, np.arange(len(xbin)) xbin, ybin, 
+			velkin, header, nodots=True, title='KINEMETRY circluar velocity', 
+			colorbar=True, res=0.2, flux=flux, ax=ax[1,i])
+
+
+	fig.savefig('%s/%s/%s/kinemetry/kinemetry_models.png'%(out_dir, gal, opt))
+
+
+
+
+
 	
 ##############################################################################
 

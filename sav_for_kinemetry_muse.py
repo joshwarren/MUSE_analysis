@@ -36,3 +36,8 @@ def sav_for_kinemetry(galaxy, opt='kin', D=None):
 					str(D.components['stellar'].plot['sigma'].uncert[i]) + '\n')
 
 		return D
+
+if __name__=='__main__':
+	for gal in ['ic1459', 'ic4296', 'ngc1316']:
+		print gal
+		sav_for_kinemetry(gal)

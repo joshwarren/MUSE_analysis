@@ -14,6 +14,7 @@ c = 299792.458
 def find_template(galaxy, set_range=None):
 	params = set_params()
 	params.gas = 0
+	params.reps = 0
 	params.set_range = set_range
 ## ----------========= Reading the spectrum  ===============---------
 
