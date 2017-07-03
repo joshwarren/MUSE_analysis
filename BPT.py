@@ -80,7 +80,7 @@ def BPT(galaxy, D=None, opt='kin'):
 		elif l == '[NII]6583d':
 			Seyfert2 = ((0.61/(x - 0.47) + 1.19 < y) + (x > 0.47)) * ~large_err
 			LINER = ((0.61/(x - 0.47) + 1.19 < y) + (x > 0.47)) * ~large_err
-			SF = (0.61/(x - 0.47) + 1.19 > y) * (x < 0.47) ~large_err
+			SF = (0.61/(x - 0.47) + 1.19 > y) * (x < 0.47) * ~large_err
 
 			y_line1 = 0.61/(x_line1 - 0.47) + 1.19
 			ax[i].plot(x_line1, y_line1,'k')

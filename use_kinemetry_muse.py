@@ -13,9 +13,11 @@ import matplotlib.pyplot as plt
 import os
 from rolling_stats import rollmed
 from plot_velfield_nointerp import plot_velfield_nointerp
+from astropy.io import fits
+from errors2_muse import get_dataCubeDirectory
+import cPickle as pickle
 
-
-def use_kinemetry(gal, opt='kin'):
+def use_kinemetry(gal, opt='kin', D=None):
 	out_dir = '%s/Data/muse/analysis' % (cc.base_dir)
 	colors=['b','y','g']
 	fig, ax = plt.subplots()
@@ -124,30 +126,54 @@ def use_kinemetry(gal, opt='kin'):
 
 	Prefig(size=(16*3,12*2), transparent=False)
 	fig, ax = plt.subplots(2,3)
-	f = fits.open(get_dataCubeDirectory(galaxy))
+	fig2, ax2 = plt.subplots(2,3)
+	f = fits.open(get_dataCubeDirectory(gal))
 	header = f[1].header
 	f.close()
 
-	for i, type in enumerate(['flux','vel','sigma']):
-		f = '%s/%s/%s/kinemetry/kinemetry_%s_model.txt' % (out_dir, gal, opt, type)
-		xbin, ybin, velkin, velcirc  = np.loadtxt(f, unpack=True, skiprows=1)
+	tessellation_File = "%s/%s/%s/setup/voronoi_2d_binning_output.txt" % (out_dir, 
+		gal, opt)
+	x,y,bin_num = np.loadtxt(tessellation_File, usecols=(0,1,2), 
+		unpack=True, skiprows=1, dtype=int)
 
-		f = '%s/%s/%s/kinemetry/flux.txt' % (out_dir, gal, opt, type)
+	if D is None:
+		pickleFile = open("%s/%s/%s/pickled/dataObj.pkl" % (out_dir,gal,opt), 'rb')
+		D = pickle.load(pickleFile)
+		pickleFile.close()
+
+	for i, type in enumerate(['flux','vel','sigma']):
+		f = '%s/%s/%s/kinemetry/kinemetry_%s_2Dmodel.txt' % (out_dir, gal, opt, type)
+		xbin, ybin, velkin, velcirc  = np.loadtxt(f, unpack=True, skiprows=1)
+		velkin[velkin==max(velkin)] = np.nan
+		velcirc[velcirc==max(velcirc)] = np.nan
+
+		f = '%s/%s/%s/kinemetry/flux.dat' % (out_dir, gal, opt)
 		flux = np.loadtxt(f)
 
-		plot_velfield_nointerp(xbin, ybin, np.arange(len(xbin)) xbin, ybin, 
-			velkin, header, nodots=True, title='KINEMETRY model', colorbar=True, 
-			res=0.2, flux=flux, ax=ax[0,i])
+		plot_velfield_nointerp(x, y, bin_num, xbin, ybin, 
+			velkin, header, nodots=True, title='KINEMETRY %s model'%(type), 
+			colorbar=True, ax=ax[0,i])#, flux=flux)
 
-		plot_velfield_nointerp(xbin, ybin, np.arange(len(xbin)) xbin, ybin, 
-			velkin, header, nodots=True, title='KINEMETRY circluar velocity', 
-			colorbar=True, res=0.2, flux=flux, ax=ax[1,i])
+		plot_velfield_nointerp(x, y, bin_num, xbin, ybin, 
+			velcirc, header, nodots=True, title='KINEMETRY circluar %s model'
+			% (type), colorbar=True, ax=ax[1,i])#, flux=flux)
+
+		lot_velfield_nointerp(x, y, bin_num, xbin, ybin, 
+			D.components['stellar'].plot[type]-velkin, header, nodots=True, 
+			title='KINEMETRY %s residuals'%(type), 
+			colorbar=True, ax=ax2[0,i])#, flux=flux)
+
+		plot_velfield_nointerp(x, y, bin_num, xbin, ybin, 
+			D.components['stellar'].plot[type]-velcirc, header, nodots=True, 
+			title='KINEMETRY circluar %s residuals'
+			% (type), colorbar=True, ax=ax2[1,i])#, flux=flux)
 
 
 	fig.savefig('%s/%s/%s/kinemetry/kinemetry_models.png'%(out_dir, gal, opt))
+	fig2.savefig('%s/%s/%s/kinemetry/kinemetry_residuals.png'%(out_dir, gal, opt))
 
 
-
+	return D
 
 
 	
@@ -156,5 +182,5 @@ def use_kinemetry(gal, opt='kin'):
 # Use of plot_absorption.py
 
 if __name__ == '__main__':
-	# use_kinemetry('ic1459')
-	use_kinemetry('ic4296')
+	use_kinemetry('ic1459')
+	# use_kinemetry('ic4296')
