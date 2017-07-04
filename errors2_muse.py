@@ -629,6 +629,8 @@ def run_ppxf(galaxy, bin_lin, bin_lin_noise, lamRange, CDELT, params, produce_pl
 	
 	noise = bin_log_noise+0.0000000000001
 
+	
+
 	stellar_templates.get_templates(galaxy, velscale, use_all_temp=use_all_temp)
 	# velscale = stellar_templates.velscale
 	dv = (stellar_templates.logLam_template[0]-logLam_bin[0])*c # km/s	
@@ -661,10 +663,6 @@ def run_ppxf(galaxy, bin_lin, bin_lin_noise, lamRange, CDELT, params, produce_pl
 
 	if produce_plot:
 		# Add noise to plot
-		# pp.ax.plot(lambdaq, noise+np.min(pp.bestfit[goodPixels]), 'purple')
-		# pp.ax.axhline(np.min(pp.bestfit[goodPixels]), linestyle='--', color='k', 
-		# 	dashes=(5,5),zorder=10)
-
 		ax2 = pp.ax.twinx()
 		ax2.set_ylabel('Residuals, emission lines and Noise',rotation=270,labelpad=12)
 		r = pp.ax.get_ylim()[1] - pp.ax.get_ylim()[0]

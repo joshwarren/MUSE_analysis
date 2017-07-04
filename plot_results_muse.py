@@ -91,7 +91,7 @@ class mapping(object):
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
-def set_lims(v, positive=False, symmetric=False):
+def set_lims(v, positive=False, symmetric=False, n_std=3):
 	if all(~np.isfinite(v)):
 		return 0, 0
 
@@ -101,7 +101,7 @@ def set_lims(v, positive=False, symmetric=False):
 		av = np.median(v)
 		std = np.std(v)
 
-		include = (v >= av - 3*std) * (v <= av + 3*std)
+		include = (v >= av - n_std*std) * (v <= av + n_std*std)
 		v = v[include]
 
 	vmin, vmax = min(v), max(v)

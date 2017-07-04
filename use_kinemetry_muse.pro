@@ -37,26 +37,28 @@ PRO do_work, gal, opt, type
 	xbin = xbin - x_cent
 	ybin = ybin - y_cent
 
-	; kinemetry on maps
-	t=systime(1)
-	KINEMETRY, xbin, ybin, velbin, rad, pa, q, cf, x0=x0[i_gal]-x_cent, $
-		y0=y0[i_gal]-y_cent, ntrm=6, scale=0.2, name=gal,er_cf=er_cf, $
-		er_pa=er_pa, even=even, ERROR=er_velbin, er_q=er_q, /verbose, $
-		velkin=velkin, velcirc=velcirc, /bmodel ; xellip=xellip, yellip=yellip
+	file = '/Data/muse/analysis/'+gal+'/'+opt+'/kinemetry/flux.dat'
+	; read in field
+	rdfloat, file, flux
+	if gal eq 'ngc1399' then badpix = where(flux gt 4000)
 
-	;catch, caught_error
-	;if caught_error ne 0 then catch, /cancel
-	print, systime(1) -t, 'seconds'
+	; kinemetry on maps
+	KINEMETRY, xbin, ybin, velbin, rad, pa, q, cf, x0=x0[i_gal]-x_cent, $
+		y0=y0[i_gal]-y_cent, ntrm=2, scale=0.2, name=gal,er_cf=er_cf, $
+		er_pa=er_pa, even=even, ERROR=er_velbin, er_q=er_q, badpix=badpix, $
+		velkin=velkin, velcirc=velcirc, /bmodel, cover=0.05, /FIXCEN 
 
 	
 	file = '/Data/muse/analysis/'+gal+'/'+opt+'/kinemetry/kinemetry_'+type+'_2Dmodel.txt'
 	forprint2, xbin, ybin, velkin, velcirc, width=200, TEXTOUT=file, /SILENT, $
 		comment='   xbin      ybin       velkin    velcirc'
 
-	; forprint2, xellip, yellip, velkin, velcirc, width=200, TEXTOUT=file, /SILENT, $
-	; 	comment='   xellip      yellip       velkin    velcirc'	
 
 	; kinemetry parameters as defined in Krajnovic et al. (2006)
+	KINEMETRY, xbin, ybin, velbin, rad, pa, q, cf, x0=x0[i_gal]-x_cent, $
+		y0=y0[i_gal]-y_cent, ntrm=6, scale=0.2, name=gal,er_cf=er_cf, $
+		er_pa=er_pa, even=even, ERROR=er_velbin, er_q=er_q, $;/verbose, $
+		velkin=velkin, velcirc=velcirc, /bmodel, cover=0.05, /FIXCEN 
 	k0 = cf[*,0]
 	k1 = SQRT(cf[*,1]^2 + cf[*,2]^2)
 	k5 = SQRT(cf[*,5]^2 + cf[*,6]^2)
@@ -95,14 +97,14 @@ END
 
 pro use_kinemetry
 ;	gal = 'eso443-g024'
-	gals=['ic1459'];, 'ic4296', 'ngc1316', 'ngc1399']
+	gals=['ic1459', 'ic4296', 'ngc1316', 'ngc1399']
 	for i=0,3 do begin
 		gal=gals[i]
 		print, gal
 
 		do_work, gal, 'kin', 'flux'
-		do_work, gal, 'kin', 'sigma'
 		do_work, gal, 'kin', 'vel'
+		do_work, gal, 'kin', 'sigma'
 
 	endfor
 

@@ -174,7 +174,7 @@ def compare_atlas3d():
 	KDC_vimos = (KDC_vimos!='-')[gal_order]
 
 	ax.scatter(ellipticity_vimos[no_rot_vimos], lambda_Re_vimos[no_rot_vimos], 
-		marker=marker_atlas3d(0), c='r', alpha=0.5, lw=0, label='MUSE')
+		marker=marker_atlas3d(0), c='r', alpha=0.5, lw=0, label='VIMOS')
 	ax.scatter(ellipticity_vimos[complex_rot_vimos], lambda_Re_vimos[complex_rot_vimos], 
 		marker=marker_atlas3d(1), c='r', alpha=0.5, lw=0)
 	ax.scatter(ellipticity_vimos[KDC_vimos], lambda_Re_vimos[KDC_vimos], 
@@ -192,7 +192,22 @@ def compare_atlas3d():
 
 	# Plot Slow Rotator bounds
 	ax.plot([0,0.4,0.4], [0.08, 0.18, 0], 'k', label='FR/SR boundary')
-	ax.legend(facecolor='w')
+	leg = plt.legend(facecolor='w')
+	ax.add_artist(leg)
+
+	# Proxy for kinematics legend
+	h1, = ax.plot(np.nan, marker=marker_atlas3d(0), c='b', alpha=0.5, lw=0, 
+		label='No Rotation')
+	h2, = ax.plot(np.nan, marker=marker_atlas3d(1), c='b', alpha=0.5, lw=0,
+		label='Complex Rotation')
+	h3, = ax.plot(np.nan, marker=marker_atlas3d(2), c='b', alpha=0.5, lw=0, 
+		label='KDC/CDC')
+	h4, = ax.plot(np.nan, marker=marker_atlas3d(3), c='b', alpha=0.5, lw=0,
+		label='Counter Rotating Disks')
+	h5, = ax.plot(np.nan, marker=marker_atlas3d(4), c='b', alpha=0.5, lw=0,
+		label='Regular Rotator')
+
+	plt.legend(handles=[h1,h2,h3,h4,h5], facecolor='w', loc=5)
 
 	# Save plot
 	fig.savefig('%s/Data/muse/analysis/lambda_R_ellipticity.png' % (cc.base_dir))

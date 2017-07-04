@@ -15,9 +15,9 @@ from rolling_stats import rollmed
 from plot_velfield_nointerp import plot_velfield_nointerp
 from astropy.io import fits
 from errors2_muse import get_dataCubeDirectory
-import cPickle as pickle
+from plot_results_muse import set_lims
 
-def use_kinemetry(gal, opt='kin', D=None):
+def use_kinemetry(gal, opt='kin'):
 	out_dir = '%s/Data/muse/analysis' % (cc.base_dir)
 	colors=['b','y','g']
 	fig, ax = plt.subplots()
@@ -84,6 +84,8 @@ def use_kinemetry(gal, opt='kin', D=None):
 	if missing != 3:
 		# Get redshift of galaxy from data_file
 		data_file =  "%s/Data/vimos/analysis/galaxies.txt" % (cc.base_dir)
+		classify_file = "%s/Data/muse/analysis/galaxies_classify.txt" % (cc.base_dir)
+
 		# different data types need to be read separetly
 		z_gals = np.loadtxt(data_file, unpack=True, skiprows=1, usecols=(1,))
 		galaxy_gals = np.loadtxt(data_file, skiprows=1, usecols=(0,),dtype=str)
@@ -103,6 +105,16 @@ def use_kinemetry(gal, opt='kin', D=None):
 		#ax.tick_params(axis='y', colors='blue')
 		ax.set_ylabel('PA')#,color='b')
 		ax.set_xlabel('radius (arcsec)')
+
+		# Mark extent of KDC
+		galaxy_gals2, KDC_size = np.loadtxt(classify_file, unpack=True, usecols=(0,6), 
+		dtype=str, skiprows=1)
+		has_KDC = KDC_size!='-'
+		galaxy_gals2 = galaxy_gals2[has_KDC]
+		KDC_size = KDC_size[has_KDC].astype(float)
+
+		if gal in galaxy_gals2:
+			ax.axvline(KDC_size[galaxy_gals2==gal][0])
 
 		# Legend
 		try:
@@ -124,9 +136,8 @@ def use_kinemetry(gal, opt='kin', D=None):
 	plt.close()
 
 
-	Prefig(size=(16*3,12*2), transparent=False)
-	fig, ax = plt.subplots(2,3)
-	fig2, ax2 = plt.subplots(2,3)
+	Prefig(size=(16*3,12*4), transparent=False)
+	fig, ax = plt.subplots(4,3)
 	f = fits.open(get_dataCubeDirectory(gal))
 	header = f[1].header
 	f.close()
@@ -136,44 +147,43 @@ def use_kinemetry(gal, opt='kin', D=None):
 	x,y,bin_num = np.loadtxt(tessellation_File, usecols=(0,1,2), 
 		unpack=True, skiprows=1, dtype=int)
 
-	if D is None:
-		pickleFile = open("%s/%s/%s/pickled/dataObj.pkl" % (out_dir,gal,opt), 'rb')
-		D = pickle.load(pickleFile)
-		pickleFile.close()
-
 	for i, type in enumerate(['flux','vel','sigma']):
 		f = '%s/%s/%s/kinemetry/kinemetry_%s_2Dmodel.txt' % (out_dir, gal, opt, type)
 		xbin, ybin, velkin, velcirc  = np.loadtxt(f, unpack=True, skiprows=1)
+
+		f = '%s/%s/%s/kinemetry/%s.dat' % (out_dir, gal, opt, type)
+		vel = np.loadtxt(f, usecols=(0,), unpack=True)
+
 		velkin[velkin==max(velkin)] = np.nan
 		velcirc[velcirc==max(velcirc)] = np.nan
 
 		f = '%s/%s/%s/kinemetry/flux.dat' % (out_dir, gal, opt)
 		flux = np.loadtxt(f)
 
+		vmin, vmax = set_lims(vel, symmetric=type=='vel', positive=type!='vel')
 		plot_velfield_nointerp(x, y, bin_num, xbin, ybin, 
-			velkin, header, nodots=True, title='KINEMETRY %s model'%(type), 
-			colorbar=True, ax=ax[0,i])#, flux=flux)
+			vel, header, vmin=vmin, vmax=vmax, nodots=True, 
+			title='%s Data'%(type), colorbar=True, ax=ax[0,i])#, flux=flux)
+		
 
 		plot_velfield_nointerp(x, y, bin_num, xbin, ybin, 
-			velcirc, header, nodots=True, title='KINEMETRY circluar %s model'
+			velkin, header, vmin=vmin, vmax=vmax, nodots=True, title='KINEMETRY %s model'
 			% (type), colorbar=True, ax=ax[1,i])#, flux=flux)
 
-		lot_velfield_nointerp(x, y, bin_num, xbin, ybin, 
-			D.components['stellar'].plot[type]-velkin, header, nodots=True, 
-			title='KINEMETRY %s residuals'%(type), 
-			colorbar=True, ax=ax2[0,i])#, flux=flux)
-
 		plot_velfield_nointerp(x, y, bin_num, xbin, ybin, 
-			D.components['stellar'].plot[type]-velcirc, header, nodots=True, 
-			title='KINEMETRY circluar %s residuals'
-			% (type), colorbar=True, ax=ax2[1,i])#, flux=flux)
+			velcirc, header, vmin=vmin, vmax=vmax, nodots=True, 
+			title='KINEMETRY circluar %s'
+			% (type), colorbar=True, ax=ax[3,i])#, flux=flux)
+
+		vmin, vmax = set_lims(vel-velkin, symmetric=True)
+		plot_velfield_nointerp(x, y, bin_num, xbin, ybin, 
+			vel-velkin, header, vmin=vmin, vmax=vmax, nodots=True, 
+			title='KINEMETRY %s residuals'%(type), 
+			colorbar=True, ax=ax[2,i])#, flux=flux)
 
 
 	fig.savefig('%s/%s/%s/kinemetry/kinemetry_models.png'%(out_dir, gal, opt))
-	fig2.savefig('%s/%s/%s/kinemetry/kinemetry_residuals.png'%(out_dir, gal, opt))
 
-
-	return D
 
 
 	
@@ -182,5 +192,7 @@ def use_kinemetry(gal, opt='kin', D=None):
 # Use of plot_absorption.py
 
 if __name__ == '__main__':
-	use_kinemetry('ic1459')
-	# use_kinemetry('ic4296')
+	for gal in ['ic1459', 'ic4296', 'ngc1316', 'ngc1399']:
+		print gal
+		use_kinemetry(gal)
+	# use_kinemetry('ic1459')

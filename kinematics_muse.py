@@ -142,6 +142,7 @@ def kinematics(galaxy, opt='kin', discard=0, plots=False, D=None):
 # NB: this is not written for gas=2 or gas=3 options. 
 	if D.gas == 1:
 		save_to = "%s/plots/gas_kinematics.png" % (output)
+		print np.array(D.components['Hbeta'].plot['vel'])
 		k = fit_kinematic_pa(D.xBar - f.xpeak, D.yBar - f.ypeak, 
 			np.array(D.components['Hbeta'].plot['vel']), quiet=True, plot=plots, 
 			sav_fig=save_to)
