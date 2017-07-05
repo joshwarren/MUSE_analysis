@@ -42,7 +42,7 @@ def classify(galaxy, opt='kin'):
 # ------------================= RR/NRR ===================----------
 	file = '%s/%s/%s/kinemetry/kinemetry_vel.txt' % (analysis_dir,galaxy,opt)
 	rad, pa, k1, k51 = np.loadtxt(file, usecols=(0,1,5,7), skiprows=1, unpack=True)
-	rad *= 0.2 # Pix to arcsec
+	# rad *= 0.2 # Pix to arcsec
 	pa = rollmed(pa, 5)
 	k1 = rollmed(k1, 5)
 
@@ -134,6 +134,6 @@ def classify(galaxy, opt='kin'):
 
 if __name__ == '__main__':
 	galaxy = 'ic4296'
-	galaxy = 'ic1459'
+	# galaxy = 'ic1459'
 
 	classify(galaxy)

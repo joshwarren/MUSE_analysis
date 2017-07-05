@@ -32,7 +32,7 @@ def use_kinemetry(gal, opt='kin'):
 				unpack=True, skiprows=1)
 			pa = rollmed(pa, 5)
 			k1 = rollmed(k1, 5)
-			rad*=0.2 # Change to arcsec
+			# rad*=0.2 # Change to arcsec
 
 			# Align pa[0] as closely as possible with flux pa[0] by +/- 360 deg
 			if type == 'flux': pa0 = pa[0]
@@ -125,7 +125,7 @@ def use_kinemetry(gal, opt='kin'):
 			else:lns=pl_ob[0]
 
 		labs = [l.get_label() for l in lns]
-		ax.legend(lns, labs, loc=0)
+		ax.legend(lns, labs, loc=0, facecolor='w')
 
 		# Moves title clear of upper x axis
 		plt.subplots_adjust(top=0.85)
@@ -141,6 +141,9 @@ def use_kinemetry(gal, opt='kin'):
 	f = fits.open(get_dataCubeDirectory(gal))
 	header = f[1].header
 	f.close()
+
+	header['NAXIS1'] = 150
+	header['NAXIS2'] = 150
 
 	tessellation_File = "%s/%s/%s/setup/voronoi_2d_binning_output.txt" % (out_dir, 
 		gal, opt)
@@ -192,7 +195,7 @@ def use_kinemetry(gal, opt='kin'):
 # Use of plot_absorption.py
 
 if __name__ == '__main__':
-	for gal in ['ic1459', 'ic4296', 'ngc1316', 'ngc1399']:
-		print gal
-		use_kinemetry(gal)
-	# use_kinemetry('ic1459')
+	# for gal in ['ic1459', 'ic4296', 'ngc1316', 'ngc1399']:
+	# 	print gal
+	# 	use_kinemetry(gal)
+	use_kinemetry('ic1459')

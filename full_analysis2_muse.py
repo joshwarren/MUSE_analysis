@@ -80,7 +80,7 @@ for galaxy in galaxies:
 		# traceback.print_exc()
 		 
 # # v_vd_ellip(wav_range=wav_range)
-# compare_atlas3d()
+compare_atlas3d()
 
 # Display errors
 for i in range(len(gal_err)):

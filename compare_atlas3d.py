@@ -229,11 +229,11 @@ def compare_atlas3d():
 	fast_sauron = fast_sauron == 'F'
 
 	ax.errorbar(size_sauron[fast_sauron], age_sauron[fast_sauron], fmt='.',
-		xerr=size_unc_sauron[fast_sauron], yerr=age_unc_sauron[fast_sauron], color='b',
+		xerr=size_unc_sauron[fast_sauron], yerr=age_unc_sauron[fast_sauron], color='k',
 		label='Fast rotating SAURON')
 	ax.errorbar(size_sauron[~fast_sauron], age_sauron[~fast_sauron], fmt='.',
-		xerr=size_unc_sauron[~fast_sauron], yerr=age_unc_sauron[~fast_sauron], color='r',
-		label='Slow rotating SAURON')
+		xerr=size_unc_sauron[~fast_sauron], yerr=age_unc_sauron[~fast_sauron], 
+		color='lightgrey', label='Slow rotating SAURON')
 
 	# MUSE
 	age_muse, age_unc_muse, OIII_eqw_muse = np.loadtxt(muse_core_file, unpack=True, 
@@ -254,10 +254,10 @@ def compare_atlas3d():
 		size_muse[i2] = angle_to_pc(g, size_muse[i2])
 		if i2 == 0:
 			ax.errorbar(size_muse[i2], age_muse[i1], fmt='.',xerr=size_unc_muse[i2], 
-				yerr=age_unc_muse[i1], color='g', label='MUSE')
+				yerr=age_unc_muse[i1], color='b', label='MUSE')
 		else:
 			ax.errorbar(size_muse[i2], age_muse[i1], fmt='.',xerr=size_unc_muse[i2], 
-				yerr=age_unc_muse[i1], color='g')
+				yerr=age_unc_muse[i1], color='b')
 
 	# VIMOS
 	age_vimos, age_unc_vimos, OIII_eqw_vimos = np.loadtxt(vimos_core_file, unpack=True, 
@@ -278,10 +278,10 @@ def compare_atlas3d():
 		size_vimos[i2] = angle_to_pc(g, size_vimos[i2])
 		if i2 == 0:
 			ax.errorbar(size_vimos[i2], age_vimos[i1], fmt='.',xerr=size_unc_vimos[i2], 
-				yerr=age_unc_vimos[i1], color='c', label='VIMOS')
+				yerr=age_unc_vimos[i1], color='r', label='VIMOS')
 		else:
 			ax.errorbar(size_vimos[i2], age_vimos[i1], fmt='.',xerr=size_unc_vimos[i2], 
-				yerr=age_unc_vimos[i1], color='c')
+				yerr=age_unc_vimos[i1], color='r')
 		if g in gals_muse2 and count==0:
 			count += 1
 			i_muse1 = np.where(gals_muse1==g)[0][0]
