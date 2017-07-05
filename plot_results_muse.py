@@ -217,7 +217,6 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 
 	pa = {'ic1459':0, 'ic4296':0, 'ngc1316':0, 'ngc1399':0}
 
-	res = 0.2 # arcsec (spatial MUSE resolution)
 	pa = pa[galaxy] # PA from reduction
 
 	data_file =  "%s/galaxies.txt" % (vin_dir)
@@ -290,7 +289,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 		saveTo = "%s/SNR.png" % (out_nointerp)
 		ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, D.SNRatio, 
 			header, colorbar=True, nodots=True, title='SNR', save=saveTo, close=True, 
-			res=res, flux_unbinned=D.unbinned_flux, center=center)
+			flux_unbinned=D.unbinned_flux, center=center)
 # ------------=============== Plot image ================----------
 	if mapping.image or mapping is None:
 		print "    Image"
@@ -308,7 +307,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 		ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, D.flux, 
 			header, vmin=fmin, vmax=fmax, nodots=True, show_bin_num=show_bin_num, 
 			colorbar=True, label=CBLabel, title=title, cmap='gist_yarg', ax=ax, 
-			res=res, flux_unbinned=D.unbinned_flux, center=center)
+			flux_unbinned=D.unbinned_flux, center=center)
 		if plots:
 			plt.show()
 
@@ -349,7 +348,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 			
 			ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, 
 				D.e_line[c].flux, header, vmin=f_min, vmax=f_max, colorbar=True, 
-				nodots=True, label=fCBtitle, title=f_title, ax=ax, res=res,
+				nodots=True, label=fCBtitle, title=f_title, ax=ax, 
 				flux_unbinned=D.unbinned_flux, center=center, 
 				signal_noise=D.e_line[c].amp_noise, signal_noise_target=5, )
 				#cmap = 'gist_yarg')
@@ -372,7 +371,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 				flux_unbinned=D.unbinned_flux, nodots=True, 
 				show_bin_num=show_bin_num, colorbar=True, label=fCBtitle, 
 				galaxy = galaxy.upper(), redshift = z, title=fu_title, 
-				save=saveTo, close=True, res=res, center=center)
+				save=saveTo, close=True, center=center)
 			
 			# Equivalent Width
 			eq_title = "%s Equivalent Width" % (c_title)
@@ -395,7 +394,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 				D.e_line[c].equiv_width, header, vmin=eq_min, vmax=eq_max, 
 				colorbar=True, nodots=True, label=eqCBtitle, title=eq_title, ax=ax, 
 				flux_unbinned=D.unbinned_flux, signal_noise=D.e_line[c].amp_noise,
-				signal_noise_target=5, center=center, res=res)
+				signal_noise_target=5, center=center)
 			ax_array.append(ax)
 			f.delaxes(ax)
 			f.delaxes(ax.cax)
@@ -413,7 +412,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 				vmax=eq_uncert_max, flux_unbinned=D.unbinned_flux, nodots=True, 
 				show_bin_num=show_bin_num, colorbar=True, label=eqCBtitle, 
 				galaxy = galaxy.upper(), redshift = z, title=equ_title, 
-				save=saveTo, close=True, res=res, center=center)
+				save=saveTo, close=True, center=center)
 # ------------============ Amplitude/Noise ==============----------
 	if mapping.amp_noise or mapping is None:
 		for c in D.e_components:
@@ -433,7 +432,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 			ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, 
 				D.e_line[c].amp_noise, header, vmin=amp_min, vmax=amp_max, 
 				colorbar=True,  nodots=True, title=amp_title, save=saveTo, 
-				close=True, res=res, flux_unbinned=D.unbinned_flux, center=center)
+				close=True, flux_unbinned=D.unbinned_flux, center=center)
 # ------------=========== Setting titles etc ============----------
 	if mapping.kinematics or mapping is None:
 		print '    Kinematics'
@@ -533,7 +532,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 					flux_unbinned=D.unbinned_flux, #flux_type='notmag',
 					nodots=True, show_bin_num=show_bin_num, colorbar=True, 
 					label=CBLabel,galaxy = galaxy.upper(), redshift = z,
-					title=title, ax=ax, res=res, signal_noise=SNR,
+					title=title, ax=ax, signal_noise=SNR,
 					signal_noise_target=SN_target, center=center)
 				# add_R_e(ax, galaxy, pa=pa)
 				if plots:
@@ -551,8 +550,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 					vmax=v_uncert_max, flux_unbinned=D.unbinned_flux, 
 					nodots=True, show_bin_num=show_bin_num, colorbar=True, 
 					label=CBLabel, galaxy = galaxy.upper(), redshift = z, 
-					title=utitle, save=saveTo, close=True, res=res,
-					center=center)
+					title=utitle, save=saveTo, close=True, center=center)
 				if plots:
 					plt.show()
 # ------------============= Plot residuals ==============----------
@@ -585,7 +583,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 			nodots=True, show_bin_num=show_bin_num, colorbar=True, 
 			label=CBLabel, #flux_unbinned=D.unbinned_flux, 
 			galaxy = galaxy.upper(), redshift = z, title=title, 
-			save=saveTo, close=True, res=res, center=center)
+			save=saveTo, close=True, center=center)
 		if plots:
 			plt.show()
 # # ------------=============== Plot Chi2/DOF =============----------
@@ -628,7 +626,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 			dust, header, vmin=d_min, vmax=d_max, colorbar=True,
 			nodots=True, title='Balmer Decrement', label=CBtitle,
 			show_bin_num=show_bin_num, galaxy = galaxy.upper(), redshift = z, 
-			res=res, center=center, save=saveTo, close=not overplot,
+			center=center, save=saveTo, close=not overplot,
 			flux_unbinned=D.unbinned_flux)
 		for o, c in overplot.iteritems():
 			add_(o, c, ax1, galaxy)
@@ -680,12 +678,14 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 			ax.saveTo = saveTo
 			ax.figx, ax.figy = n%3, n_rows-int(np.ceil(t_num/3)) + int(np.ceil(n/3))
 
+			ANRatio = np..min([D.e_line[cA].amp_noise, D.e_line[cB].amp_noise], axis=0)
 
 			ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar,
 				line_ratio, header, vmin=lr_min, vmax=lr_max, colorbar=True,
 				nodots=True, title=lr_title, label=lrCBtitle, ax=ax,
 				show_bin_num=show_bin_num, galaxy = galaxy.upper(), redshift = z, 
-				res=res, center=center, flux_unbinned=D.unbinned_flux)
+				center=center, flux_unbinned=D.unbinned_flux, signal_noise=ANRatio,
+				signal_noise_target=5)
 
 			ax_array.append(ax)
 			f.delaxes(ax)

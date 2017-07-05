@@ -151,15 +151,15 @@ def compare_atlas3d():
 	KDC_muse = (KDC_muse!='-')[gal_order]
 
 	ax.scatter(ellipticity_muse[no_rot_muse], lambda_Re_muse[no_rot_muse], 
-		marker=marker_atlas3d(0), c='b', alpha=0.5, lw=0, label='MUSE')
+		marker=marker_atlas3d(0), c='b', lw=0, label='MUSE')
 	ax.scatter(ellipticity_muse[complex_rot_muse], lambda_Re_muse[complex_rot_muse], 
-		marker=marker_atlas3d(1), c='b', alpha=0.5, lw=0)
+		marker=marker_atlas3d(1), c='b', lw=0)
 	ax.scatter(ellipticity_muse[KDC_muse], lambda_Re_muse[KDC_muse], 
-		marker=marker_atlas3d(2), c='b', alpha=0.5, lw=0)
+		marker=marker_atlas3d(2), c='b', lw=0)
 	ax.scatter(ellipticity_muse[counter_rot_muse], lambda_Re_muse[counter_rot_muse], 
-		marker=marker_atlas3d(3), c='b', alpha=0.5, lw=0)
+		marker=marker_atlas3d(3), c='b', lw=0)
 	ax.plot(ellipticity_muse[regular_rot_muse], lambda_Re_muse[regular_rot_muse], 
-		marker=marker_atlas3d(4), c='b', alpha=0.5, lw=0, markerfacecolor='none')
+		marker=marker_atlas3d(4), c='b', lw=0, markerfacecolor='none')
 
 
 	# VIMOS
@@ -174,15 +174,15 @@ def compare_atlas3d():
 	KDC_vimos = (KDC_vimos!='-')[gal_order]
 
 	ax.scatter(ellipticity_vimos[no_rot_vimos], lambda_Re_vimos[no_rot_vimos], 
-		marker=marker_atlas3d(0), c='r', alpha=0.5, lw=0, label='VIMOS')
+		marker=marker_atlas3d(0), c='r', lw=0, label='VIMOS')
 	ax.scatter(ellipticity_vimos[complex_rot_vimos], lambda_Re_vimos[complex_rot_vimos], 
-		marker=marker_atlas3d(1), c='r', alpha=0.5, lw=0)
+		marker=marker_atlas3d(1), c='r', lw=0)
 	ax.scatter(ellipticity_vimos[KDC_vimos], lambda_Re_vimos[KDC_vimos], 
-		marker=marker_atlas3d(2), c='r', alpha=0.5, lw=0)
+		marker=marker_atlas3d(2), c='r', lw=0)
 	ax.scatter(ellipticity_vimos[counter_rot_vimos], lambda_Re_vimos[counter_rot_vimos], 
-		marker=marker_atlas3d(3), c='r', alpha=0.5, lw=0)
+		marker=marker_atlas3d(3), c='r', lw=0)
 	ax.plot(ellipticity_vimos[regular_rot_vimos], lambda_Re_vimos[regular_rot_vimos], 
-		marker=marker_atlas3d(4), c='r', alpha=0.5, lw=0, markerfacecolor='none')
+		marker=marker_atlas3d(4), c='r', lw=0, markerfacecolor='none')
 
 	ax.set_title('Atlas3D Fast/Slow Rotator Classification scheme')
 	ax.set_xlabel(r'$\epsilon$')

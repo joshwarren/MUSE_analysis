@@ -19,6 +19,11 @@ def sav_for_kinemetry(galaxy, opt='kin', D=None):
 			D = pickle.load(pickleFile)
 			pickleFile.close()
 
+		if D.norm_method != 'lws':
+			print 'Normalising vel'
+			D.norm_method = 'lws'
+			D.find_restFrame()
+
 
 		print "    Saving flux for KINEMETRY (IDL)"
 		with open('%s/kinemetry/flux.dat' % (output), 'wb') as f:
@@ -39,6 +44,7 @@ def sav_for_kinemetry(galaxy, opt='kin', D=None):
 		return D
 
 if __name__=='__main__':
-	for gal in ['ic1459', 'ic4296', 'ngc1316', 'ngc1399']:
-		print gal
-		sav_for_kinemetry(gal)
+	# for gal in ['ic1459', 'ic4296', 'ngc1316', 'ngc1399']:
+	# 	print gal
+	# 	sav_for_kinemetry(gal)
+	sav_for_kinemetry('ngc1399')
