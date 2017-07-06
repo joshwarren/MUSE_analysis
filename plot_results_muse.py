@@ -678,7 +678,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 			ax.saveTo = saveTo
 			ax.figx, ax.figy = n%3, n_rows-int(np.ceil(t_num/3)) + int(np.ceil(n/3))
 
-			ANRatio = np..min([D.e_line[cA].amp_noise, D.e_line[cB].amp_noise], axis=0)
+			ANRatio = np.min([D.e_line[cA].amp_noise, D.e_line[cB].amp_noise], axis=0)
 
 			ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar,
 				line_ratio, header, vmin=lr_min, vmax=lr_max, colorbar=True,
