@@ -143,8 +143,11 @@ def use_kinemetry(gal, opt='kin'):
 	header = f[1].header
 	f.close()
 
-	header['NAXIS1'] = 150
-	header['NAXIS2'] = 150
+	try:
+		hedaer['NAXIS2']
+	except KeyError:
+		header['NAXIS1'] = 150
+		header['NAXIS2'] = 150
 
 	tessellation_File = "%s/%s/%s/setup/voronoi_2d_binning_output.txt" % (out_dir, 
 		gal, opt)

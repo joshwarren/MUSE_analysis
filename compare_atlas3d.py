@@ -52,7 +52,7 @@ def compare_atlas3d():
 	atlas3d_file = '%s/Data/atlas3d/II_tableD1.dat' % (cc.base_dir)
 	structure_atlas = np.loadtxt(atlas3d_file, unpack=True, usecols=(13,), dtype=str)
 	atlas3d_file = '%s/Data/atlas3d/I_table3.dat' % (cc.base_dir)
-	T_type = np.loadtxt(atlas3d_file, unpack=True, usecols=(10,))
+	M_k_atlas, T_type = np.loadtxt(atlas3d_file, unpack=True, usecols=(8,10))
 	E = T_type < -3.5
 	
 	no_rot_muse = structure_atlas=='NRR/LV'
@@ -211,7 +211,70 @@ def compare_atlas3d():
 
 	# Save plot
 	fig.savefig('%s/Data/muse/analysis/lambda_R_ellipticity.png' % (cc.base_dir))
+	plt.close()	
+## ----------============ K-band magnitude vs lambda_R ===========----------
+	Prefig(size=(16,12*1.4), transparent=False)
+	fig, ax = plt.subplots(2,1, sharex=True,  gridspec_kw = {'height_ratios':[1, 3]})
+	FR_atlas = (lambda_Re_atlas > 0.08 + ellipticity_atlas/4) + (ellipticity_atlas > 0.4)
+	ax[1].scatter(M_k_atlas[FR_atlas], lambda_Re_atlas[FR_atlas], marker='x', c='k', 
+		alpha=0.5, label='Atlas3D Fast Rotators')
+	ax[1].scatter(M_k_atlas[~FR_atlas], lambda_Re_atlas[~FR_atlas], marker='^', c='k', 
+		alpha=0.5, label='Atlas3D Slow Rotators')
+
+	GalaxiesFile = '%s/Data/galaxies_properties.txt' % (cc.base_dir)
+	M_k =  np.loadtxt(GalaxiesFile, unpack=True, skiprows=2, usecols=(2))
+	galaxies =  np.loadtxt(GalaxiesFile, unpack=True, skiprows=2, usecols=(0,), dtype=str)
+
+
+	v_gals = []
+	for g in galaxies_vimos:
+		i_gal = np.where(galaxies==g)[0][0]
+		v_gals.append(i_gal)
+
+	FR_vimos = (lambda_Re_vimos > 0.08 + ellipticity_vimos/4) + (ellipticity_vimos > 0.4)
+
+	m_gals = []
+	for g in galaxies_muse:
+		i_gal = np.where(galaxies==g)[0][0]
+		m_gals.append(i_gal)
+
+	FR_muse = (lambda_Re_muse > 0.08 + ellipticity_muse/4) + (ellipticity_muse > 0.4)
+
+	ax[1].scatter(M_k[v_gals][FR_vimos], lambda_Re_vimos[FR_vimos], c='r', marker='x',
+		label='VIMOS Fast Rotators')
+	ax[1].scatter(M_k[v_gals][~FR_vimos], lambda_Re_vimos[~FR_vimos], c='r', marker='^',
+		label='VIMOS Slow Rotators')
+	ax[1].scatter(M_k[m_gals][FR_muse], lambda_Re_muse[FR_muse], c='b', marker='x',
+		label='MUSE Fast Rotators')
+	ax[1].scatter(M_k[m_gals][~FR_muse], lambda_Re_vimos[~FR_muse], c='b', marker='^',
+		label='MUSE Slow Rotators')
+
+	plt.legend(facecolor='w')
+
+	ax[0].twinx().hist(M_k_atlas[FR_atlas], histtype='step', color='k', normed=True)
+	plt.yticks([])
+	ax[0].twinx().hist(M_k_atlas[~FR_atlas], histtype='step', color='k', normed=True, 
+		linestyle='--')
+	plt.yticks([])
+	ax[0].twinx().hist(M_k[v_gals][FR_vimos], histtype='step', color='r')
+	plt.yticks([])
+	ax[0].twinx().hist(M_k[v_gals][~FR_vimos], histtype='step', color='r', 
+		linestyle='--')
+	plt.yticks([])
+	ax[0].twinx().hist(M_k[m_gals][FR_muse], histtype='step', color='b')
+	plt.yticks([])
+	ax[0].twinx().hist(M_k[m_gals][~FR_muse], histtype='step', color='b',
+		linestyle='--')
+	plt.yticks([])
+
+	ax[1].set_xlabel(r'$M_k \mathrm{(mag)}$')
+	ax[1].set_ylabel(r'$\lambda_R (R_e)$')
+	ax[1].invert_xaxis()
+
+	fig.savefig('%s/Data/muse/analysis/lambda_R_M_k.png' % (cc.base_dir))
 	plt.close()
+
+	Prefig(transparent=False)
 ## ----------================ Core age vs KDC size ================----------
 	print 'KDC size/age'
 	muse_core_file = "%s/Data/muse/analysis/galaxies_core.txt" % (cc.base_dir)

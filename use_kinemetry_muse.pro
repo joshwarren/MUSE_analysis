@@ -15,7 +15,7 @@ PRO do_work, gal, opt, type
 	file = '/Data/muse/analysis/'+gal+'/'+opt+'/kinemetry/'+type+'.dat'
 	; read in field
 	rdfloat, file, velbin, er_velbin
-	if type eq 'flux' then er_velbin = SQRT(velbin)
+	if strcmp(type, 'flux', 4, /FOLD_CASE) then er_velbin = SQRT(velbin)
 
 	; Read in binning
 	file = '/Data/muse/analysis/'+gal+'/'+opt+'/setup/voronoi_2d_binning_output.txt'
@@ -25,7 +25,8 @@ PRO do_work, gal, opt, type
 	readcol, file, galaxy_gals,x0,y0, skipline=1,format='A,I,I'
 	i_gal = where(galaxy_gals eq gal)
 
-	
+	badpix = where(velbin eq 9999)
+
 
 	b = uniq(bin_num,sort(bin_num))
 	xbin = xbin[b]
@@ -42,7 +43,6 @@ PRO do_work, gal, opt, type
 	; rdfloat, file, flux
 	; if gal eq 'ngc1399' then badpix = where(flux gt 4000)
 
-	badpix = where(velbin eq 9999)
 	
 	xbin = xbin * 0.2
 	ybin = ybin * 0.2
