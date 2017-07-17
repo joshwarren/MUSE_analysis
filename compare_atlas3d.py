@@ -144,12 +144,12 @@ def compare_atlas3d():
 	gals_muse2, group_muse = np.loadtxt(muse_classify_file, unpack=True, usecols=(0,8), 
 		dtype=str, skiprows=1)
 	gal_order = [np.where(galaxies_muse==g)[0][0] for g in gals_muse2]
-	a_muse = (group_muse!='a')[gal_order] # No rotation
-	b_muse = (group_muse!='b')[gal_order] # Complex rotation
-	c_muse = (group_muse!='c')[gal_order] # KDC
-	d_muse = (group_muse!='d')[gal_order] # Counter-rotating disks
-	e_muse = (group_muse!='e')[gal_order] # Regular rotator
-	f_muse = (group_muse!='f')[gal_order] # Unclassified
+	a_muse = (group_muse=='a')[gal_order] # No rotation
+	b_muse = (group_muse=='b')[gal_order] # Complex rotation
+	c_muse = (group_muse=='c')[gal_order] # KDC
+	d_muse = (group_muse=='d')[gal_order] # Counter-rotating disks
+	e_muse = (group_muse=='e')[gal_order] # Regular rotator
+	f_muse = (group_muse=='f')[gal_order] # Unclassified
 
 	ax.scatter(ellipticity_muse[a_muse], lambda_Re_muse[a_muse], 
 		marker=marker_atlas3d(0), c='b', lw=0, label='MUSE')
@@ -166,17 +166,20 @@ def compare_atlas3d():
 	# VIMOS
 	gals_vimos2, group_vimos = np.loadtxt(vimos_classify_file, unpack=True, usecols=(0,8), 
 		dtype=str, skiprows=1)
+	print group_vimos=='f'
 	gal_order = [np.where(galaxies_vimos==g)[0][0] for g in gals_vimos2]
-	a_vimos = (group_vimos!='a')[gal_order] # No rotation
-	b_vimos = (group_vimos!='b')[gal_order] # Complex rotation
-	c_vimos = (group_vimos!='c')[gal_order] # KDC
-	d_vimos = (group_vimos!='d')[gal_order] # Counter-rotating disks
-	e_vimos = (group_vimos!='e')[gal_order] # Regular rotator
-	f_vimos = (group_vimos!='f')[gal_order] # Unclassified
+	a_vimos = (group_vimos=='a')[gal_order] # No rotation
+	b_vimos = (group_vimos=='b')[gal_order] # Complex rotation
+	c_vimos = (group_vimos=='c')[gal_order] # KDC
+	d_vimos = (group_vimos=='d')[gal_order] # Counter-rotating disks
+	e_vimos = (group_vimos=='e')[gal_order] # Regular rotator
+	f_vimos = (group_vimos=='f')[gal_order] # Unclassified - have included with complex vel
 
 	ax.scatter(ellipticity_vimos[a_vimos], lambda_Re_vimos[a_vimos], 
 		marker=marker_atlas3d(0), c='r', lw=0, label='VIMOS')
 	ax.scatter(ellipticity_vimos[b_vimos], lambda_Re_vimos[b_vimos], 
+		marker=marker_atlas3d(1), c='r', lw=0)
+	ax.scatter(ellipticity_vimos[f_vimos], lambda_Re_vimos[f_vimos], 
 		marker=marker_atlas3d(1), c='r', lw=0)
 	ax.scatter(ellipticity_vimos[c_vimos], lambda_Re_vimos[c_vimos], 
 		marker=marker_atlas3d(2), c='r', lw=0)
@@ -195,16 +198,16 @@ def compare_atlas3d():
 	ax.add_artist(leg)
 
 	# Proxy for kinematics legend
-	h1, = ax.plot(np.nan, marker=marker_atlas3d(0), c='b', alpha=0.5, lw=0, 
+	h1, = ax.plot(np.nan, marker=marker_atlas3d(0), c='b', lw=0, 
 		label='No Rotation')
-	h2, = ax.plot(np.nan, marker=marker_atlas3d(1), c='b', alpha=0.5, lw=0,
+	h2, = ax.plot(np.nan, marker=marker_atlas3d(1), c='b', lw=0,
 		label='Complex Rotation')
-	h3, = ax.plot(np.nan, marker=marker_atlas3d(2), c='b', alpha=0.5, lw=0, 
+	h3, = ax.plot(np.nan, marker=marker_atlas3d(2), c='b', lw=0, 
 		label='KDC/CDC')
-	h4, = ax.plot(np.nan, marker=marker_atlas3d(3), c='b', alpha=0.5, lw=0,
+	h4, = ax.plot(np.nan, marker=marker_atlas3d(3), c='b', lw=0,
 		label='Counter Rotating Disks')
-	h5, = ax.plot(np.nan, marker=marker_atlas3d(4), c='b', alpha=0.5, lw=0,
-		label='Regular Rotator')
+	h5, = ax.plot(np.nan, marker=marker_atlas3d(4), c='b', lw=0,
+		label='Regular Rotator',  markerfacecolor='none')
 
 	plt.legend(handles=[h1,h2,h3,h4,h5], facecolor='w', loc=5)
 
