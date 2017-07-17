@@ -137,17 +137,14 @@ def use_kinemetry(gal, opt='kin'):
 
 	Prefig(size=(16*3,12*5), transparent=False)
 	fig, ax = plt.subplots(5,3)
-	fig.set_suptitle('Kinemetry fit to Ionised gas dynamics')
+	fig.suptitle('Kinemetry fit to Ionised gas dynamics')
 
 	f = fits.open(get_dataCubeDirectory(gal))
 	header = f[1].header
 	f.close()
 
-	try:
-		hedaer['NAXIS2']
-	except KeyError:
-		header['NAXIS1'] = 150
-		header['NAXIS2'] = 150
+	header['NAXIS1'] = 150
+	header['NAXIS2'] = 150
 
 	tessellation_File = "%s/%s/%s/setup/voronoi_2d_binning_output.txt" % (out_dir, 
 		gal, opt)
@@ -206,7 +203,7 @@ def use_kinemetry(gal, opt='kin'):
 # Use of plot_absorption.py
 
 if __name__ == '__main__':
-	# for gal in ['ic1459', 'ic4296', 'ngc1316', 'ngc1399']:
-	# 	print gal
-	# 	use_kinemetry(gal)
-	use_kinemetry('ic4296')
+	for gal in ['ic1459', 'ic4296', 'ngc1316', 'ngc1399']:
+		print gal
+		use_kinemetry(gal)
+	# use_kinemetry('ic4296')
