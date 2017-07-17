@@ -106,7 +106,7 @@ def use_kinemetry(gal, opt='kin'):
 		ax.set_xlabel('radius (arcsec)')
 
 		# Mark extent of KDC
-		galaxy_gals2, KDC_size = np.loadtxt(classify_file, unpack=True, usecols=(0,6), 
+		galaxy_gals2, KDC_size = np.loadtxt(classify_file, unpack=True, usecols=(0,5), 
 		dtype=str, skiprows=1)
 		has_KDC = KDC_size!='-'
 		galaxy_gals2 = galaxy_gals2[has_KDC]

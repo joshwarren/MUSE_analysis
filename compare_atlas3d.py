@@ -53,6 +53,7 @@ def compare_atlas3d():
 	structure_atlas = np.loadtxt(atlas3d_file, unpack=True, usecols=(13,), dtype=str)
 	atlas3d_file = '%s/Data/atlas3d/I_table3.dat' % (cc.base_dir)
 	M_k_atlas, T_type = np.loadtxt(atlas3d_file, unpack=True, usecols=(8,10))
+	galaxies_atlas = np.loadtxt(atlas3d_file, unpack=True, usecols=(0), dtype=str)
 	E = T_type < -3.5
 	
 	no_rot_muse = structure_atlas=='NRR/LV'
@@ -140,56 +141,54 @@ def compare_atlas3d():
 
 
 	# MUSE
-	gals_muse2, regular_rot_muse, no_rot_muse, complex_rot_muse, counter_rot_muse, \
-		KDC_muse = np.loadtxt(muse_classify_file, unpack=True, usecols=(0,2,3,4,5,6), 
+	gals_muse2, group_muse = np.loadtxt(muse_classify_file, unpack=True, usecols=(0,8), 
 		dtype=str, skiprows=1)
 	gal_order = [np.where(galaxies_muse==g)[0][0] for g in gals_muse2]
-	regular_rot_muse = (regular_rot_muse!='-')[gal_order]
-	no_rot_muse = (no_rot_muse!='-')[gal_order]
-	complex_rot_muse = (complex_rot_muse!='-')[gal_order]
-	counter_rot_muse = (counter_rot_muse!='-')[gal_order]
-	KDC_muse = (KDC_muse!='-')[gal_order]
+	a_muse = (group_muse!='a')[gal_order] # No rotation
+	b_muse = (group_muse!='b')[gal_order] # Complex rotation
+	c_muse = (group_muse!='c')[gal_order] # KDC
+	d_muse = (group_muse!='d')[gal_order] # Counter-rotating disks
+	e_muse = (group_muse!='e')[gal_order] # Regular rotator
+	f_muse = (group_muse!='f')[gal_order] # Unclassified
 
-	ax.scatter(ellipticity_muse[no_rot_muse], lambda_Re_muse[no_rot_muse], 
+	ax.scatter(ellipticity_muse[a_muse], lambda_Re_muse[a_muse], 
 		marker=marker_atlas3d(0), c='b', lw=0, label='MUSE')
-	ax.scatter(ellipticity_muse[complex_rot_muse], lambda_Re_muse[complex_rot_muse], 
+	ax.scatter(ellipticity_muse[b_muse], lambda_Re_muse[b_muse], 
 		marker=marker_atlas3d(1), c='b', lw=0)
-	ax.scatter(ellipticity_muse[KDC_muse], lambda_Re_muse[KDC_muse], 
+	ax.scatter(ellipticity_muse[c_muse], lambda_Re_muse[c_muse], 
 		marker=marker_atlas3d(2), c='b', lw=0)
-	ax.scatter(ellipticity_muse[counter_rot_muse], lambda_Re_muse[counter_rot_muse], 
+	ax.scatter(ellipticity_muse[d_muse], lambda_Re_muse[d_muse], 
 		marker=marker_atlas3d(3), c='b', lw=0)
-	ax.plot(ellipticity_muse[regular_rot_muse], lambda_Re_muse[regular_rot_muse], 
+	ax.plot(ellipticity_muse[e_muse], lambda_Re_muse[e_muse], 
 		marker=marker_atlas3d(4), c='b', lw=0, markerfacecolor='none')
 
 
 	# VIMOS
-	gals_vimos2, regular_rot_vimos, no_rot_vimos, complex_rot_vimos, counter_rot_vimos, \
-		KDC_vimos = np.loadtxt(vimos_classify_file, unpack=True, usecols=(0,2,3,4,5,6), 
+	gals_vimos2, group_vimos = np.loadtxt(vimos_classify_file, unpack=True, usecols=(0,8), 
 		dtype=str, skiprows=1)
 	gal_order = [np.where(galaxies_vimos==g)[0][0] for g in gals_vimos2]
-	regular_rot_vimos = (regular_rot_vimos!='-')[gal_order]
-	no_rot_vimos = (no_rot_vimos!='-')[gal_order]
-	complex_rot_vimos = (complex_rot_vimos!='-')[gal_order]
-	counter_rot_vimos = (counter_rot_vimos!='-')[gal_order]
-	KDC_vimos = (KDC_vimos!='-')[gal_order]
+	a_vimos = (group_vimos!='a')[gal_order] # No rotation
+	b_vimos = (group_vimos!='b')[gal_order] # Complex rotation
+	c_vimos = (group_vimos!='c')[gal_order] # KDC
+	d_vimos = (group_vimos!='d')[gal_order] # Counter-rotating disks
+	e_vimos = (group_vimos!='e')[gal_order] # Regular rotator
+	f_vimos = (group_vimos!='f')[gal_order] # Unclassified
 
-	ax.scatter(ellipticity_vimos[no_rot_vimos], lambda_Re_vimos[no_rot_vimos], 
+	ax.scatter(ellipticity_vimos[a_vimos], lambda_Re_vimos[a_vimos], 
 		marker=marker_atlas3d(0), c='r', lw=0, label='VIMOS')
-	ax.scatter(ellipticity_vimos[complex_rot_vimos], lambda_Re_vimos[complex_rot_vimos], 
+	ax.scatter(ellipticity_vimos[b_vimos], lambda_Re_vimos[b_vimos], 
 		marker=marker_atlas3d(1), c='r', lw=0)
-	ax.scatter(ellipticity_vimos[KDC_vimos], lambda_Re_vimos[KDC_vimos], 
+	ax.scatter(ellipticity_vimos[c_vimos], lambda_Re_vimos[c_vimos], 
 		marker=marker_atlas3d(2), c='r', lw=0)
-	ax.scatter(ellipticity_vimos[counter_rot_vimos], lambda_Re_vimos[counter_rot_vimos], 
+	ax.scatter(ellipticity_vimos[d_vimos], lambda_Re_vimos[d_vimos], 
 		marker=marker_atlas3d(3), c='r', lw=0)
-	ax.plot(ellipticity_vimos[regular_rot_vimos], lambda_Re_vimos[regular_rot_vimos], 
+	ax.plot(ellipticity_vimos[e_vimos], lambda_Re_vimos[e_vimos], 
 		marker=marker_atlas3d(4), c='r', lw=0, markerfacecolor='none')
 
 	ax.set_title('Atlas3D Fast/Slow Rotator Classification scheme')
 	ax.set_xlabel(r'$\epsilon$')
 	ax.set_ylabel(r'$\lambda_R (R_e)$')
-	ax.set_xlim([0, 0.9])
-	ax.set_ylim([0, 0.8])
-
+	
 	# Plot Slow Rotator bounds
 	ax.plot([0,0.4,0.4], [0.08, 0.18, 0], 'k', label='FR/SR boundary')
 	leg = plt.legend(facecolor='w')
@@ -209,72 +208,277 @@ def compare_atlas3d():
 
 	plt.legend(handles=[h1,h2,h3,h4,h5], facecolor='w', loc=5)
 
+	# Show fraction of Slow Rotators in background of plot per elliptiity bin with 
+	# width 0.1
+	SRfraction_atlas = []
+	SRfraction_vimos = []
+	SRfraction_muse = []
+	expectedSRs = 0
+
+	FR_atlas = (lambda_Re_atlas > 0.08 + ellipticity_atlas/4) + (ellipticity_atlas > 0.4)
+	FR_vimos = (lambda_Re_vimos > 0.08 + ellipticity_vimos/4) + (ellipticity_vimos > 0.4)
+	FR_muse = (lambda_Re_muse > 0.08 + ellipticity_muse/4) + (ellipticity_muse > 0.4)
+	for i, ell in enumerate(np.arange(0,0.9,0.1)):
+		ell_bin_atlas = (ellipticity_atlas >= ell ) * (ellipticity_atlas < ell+0.1)
+		SRfraction_atlas.append(np.sum(~FR_atlas*ell_bin_atlas)/
+			float(np.sum(ell_bin_atlas)))
+
+		ell_bin_vimos = (ellipticity_vimos >= ell ) * (ellipticity_vimos < ell+0.1)
+		SRfraction_vimos.append(np.sum(~FR_vimos*ell_bin_vimos)/
+			float(np.sum(ell_bin_vimos)))
+
+		ell_bin_muse = (ellipticity_muse >= ell ) * (ellipticity_muse < ell+0.1)
+		SRfraction_muse.append(np.sum(~FR_muse*ell_bin_muse)/
+			float(np.sum(ell_bin_muse)))
+
+		expectedSRs = np.nansum((np.sum(ell_bin_vimos) * SRfraction_atlas[i], expectedSRs))
+
+	SRfraction_atlas.insert(0,SRfraction_atlas[0])
+	SRfraction_vimos.insert(0,SRfraction_vimos[0])
+	SRfraction_muse.insert(0,SRfraction_muse[0])
+
+	SRfraction_atlas = np.array(SRfraction_atlas)
+	SRfraction_vimos = np.array(SRfraction_vimos)
+	SRfraction_muse = np.array(SRfraction_muse)
+
+	SRfraction_atlas[np.isnan(SRfraction_atlas)] = 0
+	SRfraction_vimos[np.isnan(SRfraction_vimos)] = 0
+	SRfraction_muse[np.isnan(SRfraction_muse)] = 0
+
+	ax2 = ax.twinx()
+	ax2.set_ylabel('Fraction of Slow Rotators in ellipticity bin', rotation=270, 
+		labelpad=25)
+	ax2.plot(np.arange(0,1,0.1), SRfraction_atlas, color='k', alpha=0.3, ls='steps')
+	ax2.plot(np.arange(0,1,0.1), SRfraction_vimos, color='r', alpha=0.3, ls='steps')
+	ax2.plot(np.arange(0,1,0.1), SRfraction_muse, color='b', alpha=0.3, ls='steps')
+	ax2.text(0.02,0.9, 
+		'Expected # of SRs in our sample \n   based on Atlas3D: %.2f/10' % (expectedSRs))
+
+	ax2.set_ylim([0,1.05])
+	ax.set_xlim([0, 0.9])
+	ax.set_ylim([0, 0.8])
+
 	# Save plot
 	fig.savefig('%s/Data/muse/analysis/lambda_R_ellipticity.png' % (cc.base_dir))
 	plt.close()	
 ## ----------============ K-band magnitude vs lambda_R ===========----------
-	Prefig(size=(16,12*1.4), transparent=False)
-	fig, ax = plt.subplots(2,1, sharex=True,  gridspec_kw = {'height_ratios':[1, 3]})
-	FR_atlas = (lambda_Re_atlas > 0.08 + ellipticity_atlas/4) + (ellipticity_atlas > 0.4)
-	ax[1].scatter(M_k_atlas[FR_atlas], lambda_Re_atlas[FR_atlas], marker='x', c='k', 
-		alpha=0.5, label='Atlas3D Fast Rotators')
-	ax[1].scatter(M_k_atlas[~FR_atlas], lambda_Re_atlas[~FR_atlas], marker='^', c='k', 
-		alpha=0.5, label='Atlas3D Slow Rotators')
+	print 'K-band magnitude vs lambda_Re'
+	Prefig(size=(16,12*1.7), transparent=False)
+	fig, ax = plt.subplots(3,1, sharex=True,  gridspec_kw = {'height_ratios':[1, 1, 3]})
+	ax[2].scatter(M_k_atlas[FR_atlas], lambda_Re_atlas[FR_atlas], marker='x', c='k', 
+		label='Atlas3D Fast Rotators')
+	ax[2].scatter(M_k_atlas[~FR_atlas], lambda_Re_atlas[~FR_atlas], marker='^', c='k', 
+		label='Atlas3D Slow Rotators')
 
 	GalaxiesFile = '%s/Data/galaxies_properties.txt' % (cc.base_dir)
-	M_k =  np.loadtxt(GalaxiesFile, unpack=True, skiprows=2, usecols=(2))
+	radio, M_k =  np.loadtxt(GalaxiesFile, unpack=True, skiprows=2, usecols=(1,2))
 	galaxies =  np.loadtxt(GalaxiesFile, unpack=True, skiprows=2, usecols=(0,), dtype=str)
-
 
 	v_gals = []
 	for g in galaxies_vimos:
 		i_gal = np.where(galaxies==g)[0][0]
 		v_gals.append(i_gal)
 
-	FR_vimos = (lambda_Re_vimos > 0.08 + ellipticity_vimos/4) + (ellipticity_vimos > 0.4)
-
 	m_gals = []
 	for g in galaxies_muse:
 		i_gal = np.where(galaxies==g)[0][0]
 		m_gals.append(i_gal)
 
-	FR_muse = (lambda_Re_muse > 0.08 + ellipticity_muse/4) + (ellipticity_muse > 0.4)
-
-	ax[1].scatter(M_k[v_gals][FR_vimos], lambda_Re_vimos[FR_vimos], c='r', marker='x',
+	ax[2].scatter(M_k[v_gals][FR_vimos], lambda_Re_vimos[FR_vimos], c='r', marker='x',
 		label='VIMOS Fast Rotators')
-	ax[1].scatter(M_k[v_gals][~FR_vimos], lambda_Re_vimos[~FR_vimos], c='r', marker='^',
+	ax[2].scatter(M_k[v_gals][~FR_vimos], lambda_Re_vimos[~FR_vimos], c='r', marker='^',
 		label='VIMOS Slow Rotators')
-	ax[1].scatter(M_k[m_gals][FR_muse], lambda_Re_muse[FR_muse], c='b', marker='x',
+	ax[2].scatter(M_k[m_gals][FR_muse], lambda_Re_muse[FR_muse], c='b', marker='x',
 		label='MUSE Fast Rotators')
-	ax[1].scatter(M_k[m_gals][~FR_muse], lambda_Re_vimos[~FR_muse], c='b', marker='^',
+	ax[2].scatter(M_k[m_gals][~FR_muse], lambda_Re_muse[~FR_muse], c='b', marker='^',
 		label='MUSE Slow Rotators')
+
+	# Join MUSE and VIMOS
+	first = True
+	for i_muse, g in enumerate(galaxies_muse):
+		if g in galaxies_vimos:
+			i_vimos = np.where(galaxies_vimos==g)[0][0]
+			if first: # add just one label to legend
+				ax[2].plot([M_k[m_gals][i_muse],M_k[v_gals][i_vimos]], 
+					[lambda_Re_muse[i_muse], lambda_Re_vimos[i_vimos]], 'k--', 
+					zorder=1, label='same galaxy in MUSE and VIMOS')
+				first = False
+			else:
+				ax[2].plot([M_k[m_gals][i_muse],M_k[v_gals][i_vimos]], 
+					[lambda_Re_muse[i_muse], lambda_Re_vimos[i_vimos]], 'k--', 
+					zorder=1)
+
+
 
 	plt.legend(facecolor='w')
 
-	ax[0].twinx().hist(M_k_atlas[FR_atlas], histtype='step', color='k', normed=True)
+	_,_,h1= ax[1].twinx().hist(M_k_atlas[FR_atlas], histtype='step', color='k', 
+		normed=True, label='Atlas3d Fast Rotators')
 	plt.yticks([])
-	ax[0].twinx().hist(M_k_atlas[~FR_atlas], histtype='step', color='k', normed=True, 
-		linestyle='--')
+	_,_,h2 = ax[1].twinx().hist(M_k_atlas[~FR_atlas], histtype='step', color='k', 
+		normed=True, linestyle='--', label='Atlas3d Slow Rotators')
 	plt.yticks([])
-	ax[0].twinx().hist(M_k[v_gals][FR_vimos], histtype='step', color='r')
-	plt.yticks([])
-	ax[0].twinx().hist(M_k[v_gals][~FR_vimos], histtype='step', color='r', 
-		linestyle='--')
-	plt.yticks([])
-	ax[0].twinx().hist(M_k[m_gals][FR_muse], histtype='step', color='b')
-	plt.yticks([])
-	ax[0].twinx().hist(M_k[m_gals][~FR_muse], histtype='step', color='b',
-		linestyle='--')
-	plt.yticks([])
+	# _,_,h3 = ax[1].twinx().hist(M_k[v_gals][FR_vimos], histtype='step', color='r',
+	# 	label='VIMOS Fast Rotators')
+	# plt.yticks([])
+	# _,_,h4 = ax[1].twinx().hist(M_k[v_gals][~FR_vimos], histtype='step', color='r', 
+	# 	linestyle='--', label='VIMOS Slow Rotators')
+	# plt.yticks([])
+	# _,_,h5 = ax[1].twinx().hist(M_k[m_gals][FR_muse], histtype='step', color='b',
+	# 	label='MUSE Fast Rotators')
+	# plt.yticks([])
+	# _,_,h6 = ax[1].twinx().hist(M_k[m_gals][~FR_muse], histtype='step', color='b',
+	# 	linestyle='--', label='MUSE Slow Rotators')
+	# plt.yticks([])
+	for l in M_k[v_gals][FR_vimos]:
+		h3 = ax[1].axvline(l, color='r', label='VIMOS Fast Rotators')
+	for l in M_k[v_gals][~FR_vimos]:
+		h4 = ax[1].axvline(l, color='r', ls='--', label='VIMOS Slow Rotators')
+	for l in M_k[m_gals][FR_muse]:
+		h5 = ax[1].axvline(l, color='b', label='MUSE Fast Rotators')
+	for l in M_k[m_gals][~FR_muse]:
+		h6 = ax[1].axvline(l, color='b', label='MUSE Slow Rotators')
 
-	ax[1].set_xlabel(r'$M_k \mathrm{(mag)}$')
-	ax[1].set_ylabel(r'$\lambda_R (R_e)$')
-	ax[1].invert_xaxis()
+	plt.legend(handles=[h1[0],h2[0],h3,h4,h5,h6], facecolor='w', loc='center left')
 
+	ax[2].set_xlabel(r'$M_k \mathrm{(mag)}$')
+	ax[2].set_ylabel(r'$\lambda_R (R_e)$')
+	ax[1].set_ylabel('Normalised histogram')
+	ax[0].set_ylabel('Fraction of SR')
+	ax[2].invert_xaxis()
+
+
+	# Show fraction of Slow Rotators in background of plot per M_k bin with width 0.5
+	SRfraction_atlas = []
+	SRfraction_vimos = []
+	SRfraction_muse = []
+	expectedSRs = 0
+
+	# step = 1#0.5
+	# steps = np.arange(-27,-21,step)
+	# step = [2,1,1,1,1]#,1]
+	# steps = [-27,-25,-24,-23,-22]#,-21]
+
+	order = np.argsort(M_k_atlas)
+	steps = [-27.]+list(M_k_atlas[order][~FR_atlas[order]][::-5][::-1]+0.1)
+	step = np.diff(steps+[-21.])
+
+	for i, M in enumerate(steps):
+		# ax[2].axvline(M) # Show bins in main plot
+		M_k_bin_atlas = (M_k_atlas >= M ) * (M_k_atlas < M + step[i])
+		SRfraction_atlas.append(np.sum(~FR_atlas * M_k_bin_atlas)/
+			float(np.sum(M_k_bin_atlas)))
+
+		M_k_bin_vimos = (M_k[v_gals] >= M ) * (M_k[v_gals] < M + step[i])
+		SRfraction_vimos.append(np.sum(~FR_vimos * M_k_bin_vimos)/
+			float(np.sum(M_k_bin_vimos)))
+
+		M_k_bin_muse = (M_k[m_gals] >= M ) * (M_k[m_gals] < M + step[i])
+		SRfraction_muse.append(np.sum(~FR_muse * M_k_bin_muse)/
+			float(np.sum(M_k_bin_muse)))
+		expectedSRs = np.nansum((np.sum(M_k_bin_vimos) * SRfraction_atlas[i], expectedSRs))
+
+	SRfraction_atlas.insert(0,SRfraction_atlas[0])
+	SRfraction_vimos.insert(0,SRfraction_vimos[0])
+	SRfraction_muse.insert(0,SRfraction_muse[0])
+
+	SRfraction_atlas = np.array(SRfraction_atlas)
+	SRfraction_vimos = np.array(SRfraction_vimos)
+	SRfraction_muse = np.array(SRfraction_muse)
+
+	SRfraction_atlas[np.isnan(SRfraction_atlas)] = 0
+	SRfraction_vimos[np.isnan(SRfraction_vimos)] = 0
+	SRfraction_muse[np.isnan(SRfraction_muse)] = 0
+
+	steps.append(-21)
+	# ax[0].plot(np.arange(-27,-21+step,step), SRfraction_atlas, color='k', ls='steps--')
+	# ax[0].plot(np.arange(-27,-21+step,step), SRfraction_vimos, color='r', ls='steps--')
+	# ax[0].plot(np.arange(-27,-21+step,step), SRfraction_muse, color='b', ls='steps--')
+	ax[0].plot(steps, SRfraction_atlas, color='k', ls='steps--')
+	ax[0].plot(steps, SRfraction_vimos, color='r', ls='steps--')
+	ax[0].plot(steps, SRfraction_muse, color='b', ls='steps--')
+	ax[0].set_ylim([-0.05,1.05])
+	ax[0].text(-21,0.75, 
+		'Expected # of SRs in our sample \n   based on Atlas3D: %.2f/10' % (expectedSRs))
+
+	fig.suptitle('K-band magnitude distribution for F/S rotators')
 	fig.savefig('%s/Data/muse/analysis/lambda_R_M_k.png' % (cc.base_dir))
 	plt.close()
 
 	Prefig(transparent=False)
+## ----------============== ellipticity vs M_k ===============----------
+	print 'Ellipticity vs M_k'
+
+	fig, ax = plt.subplots()
+	ax.scatter(M_k_atlas[FR_atlas], ellipticity_atlas[FR_atlas], color='k', marker='x',
+		label='Atlas3d Fast Rotators')
+	ax.scatter(M_k_atlas[~FR_atlas], ellipticity_atlas[~FR_atlas], color='k', marker='^',
+		label='Atlas3d Slow Rotators')
+
+	ax.scatter(M_k[v_gals][FR_vimos], ellipticity_vimos[FR_vimos], color='r', marker='x',
+		label='VIMOS Fast Rotators')
+	ax.scatter(M_k[v_gals][~FR_vimos], ellipticity_vimos[~FR_vimos], color='r', marker='^',
+		label='VIMOS Slow Rotators')
+
+	M_k_steps = [-27,-25,-24,-23,-22,-21]
+	ell_steps = np.arange(0,0.9,0.1)
+	expectedSRs = 0
+	for i in range(len(M_k_steps)-1):
+		ax.axvline(M_k_steps[i], c='k', alpha=0.5)
+		for j in range(len(ell_steps)-1):
+			M = (M_k[v_gals] >= M_k_steps[i]) * (M_k[v_gals] < M_k_steps[i+1])
+			E = (ellipticity_vimos >= ell_steps[i]) * (ellipticity_vimos < ell_steps[i+1])
+
+			n_vimos_in_bin = np.sum(M*E)
+
+			M = (M_k_atlas >= M_k_steps[i]) * (M_k_atlas < M_k_steps[i+1])
+			E = (ellipticity_atlas >= ell_steps[i]) * (ellipticity_atlas < ell_steps[i+1])
+
+			expectedSRs = np.nansum([expectedSRs, n_vimos_in_bin*np.sum(~FR_atlas[M*E])/
+				float(np.sum(M*E))])
+	for e in ell_steps:
+		ax.axhline(e, c='k', alpha=0.5)
+
+	ax.text(-21.5, 0.8, 
+		'Expected # of SRs in our sample \n   based on Atlas3D: %.2f/10' % (expectedSRs))
+
+	ax.set_title('K-band magnitude to elliticity relationship')
+	ax.set_xlabel(r'$M_k \mathrm{(mag)}$')
+	ax.set_ylabel(r'$\epsilon$')
+	ax.invert_xaxis()
+
+	plt.legend(facecolor='w')
+	fig.savefig('%s/Data/muse/analysis/ellipticity_M_k.png' % (cc.base_dir))
+
+## ----------============== Radio power vs M_k ===============----------
+	print 'M_k vs Radio power'
+
+	atlas3d_file = '%s/Data/atlas3d/XXXI_tableA1.dat' % (cc.base_dir)
+	galaxies_atlas2, radio_atlas = np.loadtxt(atlas3d_file, unpack=True, usecols=(0,10), 
+		skiprows=2, dtype=str)
+	m = np.array(['<' not in r for r in radio_atlas])
+	m2 = np.array([g in galaxies_atlas2 for g in galaxies_atlas])
+
+	fig, ax = plt.subplots()
+
+	ax.scatter(M_k[v_gals][FR_vimos], radio[v_gals][FR_vimos], color='b', 
+		label='VIMOS Fast Rotators')
+	ax.scatter(M_k[v_gals][~FR_vimos], radio[v_gals][~FR_vimos], color='c',
+		label = 'VIMOS Slow Rotators')
+
+	ax.scatter(M_k_atlas[m2][m*FR_atlas[m2]], radio_atlas[m*FR_atlas[m2]].astype(float), 
+		color='r', label='Atlas3d Fast Rotators')
+	ax.scatter(M_k_atlas[m2][m*~FR_atlas[m2]], radio_atlas[m*~FR_atlas[m2]].astype(float), 
+		color='orange', label='Atlas3d Slow Rotators')
+	ax.invert_xaxis()
+	plt.legend(facecolor='w')
+
+	ax.set_title('K-band magnitude vs Radio Power')
+	ax.set_xlabel(r'$M_k \mathrm{(mag)}$')
+	ax.set_ylabel(r'$\log P_{1.4\mathrm{GHz}}$')
+
+	fig.savefig('%s/Data/muse/analysis/radio_power_M_k.png' % (cc.base_dir))
+	plt.close()
 ## ----------================ Core age vs KDC size ================----------
 	print 'KDC size/age'
 	muse_core_file = "%s/Data/muse/analysis/galaxies_core.txt" % (cc.base_dir)
@@ -303,7 +507,7 @@ def compare_atlas3d():
 		usecols=(1,2,7), skiprows=2)
 	gals_muse1 = np.loadtxt(muse_core_file, unpack=True, usecols=(0,), 
 		skiprows=2, dtype=str)
-	gals_muse2, size_muse = np.loadtxt(muse_classify_file, unpack=True, usecols=(0,6), 
+	gals_muse2, size_muse = np.loadtxt(muse_classify_file, unpack=True, usecols=(0,5), 
 		dtype=str, skiprows=1)
 	has_KDC = size_muse!='-'
 	gals_muse2 = gals_muse2[has_KDC]
@@ -327,7 +531,7 @@ def compare_atlas3d():
 		usecols=(1,2,7), skiprows=2)
 	gals_vimos1 = np.loadtxt(vimos_core_file, unpack=True, usecols=(0,), 
 		skiprows=2, dtype=str)
-	gals_vimos2, size_vimos = np.loadtxt(vimos_classify_file, unpack=True, usecols=(0,6), 
+	gals_vimos2, size_vimos = np.loadtxt(vimos_classify_file, unpack=True, usecols=(0,5), 
 		dtype=str, skiprows=1)
 	has_KDC = size_vimos!='-'
 	gals_vimos2 = gals_vimos2[has_KDC]
