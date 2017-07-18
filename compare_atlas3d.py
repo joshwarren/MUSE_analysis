@@ -30,7 +30,8 @@ def compare_atlas3d():
 	museGalaxiesFile = "%s/Data/muse/analysis/galaxies2.txt" % (cc.base_dir)
 	vimosGalaxiesFile = "%s/Data/vimos/analysis/galaxies2.txt" % (cc.base_dir)
 	muse_classify_file = "%s/Data/muse/analysis/galaxies_classify.txt" % (cc.base_dir)
-	vimos_classify_file = "%s/Data/vimos/analysis/galaxies_classify.txt" % (cc.base_dir)
+	vimos_classify_file = "%s/Data/vimos/analysis/galaxies_classify_by_eye.txt" % (
+		cc.base_dir)
 
 
 	lambda_Re_muse, ellipticity_muse =  np.loadtxt(museGalaxiesFile, unpack=True, 
@@ -110,19 +111,12 @@ def compare_atlas3d():
 
 	ell = np.arange(0.01,0.99,0.01)
 
-	# Isotropic line
-	# vSigma = 0.831 * np.sqrt(ell/(1 - 0.896 * ell))
-	# k = 1.1
-	# lambda_R = k*vSigma/np.sqrt(1 + k**2 * vSigma**2)
-	# ax.plot(ell, lambda_R, 'g', label='Isotropic Line')
-
-	# Add envolope - from footnote, page 430, SAURON X
+	# Isotropic line: add envolope - from footnote, page 430, SAURON X
 	k = 1.1
 	alpha = 0.15
 	vSigma = np.sqrt((0.09 + 0.1 * ell) * ell/(1 - ell))
 	lambda_R = k*vSigma/np.sqrt(1 + k**2 * vSigma**2)
 	ax.plot(ell, lambda_R, 'm', label=r'$\delta = 0.7 \epsilon_\mathrm{intr}$')
-
 
 	# Lines of constant intrinsic ellipticity, from Cappellari ARAA 2016 Review
 	i = np.arange(0, np.pi/2, 0.01)
@@ -485,9 +479,7 @@ def compare_atlas3d():
 ## ----------================ Core age vs KDC size ================----------
 	print 'KDC size/age'
 	muse_core_file = "%s/Data/muse/analysis/galaxies_core.txt" % (cc.base_dir)
-	muse_classify_file = "%s/Data/muse/analysis/galaxies_classify.txt" % (cc.base_dir)
 	vimos_core_file = "%s/Data/vimos/analysis/galaxies_core.txt" % (cc.base_dir)
-	vimos_classify_file = "%s/Data/vimos/analysis/galaxies_classify.txt" % (cc.base_dir)
 	# vimosGalaxiesFile = "%s/Data/vimos/analysis/galaxies_core.txt" % (cc.base_dir)
 	sauron_file = '%s/Data/sauron/VIII_table8.dat' % (cc.base_dir)
 	
