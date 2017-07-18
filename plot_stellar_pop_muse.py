@@ -13,6 +13,10 @@ import os
 # from plot_results import set_lims
 from checkcomp import checkcomp
 cc = checkcomp()
+from errors2_muse import get_dataCubeDirectory
+from astropy.io import fits
+from prefig import Prefig
+Prefig(size=(16*2,12*3), transparent=False)
 
 def plot_stellar_pop(galaxy, method='median', opt='pop', D=None):
 	print 'Plotting stellar population'
@@ -34,6 +38,10 @@ def plot_stellar_pop(galaxy, method='median', opt='pop', D=None):
 		D = pickle.load(pickleFile)
 		pickleFile.close()
 
+	f = fits.open(get_dataCubeDirectory(galaxy))
+	header = f[1].header
+	f.close()
+
 	age = np.zeros(D.number_of_bins)
 	met = np.zeros(D.number_of_bins)
 	alp = np.zeros(D.number_of_bins)
@@ -41,7 +49,7 @@ def plot_stellar_pop(galaxy, method='median', opt='pop', D=None):
 	unc_met = np.zeros(D.number_of_bins)
 	unc_alp = np.zeros(D.number_of_bins)
 
-	f, ax_array = plt.subplots(3, 2)
+	f, ax_array = plt.subplots(3, 2, frameon=False)
 
 	if method == 'median':
 		for i in xrange(D.number_of_bins):
@@ -89,19 +97,19 @@ def plot_stellar_pop(galaxy, method='median', opt='pop', D=None):
 
 
 	ax_array[0,0] = plot_velfield_nointerp(D.x, D.y, D.bin_num, 
-		D.xBar, D.yBar, age, nodots=True, colorbar=True, label='Age (Gyrs)', 
+		D.xBar, D.yBar, age, header, nodots=True, colorbar=True, label='Age (Gyrs)', 
 		vmin=0, vmax=15, title='Age', ax=ax_array[0,0], cmap='gnuplot2', 
 		flux_unbinned=D.unbinned_flux, signal_noise=D.SNRatio, 
 		signal_noise_target=30)
 
 	ax_array[1,0] = plot_velfield_nointerp(D.x, D.y, D.bin_num, 
-		D.xBar, D.yBar, met, nodots=True, colorbar=True, label='Metalicity [Z/H]', 
+		D.xBar, D.yBar, met, header, nodots=True, colorbar=True, label='Metalicity [Z/H]', 
 		vmin=-2.25, vmax=0.67, title='Metalicity', ax=ax_array[1,0], 
 		cmap='gnuplot2', flux_unbinned=D.unbinned_flux, signal_noise=D.SNRatio, 
 		signal_noise_target=30)
 
 	ax_array[2,0] = plot_velfield_nointerp(D.x, D.y, D.bin_num, 
-		D.xBar, D.yBar, alp, nodots=True, colorbar=True, 
+		D.xBar, D.yBar, alp, header, nodots=True, colorbar=True, 
 		label='Element Ratio [alpha/Fe]', 
 		vmin=-0.3, vmax=0.5, title='Alpha Enhancement', ax=ax_array[2,0], 
 		cmap='gnuplot2', flux_unbinned=D.unbinned_flux, signal_noise=D.SNRatio, 
@@ -109,19 +117,19 @@ def plot_stellar_pop(galaxy, method='median', opt='pop', D=None):
 
 
 	ax_array[0,1] = plot_velfield_nointerp(D.x, D.y, D.bin_num, 
-		D.xBar, D.yBar, unc_age, nodots=True, colorbar=True, label='Age (Gyrs)', 
+		D.xBar, D.yBar, unc_age, header, nodots=True, colorbar=True, label='Age (Gyrs)', 
 		vmin=0, vmax=15, title='Age Uncertainty', ax=ax_array[0,1], 
 		cmap='gnuplot2', flux_unbinned=D.unbinned_flux, signal_noise=D.SNRatio, 
 		signal_noise_target=30)
 
 	ax_array[1,1] = plot_velfield_nointerp(D.x, D.y, D.bin_num, 
-		D.xBar, D.yBar, unc_met, nodots=True, colorbar=True, label='Metalicity', 
+		D.xBar, D.yBar, unc_met,header,  nodots=True, colorbar=True, label='Metalicity', 
 		vmin=0, vmax=0.67+2.25, title='Metalicity Uncertainty [Z/H]', 
 		ax=ax_array[1,1], cmap='gnuplot2', flux_unbinned=D.unbinned_flux, 
 		signal_noise=D.SNRatio, signal_noise_target=30)
 
 	ax_array[2,1] = plot_velfield_nointerp(D.x, D.y, D.bin_num, 
-		D.xBar, D.yBar, unc_alp, nodots=True, colorbar=True, 
+		D.xBar, D.yBar, unc_alp, header, nodots=True, colorbar=True, 
 		label='Element Ratio [alpha/Fe]', 
 		vmin=0, vmax=0.5+0.3, title='Alpha Enhancement Uncertainty', 
 		ax=ax_array[2,1], cmap='gnuplot2', flux_unbinned=D.unbinned_flux, 
@@ -133,7 +141,7 @@ def plot_stellar_pop(galaxy, method='median', opt='pop', D=None):
 	print 'Saving plot'
 
 	saveTo = "%s/population.pdf" % (out_plots)
-	f.tight_layout()
+	# f.tight_layout()
 	ax_array[0,1].set_xlabel('')
 	ax_array[0,0].set_xlabel('')
 	ax_array[1,0].set_xlabel('')
@@ -141,7 +149,7 @@ def plot_stellar_pop(galaxy, method='median', opt='pop', D=None):
 	ax_array[0,1].set_ylabel('')
 	ax_array[1,1].set_ylabel('')
 	ax_array[2,1].set_ylabel('')
-	f.savefig(saveTo, bbox_inches="tight")
+	f.savefig(saveTo)#, bbox_inches="tight")
 
 	return D
 

@@ -25,7 +25,7 @@ def full_analysis(galaxy=None, opt='kin'):
 		galaxy = galaxies[gal]
 	print galaxy, opt
 
-	targetSN = 60#None# 200
+	targetSN = 50#None# 200
 	set_range = np.array([2000,7410])
 
 	binning_spaxels(galaxy, targetSN=targetSN, opt=opt, auto_override=True, 

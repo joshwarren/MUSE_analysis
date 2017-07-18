@@ -211,6 +211,7 @@ def compare_atlas3d():
 	SRfraction_vimos = []
 	SRfraction_muse = []
 	expectedSRs = 0
+	expectedSRs_err = 0
 
 	FR_atlas = (lambda_Re_atlas > 0.08 + ellipticity_atlas/4) + (ellipticity_atlas > 0.4)
 	FR_vimos = (lambda_Re_vimos > 0.08 + ellipticity_vimos/4) + (ellipticity_vimos > 0.4)
@@ -219,6 +220,8 @@ def compare_atlas3d():
 		ell_bin_atlas = (ellipticity_atlas >= ell ) * (ellipticity_atlas < ell+0.1)
 		SRfraction_atlas.append(np.sum(~FR_atlas*ell_bin_atlas)/
 			float(np.sum(ell_bin_atlas)))
+		ell_uncert_bin_atlas = np.sqrt(SRfraction_atlas[i] * (1 - SRfraction_atlas[i])/
+			np.sum(ell_bin_atlas))
 
 		ell_bin_vimos = (ellipticity_vimos >= ell ) * (ellipticity_vimos < ell+0.1)
 		SRfraction_vimos.append(np.sum(~FR_vimos*ell_bin_vimos)/
@@ -228,7 +231,11 @@ def compare_atlas3d():
 		SRfraction_muse.append(np.sum(~FR_muse*ell_bin_muse)/
 			float(np.sum(ell_bin_muse)))
 
-		expectedSRs = np.nansum((np.sum(ell_bin_vimos) * SRfraction_atlas[i], expectedSRs))
+		expectedSRs = np.nansum((np.sum(ell_bin_vimos) * SRfraction_atlas[i], 
+			expectedSRs))
+		expectedSRs_err = np.sqrt(expectedSRs_err**2 + (
+			ell_uncert_bin_atlas * np.sum(ell_bin_vimos))**2)
+
 
 	SRfraction_atlas.insert(0,SRfraction_atlas[0])
 	SRfraction_vimos.insert(0,SRfraction_vimos[0])
@@ -249,8 +256,8 @@ def compare_atlas3d():
 	ax2.plot(np.arange(0,1,0.1), SRfraction_vimos, color='r', alpha=0.3, ls='steps')
 	ax2.plot(np.arange(0,1,0.1), SRfraction_muse, color='b', alpha=0.3, ls='steps')
 	ax2.text(0.02,0.9, 
-		'Expected # of SRs in our sample \n   based on Atlas3D: %.2f/10' % (expectedSRs))
-
+		"Expected # of SRs in our sample \n   based on Atlas3D: (%.2f+/-%.2f)/10" % (
+			expectedSRs, expectedSRs_err))
 	ax2.set_ylim([0,1.05])
 	ax.set_xlim([0, 0.9])
 	ax.set_ylim([0, 0.8])
@@ -350,6 +357,7 @@ def compare_atlas3d():
 	SRfraction_vimos = []
 	SRfraction_muse = []
 	expectedSRs = 0
+	expectedSRs_err = 0
 
 	# step = 1#0.5
 	# steps = np.arange(-27,-21,step)
@@ -365,6 +373,9 @@ def compare_atlas3d():
 		M_k_bin_atlas = (M_k_atlas >= M ) * (M_k_atlas < M + step[i])
 		SRfraction_atlas.append(np.sum(~FR_atlas * M_k_bin_atlas)/
 			float(np.sum(M_k_bin_atlas)))
+		M_k_uncert_bin_atlas = np.sqrt(SRfraction_atlas[i] * (1 - SRfraction_atlas[i])/
+			np.sum(M_k_bin_atlas))
+
 
 		M_k_bin_vimos = (M_k[v_gals] >= M ) * (M_k[v_gals] < M + step[i])
 		SRfraction_vimos.append(np.sum(~FR_vimos * M_k_bin_vimos)/
@@ -374,6 +385,8 @@ def compare_atlas3d():
 		SRfraction_muse.append(np.sum(~FR_muse * M_k_bin_muse)/
 			float(np.sum(M_k_bin_muse)))
 		expectedSRs = np.nansum((np.sum(M_k_bin_vimos) * SRfraction_atlas[i], expectedSRs))
+		expectedSRs_err = np.sqrt(expectedSRs_err**2 + (
+			M_k_uncert_bin_atlas * np.sum(M_k_bin_vimos))**2)
 
 	SRfraction_atlas.insert(0,SRfraction_atlas[0])
 	SRfraction_vimos.insert(0,SRfraction_vimos[0])
@@ -396,7 +409,8 @@ def compare_atlas3d():
 	ax[0].plot(steps, SRfraction_muse, color='b', ls='steps--')
 	ax[0].set_ylim([-0.05,1.05])
 	ax[0].text(-21,0.75, 
-		'Expected # of SRs in our sample \n   based on Atlas3D: %.2f/10' % (expectedSRs))
+		"Expected # of SRs in our sample \n   based on Atlas3D: (%.2f+/-%.2f)/10" % (
+			expectedSRs, expectedSRs_err))
 
 	fig.suptitle('K-band magnitude distribution for F/S rotators')
 	fig.savefig('%s/Data/muse/analysis/lambda_R_M_k.png' % (cc.base_dir))
@@ -420,24 +434,30 @@ def compare_atlas3d():
 	M_k_steps = [-27,-25,-24,-23,-22,-21]
 	ell_steps = np.arange(0,0.9,0.1)
 	expectedSRs = 0
+	expectedSRs_err = 0
 	for i in range(len(M_k_steps)-1):
 		ax.axvline(M_k_steps[i], c='k', alpha=0.5)
 		for j in range(len(ell_steps)-1):
 			M = (M_k[v_gals] >= M_k_steps[i]) * (M_k[v_gals] < M_k_steps[i+1])
-			E = (ellipticity_vimos >= ell_steps[i]) * (ellipticity_vimos < ell_steps[i+1])
+			E = (ellipticity_vimos >= ell_steps[j]) * (ellipticity_vimos < ell_steps[j+1])
 
 			n_vimos_in_bin = np.sum(M*E)
 
 			M = (M_k_atlas >= M_k_steps[i]) * (M_k_atlas < M_k_steps[i+1])
-			E = (ellipticity_atlas >= ell_steps[i]) * (ellipticity_atlas < ell_steps[i+1])
+			E = (ellipticity_atlas >= ell_steps[j]) * (ellipticity_atlas < ell_steps[j+1])
+			SRfraction_atlas_bin = np.sum(~FR_atlas[M*E])/float(np.sum(M*E))
 
-			expectedSRs = np.nansum([expectedSRs, n_vimos_in_bin*np.sum(~FR_atlas[M*E])/
-				float(np.sum(M*E))])
+			
+			expectedSRs = np.nansum([expectedSRs, n_vimos_in_bin*SRfraction_atlas_bin])
+			expectedSRs_err = np.sqrt(np.nansum([expectedSRs_err**2, ((SRfraction_atlas_bin * (
+				1 - SRfraction_atlas_bin)/np.sum(M*E)) * n_vimos_in_bin)**2]))
+
 	for e in ell_steps:
 		ax.axhline(e, c='k', alpha=0.5)
 
 	ax.text(-21.5, 0.8, 
-		'Expected # of SRs in our sample \n   based on Atlas3D: %.2f/10' % (expectedSRs))
+		"Expected # of SRs in our sample \n   based on Atlas3D: (%.2f+/-%.2f)/10" % (
+			expectedSRs, expectedSRs_err))
 
 	ax.set_title('K-band magnitude to elliticity relationship')
 	ax.set_xlabel(r'$M_k \mathrm{(mag)}$')
@@ -498,8 +518,8 @@ def compare_atlas3d():
 		color='lightgrey', label='Slow rotating SAURON')
 
 	# MUSE
-	age_muse, age_unc_muse, OIII_eqw_muse = np.loadtxt(muse_core_file, unpack=True, 
-		usecols=(1,2,7), skiprows=2)
+	age_muse, age_unc_muse, OIII_eqw_muse, OIII_eqw_unc_muse= np.loadtxt(muse_core_file, 
+		unpack=True, usecols=(1,2,7,8), skiprows=2)
 	gals_muse1 = np.loadtxt(muse_core_file, unpack=True, usecols=(0,), 
 		skiprows=2, dtype=str)
 	gals_muse2, size_muse = np.loadtxt(muse_classify_file, unpack=True, usecols=(0,5), 
@@ -578,8 +598,9 @@ def compare_atlas3d():
 
 	# MUSE
 	m_gals = np.array([np.where(galaxies==g)[0][0] for g in galaxies_muse])
-	ax.scatter(np.log10(OIII_eqw_muse), radio_power[m_gals], c='r', marker='x', 
-		label='MUSE')
+	ax.errorbar(np.log10(OIII_eqw_muse), radio_power[m_gals], c='r', fmt='x',
+		label='MUSE', xerr=abs(np.log(OIII_eqw_muse - OIII_eqw_unc_muse) - 
+		np.log(OIII_eqw_muse)))
 
 	# VIMOS
 	v_gals = np.array([np.where(galaxies==g)[0][0] for g in galaxies_vimos])

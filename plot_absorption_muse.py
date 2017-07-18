@@ -6,9 +6,13 @@ import matplotlib.pyplot as plt
 from plot_velfield_nointerp import plot_velfield_nointerp 
 import numpy as np 
 import os
-from plot_results import set_lims
+from plot_results_muse import set_lims
 from checkcomp import checkcomp
 cc = checkcomp()
+from errors2_muse import get_dataCubeDirectory
+from astropy.io import fits
+from prefig import Prefig
+
 
 def plot_absorption(galaxy, opt='pop', D=None, uncert=True):
 	# Find lines:
@@ -33,12 +37,17 @@ def plot_absorption(galaxy, opt='pop', D=None, uncert=True):
 		D = pickle.load(pickleFile)
 		pickleFile.close()
 
+	f = fits.open(get_dataCubeDirectory(galaxy))
+	header = f[1].header
+	f.close()
+
 	# Set up figure and subplots
+	Prefig(size=(16*2,12*np.ceil(len(lines)/2.0)), transparent=False)
 	f, ax_array = plt.subplots(int(np.ceil(len(lines)/2.0)), 2, sharex='col', 
-		sharey='row')
+		sharey='row', frameon=False)
 	if uncert:
 		f_uncert, ax_array_uncert = plt.subplots(int(np.ceil(len(lines)/2.0)), 2, 
-			sharex='col', sharey='row')
+			sharex='col', sharey='row', frameon=False)
 
 	for i, line in enumerate(lines):
 		print "    " + line
@@ -55,7 +64,7 @@ def plot_absorption(galaxy, opt='pop', D=None, uncert=True):
 		# 	abmax = limits[line][1]
 
 		ax_array[int(np.floor(i/2)),i%2] = plot_velfield_nointerp(D.x, D.y, D.bin_num, 
-			D.xBar, D.yBar, D.absorption_line(line), vmin=abmin, vmax=abmax,
+			D.xBar, D.yBar, D.absorption_line(line), header, vmin=abmin, vmax=abmax,
 			nodots=True, colorbar=True, label='Index strength ('+r'$\AA$'+')', 
 			title=line, ax=ax_array[int(np.floor(i/2)),i%2], cmap='gnuplot2', 
 			flux_unbinned=D.unbinned_flux, signal_noise=D.SNRatio, signal_noise_target=30)
@@ -64,7 +73,7 @@ def plot_absorption(galaxy, opt='pop', D=None, uncert=True):
 			abmin, abmax = set_lims(ab_uncert)
 
 			ax_array_uncert[int(np.floor(i/2)),i%2] = plot_velfield_nointerp(D.x, D.y, 
-				D.bin_num, D.xBar, D.yBar, ab_uncert, vmin=abmin, vmax=abmax,
+				D.bin_num, D.xBar, D.yBar, ab_uncert, header, vmin=abmin, vmax=abmax,
 				nodots=True, colorbar=True, label='Index strength ('+r'$\AA$'+')', 
 				title=line, ax=ax_array_uncert[int(np.floor(i/2)),i%2], cmap='gnuplot2', 
 				flux_unbinned=D.unbinned_flux, signal_noise=D.SNRatio, 
@@ -76,26 +85,26 @@ def plot_absorption(galaxy, opt='pop', D=None, uncert=True):
 	print 'Saving plot'
 
 	saveTo = "%s/absorption.pdf" % (out_plots)
-	f.tight_layout()
+	# f.tight_layout()
 	ax_array[0,1].set_xlabel('')
 	ax_array[0,0].set_xlabel('')
 	ax_array[0,1].set_ylabel('')
 	ax_array[1,1].set_ylabel('')
 	f.suptitle(galaxy.upper())
-	f.savefig(saveTo, bbox_inches="tight")
+	f.savefig(saveTo)#, bbox_inches="tight")
 
 
 	if uncert:
 		# f_uncert.set_size_inches(8.5,int(np.ceil(len(lines)/2.0))*1.8)
 
 		saveTo = "%s/absorption_uncert.pdf" % (out_plots)
-		f_uncert.tight_layout()
+		# f_uncert.tight_layout()
 		ax_array_uncert[0,1].set_xlabel('')
 		ax_array_uncert[0,0].set_xlabel('')
 		ax_array_uncert[0,1].set_ylabel('')
 		ax_array_uncert[1,1].set_ylabel('')
 		f_uncert.suptitle(galaxy.upper() + ' Uncertainties')
-		f_uncert.savefig(saveTo, bbox_inches="tight")
+		f_uncert.savefig(saveTo)#, bbox_inches="tight")
 
 	return D
 

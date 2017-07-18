@@ -153,14 +153,14 @@ END
 pro use_kinemetry
 ;	gal = 'eso443-g024'
 	gals=['ic1459', 'ic4296', 'ngc1316', 'ngc1399']
-	; gals=['ic4296']
+	gals=['ngc1399']
 	for i=0,3 do begin
 		gal=gals[i]
 
+		do_work, gal, 'kin', 'stellar_vel'
 		do_work, gal, 'kin', 'gas_flux'
 		do_work, gal, 'kin', 'gas_vel'
 		do_work, gal, 'kin', 'gas_sigma'
-		do_work, gal, 'kin', 'stellar_vel'
 
 	endfor
 
