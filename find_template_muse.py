@@ -8,7 +8,7 @@ import numpy as np
 from astropy.io import fits
 from checkcomp import checkcomp
 cc= checkcomp()
-from errors2_muse import run_ppxf, set_params, remove_anomalies, get_dataCubeDirectory
+from errors2_muse import run_ppxf, set_params, apply_range, get_dataCubeDirectory
 c = 299792.458
 
 def find_template(galaxy, set_range=None):
@@ -41,7 +41,7 @@ def find_template(galaxy, set_range=None):
 
 ## ----------========= Calibrating the spectrum  ===========---------
 	lam = np.arange(s[0])*CDELT_spec + CRVAL_spec
-	gal_spec, lam, cut = remove_anomalies(gal_spec, window=201, repeats=0, 
+	gal_spec, lam, cut = apply_range(gal_spec, window=201, repeats=0, 
 		lam=lam, return_cuts=True, set_range=params.set_range, n_sigma=2)
 	lamRange = np.array([lam[0],lam[-1]])
 	gal_noise = gal_noise[cut]

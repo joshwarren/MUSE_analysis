@@ -17,7 +17,7 @@ import glob
 from astropy.io import fits
 import ppxf_util as util
 from voronoi_2d_binning import voronoi_2d_binning
-from errors2_muse import remove_anomalies, get_dataCubeDirectory
+from errors2_muse import apply_range, get_dataCubeDirectory
 import os
 
 

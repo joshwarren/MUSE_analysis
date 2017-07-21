@@ -36,7 +36,7 @@ class set_params(object):
 					# 2   Seperate gases heated by shocks (OIII and NI) and by SF gas
 					#     (Hb and Hd)
 					# 3   All gas seperate.
-		self.reps = 1000 ## number of monte carlo reps per bin.
+		self.reps = 100 ## number of monte carlo reps per bin.
 		self.FWHM_gal = 2.3 # MUSE documentation
 		self.set_range = np.array([2000,7410])#5500])
 		self.stellar_moments = 2 # number of componants to calc with ppxf (see 
@@ -440,7 +440,7 @@ def saveAll(galaxy, bin, pp, opt='kin'):
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
-def remove_anomalies(spec, window=201, repeats=0, lam=None, set_range=None, 
+def apply_range(spec, window=201, repeats=0, lam=None, set_range=None, 
 	return_cuts=False, n_sigma=3):
 	if set_range is not None and lam is None:
 		raise ValueError('lam keyword must be supplied if set_range keyword'+\
@@ -452,16 +452,16 @@ def remove_anomalies(spec, window=201, repeats=0, lam=None, set_range=None,
 	spec = np.array(spec[r])
 	lam = np.array(lam[r])
 
-	x=np.arange(len(spec))
-	mask = np.zeros(len(spec)).astype(bool)
-	for rep in range(repeats):
-		med = rollmed(spec,window)
-		std = rollstd(spec,window)
-		for i in range(len(mask)):
-			mask[i] += spec[i] > med[i]+n_sigma*std[i]
-			mask[i] += spec[i] < med[i]-n_sigma*std[i]
+	# x=np.arange(len(spec))
+	# mask = np.zeros(len(spec)).astype(bool)
+	# for rep in range(repeats):
+	# 	med = rollmed(spec,window)
+	# 	std = rollstd(spec,window)
+	# 	for i in range(len(mask)):
+	# 		mask[i] += spec[i] > med[i]+n_sigma*std[i]
+	# 		mask[i] += spec[i] < med[i]-n_sigma*std[i]
 
-		spec[mask] = np.interp(x[mask],x[~mask],spec[~mask])
+	# 	spec[mask] = np.interp(x[mask],x[~mask],spec[~mask])
 
 	if lam is not None:
 		if return_cuts:
@@ -574,13 +574,14 @@ def errors2(i_gal=None, opt=None, bin=None):
 	spaxels_in_bin = np.where(bin_num == bin)[0]
 	n_spaxels_in_bin = len(spaxels_in_bin)
 
-	bin_lin = np.nansum(galaxy_data[:,x[spaxels_in_bin],y[spaxels_in_bin]], axis=1)
+	bin_lin = np.nansum(galaxy_data[:,x[spaxels_in_bin],y[spaxels_in_bin]], axis=1)/\
+		n_spaxels_in_bin
 	bin_lin_noise = np.nansum(galaxy_noise[:,x[spaxels_in_bin],
 		y[spaxels_in_bin]]**2, axis=1)
-	bin_lin_noise = np.sqrt(bin_lin_noise)
+	bin_lin_noise = np.sqrt(bin_lin_noise)/n_spaxels_in_bin
 ## ----------========= Calibrating the spectrum  ===========---------
 	lam = np.arange(s[0])*CDELT_spec + CRVAL_spec
-	bin_lin, lam, cut = remove_anomalies(bin_lin, window=201, repeats=0, 
+	bin_lin, lam, cut = apply_range(bin_lin, window=201, repeats=0, 
 		lam=lam, return_cuts=True, set_range=params.set_range, n_sigma=2)
 	lamRange = np.array([lam[0],lam[-1]])
 	bin_lin_noise = bin_lin_noise[cut]
@@ -638,6 +639,8 @@ def run_ppxf(galaxy, bin_lin, bin_lin_noise, lamRange, CDELT, params, produce_pl
 ## ----------=============== Emission lines ================---------
 	goodPixels = determine_goodpixels(logLam_bin,stellar_templates.lamRange_template, 
 		vel, z, gas=params.gas!=0, mask=mask_sky)#galaxy=='ic1459')
+	goodPixels = np.array([g for g in goodPixels if (~np.isnan(bin_log[g]))])
+		# * ~np.isnan(bin_log[g+1]) * ~np.isnan(bin_log[g-1]))])
 
 	e_templates = get_emission_templates(params.gas, lamRange, 
 		stellar_templates.logLam_template, FWHM_gal, goodWav=lambdaq[goodPixels])
@@ -667,11 +670,12 @@ def run_ppxf(galaxy, bin_lin, bin_lin_noise, lamRange, CDELT, params, produce_pl
 		ax2.set_ylabel('Residuals, emission lines and Noise',rotation=270,labelpad=12)
 		r = pp.ax.get_ylim()[1] - pp.ax.get_ylim()[0]
 		mn = np.min(pp.bestfit[goodPixels]) - pp.ax.get_ylim()[0]
-		ax2.set_ylim([-mn, -mn+r])
 
 		ax2.plot(lambdaq, noise, 'purple')
 		pp.ax.plot(np.nan, 'purple', label='Noise') # Proxy for legend
 		ax2.axhline(0, linestyle='--', color='k', dashes=(5,5),zorder=10)
+		ax2.set_ylim([-mn, -mn+r])
+		pp.ax2 = ax2
 
 	pp.templatesToUse = templatesToUse
 	pp.element = element
