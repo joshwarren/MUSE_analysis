@@ -35,14 +35,14 @@ def full_analysis(galaxy=None, opt='kin'):
 
 if __name__=="__main__":
 	galaxies = [
-		# 'ic1459',
+		'ic1459',
 		# 'ic4296', 
-		# 'ngc1316',
-		'ngc1399'
+		'ngc1316',
+		# 'ngc1399'
 		]
 	for g in galaxies:
 		try: 
-			full_analysis(galaxy=g, opt='kin')
+			full_analysis(galaxy=g, opt='kin2')
 		except Exception as e:
 			print '%s failed' % (g)
 			print e

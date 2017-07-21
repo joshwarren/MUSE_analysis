@@ -29,10 +29,10 @@ galaxies = [
 			'ngc1316',
 			'ngc1399'
 			]
-# galaxies = ['ic1459']
+galaxies = ['ic1459']
 # galaxies = ['ic4296']
-# galaxies = ['ngc1316']
-galaxies = ['ngc1399']
+galaxies = ['ngc1316']
+# galaxies = ['ngc1399']
 
 m=mapping()
 # m.SNR = False
@@ -44,8 +44,8 @@ m=mapping()
 # m.line_ratios = False
 
 discard = 0
-norm = 'lwv'#'lws' #'lwv'
-MC_dir=''#'_low_res'
+norm = 'lws' #'lwv'
+MC_dir='2'#'_low_res'
 
 # Arrays for error catching
 gal_err, err, trace =[], [], []
@@ -53,12 +53,12 @@ for galaxy in galaxies:
 	D = None
 	print galaxy
 	try:
-		# D = pickler(galaxy, discard=discard, norm=norm, opt='kin'+MC_dir)
+		D = pickler(galaxy, discard=discard, norm=norm, opt='kin'+MC_dir)
 		# D = sav_for_kinemetry(galaxy, opt='kin'+MC_dir, D=D)		
 		D = plot_results(galaxy, discard=discard, overplot = {'radio':'r', 'CO':'c'}, 
 			residual="median", norm=norm, D=D, show_bin_num=True, mapping=m, 
 			opt='kin'+MC_dir)
-		# plt.close("all")
+		plt.close("all")
 		D = kinematics(galaxy, discard=discard, D=D, opt='kin') # Only run 
 		# 														# for opt='kin'
 		D = rotation_curve(galaxy, D=D, opt='kin'+MC_dir) 
