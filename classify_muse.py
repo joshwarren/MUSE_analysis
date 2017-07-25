@@ -193,7 +193,7 @@ if __name__ == '__main__':
 	# galaxy = 'ic4296'
 	# galaxy = 'ic1459'
 	# galaxy = 'ngc1399'
-	for galaxy in ['ic1459','ic4296','ngc1316','ngc1399']:
-		print galaxy
-		classify(galaxy)
-	# classify('ic1459')
+	# for galaxy in ['ic1459','ic4296','ngc1316','ngc1399']:
+	# 	print galaxy
+	# 	classify(galaxy)
+	classify('ngc1399', opt='kin')

@@ -203,7 +203,7 @@ def use_kinemetry(gal, opt='kin'):
 # Use of plot_absorption.py
 
 if __name__ == '__main__':
-	for gal in ['ic1459', 'ic4296', 'ngc1316', 'ngc1399']:
-		print gal
-		use_kinemetry(gal)
-	# use_kinemetry('ic4296')
+	# for gal in ['ic1459', 'ic4296', 'ngc1316', 'ngc1399']:
+	# 	print gal
+	# 	use_kinemetry(gal)
+	use_kinemetry('ngc1399', opt='kin')

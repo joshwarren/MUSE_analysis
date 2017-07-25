@@ -157,10 +157,10 @@ pro use_kinemetry
 	for i=0,3 do begin
 		gal=gals[i]
 
-		do_work, gal, 'kin', 'stellar_vel'
-		do_work, gal, 'kin', 'gas_flux'
-		do_work, gal, 'kin', 'gas_vel'
-		do_work, gal, 'kin', 'gas_sigma'
+		do_work, gal, 'kin3', 'stellar_vel'
+		do_work, gal, 'kin3', 'gas_flux'
+		do_work, gal, 'kin3', 'gas_vel'
+		do_work, gal, 'kin3', 'gas_sigma'
 
 	endfor
 
