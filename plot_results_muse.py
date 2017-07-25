@@ -126,7 +126,8 @@ def add_R_e(ax, galaxy, discard=0, pa=0):
 	data_file =  "%s/galaxies.txt" % (vin_dir)
 	x_cent_gals, y_cent_gals = np.loadtxt(data_file, unpack=True, skiprows=1, 
 		usecols=(1,2), dtype=int)
-	galaxy_gals = np.loadtxt(data_file, skiprows=1, usecols=(0,),dtype=str, unpack=True)
+	galaxy_gals = np.loadtxt(data_file, skiprows=1, usecols=(0,),dtype=str, 
+		unpack=True)
 	i_gal = np.where(galaxy_gals==galaxy)[0][0]
 	x_cent_pix = x_cent_gals[i_gal]
 	y_cent_pix = y_cent_gals[i_gal]
@@ -143,14 +144,15 @@ def add_R_e(ax, galaxy, discard=0, pa=0):
 	data_file =  '%s/Data/vimos/analysis/galaxies2.txt' % (cc.base_dir)
 	ellip_gals, pa_gals = np.loadtxt(data_file, unpack=True, skiprows=1, 
 		usecols=(2,3), dtype=float)
-	galaxy_gals = np.loadtxt(data_file, skiprows=1, usecols=(0,),dtype=str, unpack=True)
+	galaxy_gals = np.loadtxt(data_file, skiprows=1, usecols=(0,),dtype=str, 
+		unpack=True)
 	i_gal = np.where(galaxy_gals==galaxy)[0][0]
 	ellip = ellip_gals[i_gal]
 	pa += pa_gals[i_gal]
 
 	if ax.RaDec:
-		patch = Ellipse([x_cent, y_cent], R_e*(1-ellip)/60/60, R_e/60/60, angle=pa, 
-			fill=False)
+		patch = Ellipse([x_cent, y_cent], R_e*(1-ellip)/60/60, R_e/60/60, 
+			angle=pa, fill=False)
 	else:
 		patch = Ellipse([x_cent, y_cent], R_e*(1-ellip), R_e, angle=pa, fill=False)
 	ax.add_patch(patch)
@@ -288,10 +290,11 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 	if mapping.SNR:
 		print '    SNR'
 		saveTo = "%s/SNR.png" % (out_nointerp)
-		ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, D.SNRatio, 
-			header, colorbar=True, nodots=True, title='SNR', save=saveTo, close=True, 
-			flux_unbinned=D.unbinned_flux, center=center, show_bin_num=show_bin_num,
-			galaxy=galaxy.upper(), redshift=z)
+		ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, 
+			D.SNRatio, header, colorbar=True, nodots=True, title='SNR', 
+			save=saveTo, close=True, flux_unbinned=D.unbinned_flux, 
+			center=center, show_bin_num=show_bin_num, galaxy=galaxy.upper(), 
+			redshift=z)
 # ------------=============== Plot image ================----------
 	if mapping.image:
 		print "    Image"
@@ -307,8 +310,8 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 		fmin, fmax = set_lims(D.flux, positive=True)
 
 		ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, D.flux, 
-			header, vmin=fmin, vmax=fmax, nodots=True, show_bin_num=show_bin_num, 
-			colorbar=True, label=CBLabel, title=title, cmap='gist_yarg', ax=ax, 
+			header, vmin=fmin, vmax=fmax, nodots=True, colorbar=True, 
+			label=CBLabel, title=title, ax=ax, cmap='gist_yarg', 
 			flux_unbinned=D.unbinned_flux, center=center)
 		if plots:
 			plt.show()
@@ -351,8 +354,9 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 			ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, 
 				D.e_line[c].flux, header, vmin=f_min, vmax=f_max, colorbar=True, 
 				nodots=True, label=fCBtitle, title=f_title, ax=ax, redshift=z,
-				flux_unbinned=D.unbinned_flux, center=center, galaxy=galaxy.upper(),
-				signal_noise=D.e_line[c].amp_noise, signal_noise_target=5)
+				flux_unbinned=D.unbinned_flux, center=center, 
+				galaxy=galaxy.upper(), signal_noise=D.e_line[c].amp_noise, 
+				signal_noise_target=5)
 				#cmap = 'gist_yarg')
 			ax_array.append(ax)
 			f.delaxes(ax)
@@ -369,12 +373,10 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 
 			saveTo = "%s/%s_img_uncert.png" % (out_nointerp, c)
 			ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar,
-				D.e_line[c].flux.uncert, header, vmin=f_uncert_min, vmax=f_uncert_max, 
-				flux_unbinned=D.unbinned_flux, nodots=True, 
-				# show_bin_num=show_bin_num, 
-				colorbar=True, label=fCBtitle, 
-				galaxy = galaxy.upper(), title=fu_title, 
-				save=saveTo, close=True, center=center)
+				D.e_line[c].flux.uncert, header, vmin=f_uncert_min, 
+				vmax=f_uncert_max, flux_unbinned=D.unbinned_flux, nodots=True, 
+				colorbar=True, label=fCBtitle, galaxy = galaxy.upper(), 
+				title=fu_title, save=saveTo, close=True, center=center)
 			
 			# Equivalent Width
 			eq_title = "%s Equivalent Width" % (c_title)
@@ -384,9 +386,9 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 			eq_min, eq_max = set_lims(D.e_line[c].equiv_width)
 
 			saveTo = "%s/%s_eqWidth_hist.png" % (out_plots, c)
-			plot_histogram(D.e_line[c].equiv_width, galaxy=galaxy.upper(), redshift=z,
-				vmin=eq_min,vmax=eq_max, weights=D.n_spaxels_in_bin, title=eqh_title,
-				xaxis=eqCBtitle, save=saveTo)
+			plot_histogram(D.e_line[c].equiv_width, galaxy=galaxy.upper(), 
+				redshift=z, vmin=eq_min,vmax=eq_max, weights=D.n_spaxels_in_bin,
+				title=eqh_title, xaxis=eqCBtitle, save=saveTo)
 			
 			ax = f.add_subplot(111, aspect='equal')
 			saveTo = "%s/%s_equiv_width.png" % (out_nointerp, c)
@@ -394,10 +396,10 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 
 			ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, 
 				D.e_line[c].equiv_width, header, vmin=eq_min, vmax=eq_max, 
-				colorbar=True, nodots=True, label=eqCBtitle, title=eq_title, ax=ax, 
-				flux_unbinned=D.unbinned_flux, signal_noise=D.e_line[c].amp_noise,
-				signal_noise_target=5, center=center, galaxy=galaxy.upper(),
-				redshift=z)
+				colorbar=True, nodots=True, label=eqCBtitle, title=eq_title, 
+				ax=ax, flux_unbinned=D.unbinned_flux, 
+				signal_noise=D.e_line[c].amp_noise, signal_noise_target=5, 
+				center=center, galaxy=galaxy.upper(), redshift=z)
 			ax_array.append(ax)
 			f.delaxes(ax)
 			f.delaxes(ax.cax)
@@ -406,15 +408,15 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 
 			# Uncertainy in EW
 			equ_title = "%s Equivalent Width Uncertainty" % (c_title)
-			eq_uncert_min, eq_uncert_max = set_lims(D.e_line[c].equiv_width.uncert, 
-				positive=True)
+			eq_uncert_min, eq_uncert_max = set_lims(
+				D.e_line[c].equiv_width.uncert, positive=True)
 
 			saveTo = "%s/%s_equiv_width_uncert.png" % (out_nointerp, c)
 			ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar,
 				D.e_line[c].equiv_width.uncert, header, vmin=eq_uncert_min, 
 				vmax=eq_uncert_max, flux_unbinned=D.unbinned_flux, nodots=True, 
-				colorbar=True, label=eqCBtitle, galaxy = galaxy.upper(), title=equ_title, 
-				save=saveTo, close=True, center=center)
+				colorbar=True, label=eqCBtitle, galaxy = galaxy.upper(), 
+				title=equ_title, save=saveTo, close=True, center=center)
 # ------------============ Amplitude/Noise ==============----------
 	if mapping.amp_noise:
 		for c in D.e_components:
@@ -499,7 +501,8 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 					uhtitle = "Stellar Uncertainty " + title + " Histogram"
 					title = "Stellar " + title + " Map"
 				else:
-					utitle = "Ionised" + im_type + " Gas Uncertainty " + title + " Map"
+					utitle = "Ionised" + im_type + " Gas Uncertainty " + title + \
+						" Map"
 					htitle = "Ionised" + im_type + " Gas " + title + " Histogram"
 					uhtitle = "Ionised" + im_type + " Gas Uncertainty " + title + \
 						" Histogram"
@@ -507,8 +510,8 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 # ------------============ Setting v range ==============----------
 				vmin, vmax = set_lims(D.components[pl].plot[k], positive=positive, 
 					symmetric=symmetric)
-				v_uncert_min, v_uncert_max = set_lims(D.components[pl].plot[k].uncert, 
-					positive=True)
+				v_uncert_min, v_uncert_max = set_lims(
+					D.components[pl].plot[k].uncert, positive=True)
 # # ------------============== Plot Histogram =============----------
 				# Field histogram
 				# saveTo = "%s/%s_hist_%s.png" % (out_plots, plot_title)
@@ -518,9 +521,10 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 				# # Uncertainty histogram
 				# saveTo = "%s/%s_hist_%s.png" % (out_plots, plot_title+'_uncert', 
 				# 	wav_range)
-				# plot_histogram(D.components[c].plot[k].uncert, galaxy=galaxy.upper(), 
-				# 	redshift=z, vmin=v_uncert_min,vmax=v_uncert_max, 
-				# 	weights=D.n_spaxels_in_bin, title=uhtitle, xaxis=CBLabel, save=saveTo)
+				# plot_histogram(D.components[c].plot[k].uncert, 
+				# 	galaxy=galaxy.upper(), redshift=z, vmin=v_uncert_min,
+				# 	vmax=v_uncert_max, weights=D.n_spaxels_in_bin, title=uhtitle, 
+				# 	xaxis=CBLabel, save=saveTo)
 
 				# if plots:
 				# 	plt.show()
@@ -531,8 +535,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 				ax.saveTo = saveTo
 				ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar,
 					D.components[pl].plot[k], header, vmin=vmin, vmax=vmax, 
-					flux_unbinned=D.unbinned_flux, #flux_type='notmag',
-					nodots=True, colorbar=True, 
+					flux_unbinned=D.unbinned_flux, nodots=True, colorbar=True, 
 					label=CBLabel,galaxy = galaxy.upper(), redshift = z,
 					title=title, ax=ax, signal_noise=SNR,
 					signal_noise_target=SN_target, center=center)
@@ -547,10 +550,10 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 				
 				# Uncertainty plot
 				saveTo = "%s/%s_%s_uncert_field.png" % (out_nointerp, c, k)
-				ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar,
-					D.components[pl].plot[k].uncert, header, vmin=v_uncert_min, 
-					vmax=v_uncert_max, flux_unbinned=D.unbinned_flux, 
-					nodots=True, colorbar=True, 
+				ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, 
+					D.yBar, D.components[pl].plot[k].uncert, header, 
+					vmin=v_uncert_min, vmax=v_uncert_max, 
+					flux_unbinned=D.unbinned_flux, nodots=True, colorbar=True, 
 					label=CBLabel, galaxy = galaxy.upper(), 
 					title=utitle, save=saveTo, close=True, center=center)
 				if plots:
@@ -573,18 +576,17 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 			elif residual=="max":
 				average_residuals[i] = np.max(np.abs(residuals))
 				
-		minres, maxres = set_lims(average_residuals, positive=True) #mean_centered=True,
-		
+		minres, maxres = set_lims(average_residuals, positive=True)
+
 		CBLabel = "Residuals"
 		title = str.capitalize(residual) + \
 		" Residuals of Bestfit to Normalised Spectrum"
 		saveTo = "%s/%s_residual.png" % (out_nointerp, residual)
 
 		ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar,
-			average_residuals, header, vmin=minres, vmax=maxres, flux_type='notmag',
-			nodots=True, colorbar=True, 
-			label=CBLabel, #flux_unbinned=D.unbinned_flux, 
-			galaxy = galaxy.upper(), title=title, 
+			average_residuals, header, vmin=minres, vmax=maxres, 
+			flux_type='notmag', nodots=True, colorbar=True, 
+			label=CBLabel, galaxy = galaxy.upper(), title=title, 
 			save=saveTo, close=True, center=center)
 		if plots:
 			plt.show()
@@ -678,15 +680,17 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 			ax = f.add_subplot(111, aspect='equal')
 			saveTo = "%s/lineratio/%s_%s_line_ratio.png" % (out_nointerp, cB, cA)
 			ax.saveTo = saveTo
-			ax.figx, ax.figy = n%3, n_rows-int(np.ceil(t_num/3)) + int(np.ceil(n/3))
+			ax.figx, ax.figy = n%3, n_rows-int(np.ceil(t_num/3)) + int(
+				np.ceil(n/3))
 
-			ANRatio = np.min([D.e_line[cA].amp_noise, D.e_line[cB].amp_noise], axis=0)
+			ANRatio = np.min([D.e_line[cA].amp_noise, D.e_line[cB].amp_noise], 
+				axis=0)
 
 			ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar,
 				line_ratio, header, vmin=lr_min, vmax=lr_max, colorbar=True,
 				nodots=True, title=lr_title, label=lrCBtitle, ax=ax,
-				galaxy = galaxy.upper(), redshift = z, 
-				center=center, flux_unbinned=D.unbinned_flux, signal_noise=ANRatio,
+				galaxy = galaxy.upper(), redshift = z, center=center, 
+				flux_unbinned=D.unbinned_flux, signal_noise=ANRatio,
 				signal_noise_target=5)
 
 			ax_array.append(ax)
@@ -733,5 +737,5 @@ if __name__ == '__main__':
 
 	print galaxy
 
-	plot_results(galaxy, opt='kin2', plots=False, residual = "median", show_bin_num=True, 
-		overplot = {'radio':'r', 'CO':'c'})
+	plot_results(galaxy, opt='kin2', plots=False, residual = "median", 
+		show_bin_num=True, overplot = {'radio':'r', 'CO':'c'})

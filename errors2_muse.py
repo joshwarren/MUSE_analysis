@@ -41,7 +41,7 @@ class set_params(object):
 		self.set_range = np.array([2000,7410])#5500])
 		self.stellar_moments = 2 # number of componants to calc with ppxf (see 
 							# keyword moments in ppxf.pro for more details)
-		self.gas_moments = 2
+		self.gas_moments = 4
 		if 'kin' in opt:
 			self.degree = 4  # order of addative Legendre polynomial used to 
 							# correct the template continuum shape during the fit
@@ -370,7 +370,7 @@ def saveAll(galaxy, bin, pp, opt='kin'):
 				for j in pp.sol[i]:
 					b.write("   " + str(j))
 			else: # gas = 0 
-				 for j in pp.sol:
+				for j in pp.sol:
 					b.write("   " + str(j))
 			b.write('\n')
 
@@ -628,7 +628,7 @@ def run_ppxf(galaxy, bin_lin, bin_lin_noise, lamRange, CDELT, params, produce_pl
 	bin_log_noise, logLam_bin, _ = util.log_rebin(lamRange, bin_lin_noise**2)
 	bin_log_noise = np.sqrt(bin_log_noise)
 	
-	noise = bin_log_noise+0.0000000000001
+	# noise = bin_log_noise+0.0000000000001
 
 	
 
@@ -640,7 +640,6 @@ def run_ppxf(galaxy, bin_lin, bin_lin_noise, lamRange, CDELT, params, produce_pl
 	goodPixels = determine_goodpixels(logLam_bin,stellar_templates.lamRange_template, 
 		vel, z, gas=params.gas!=0, mask=mask_sky)#galaxy=='ic1459')
 	goodPixels = np.array([g for g in goodPixels if (~np.isnan(bin_log[g]))])
-		# * ~np.isnan(bin_log[g+1]) * ~np.isnan(bin_log[g-1]))])
 
 	e_templates = get_emission_templates(params.gas, lamRange, 
 		stellar_templates.logLam_template, FWHM_gal, goodWav=lambdaq[goodPixels])
@@ -657,9 +656,9 @@ def run_ppxf(galaxy, bin_lin, bin_lin_noise, lamRange, CDELT, params, produce_pl
 	start = [[vel, sig]] * (max(component) + 1)
 	moments = [params.stellar_moments] + [params.gas_moments] * max(component)
 ## ----------============== The bestfit part ===============---------
-	noise = np.abs(noise)
+	# noise = np.abs(noise)
 
-	pp = ppxf(templates, bin_log, noise, velscale, start, 
+	pp = ppxf(templates, bin_log, bin_log_noise, velscale, start, 
 		goodpixels=goodPixels, mdegree=params.mdegree, moments=moments, 
 		degree=params.degree, vsyst=dv, component=component, lam=lambdaq, 
 		plot=not params.quiet, quiet=params.quiet, produce_plot=produce_plot)
@@ -671,7 +670,7 @@ def run_ppxf(galaxy, bin_lin, bin_lin_noise, lamRange, CDELT, params, produce_pl
 		r = pp.ax.get_ylim()[1] - pp.ax.get_ylim()[0]
 		mn = np.min(pp.bestfit[goodPixels]) - pp.ax.get_ylim()[0]
 
-		ax2.plot(lambdaq, noise, 'purple')
+		ax2.plot(pp.lam, pp.noise, 'purple')
 		pp.ax.plot(np.nan, 'purple', label='Noise') # Proxy for legend
 		ax2.axhline(0, linestyle='--', color='k', dashes=(5,5),zorder=10)
 		ax2.set_ylim([-mn, -mn+r])
@@ -703,11 +702,11 @@ def run_ppxf(galaxy, bin_lin, bin_lin_noise, lamRange, CDELT, params, produce_pl
 		# pp.MCgas_weights = None
 
 	for rep in range(params.reps):
-		random = np.random.randn(len(noise))
-		add_noise = random*np.abs(noise)
+		random = np.random.randn(len(bin_log_noise))
+		add_noise = random*np.abs(bin_log_noise)
 		bin_log = pp.bestfit + add_noise
 
-		ppMC = ppxf(templates, bin_log, noise, velscale, start, 
+		ppMC = ppxf(templates, bin_log, bin_log_noise, velscale, start, 
 			goodpixels=goodPixels, moments=moments, degree=params.degree, vsyst=dv, 
 			lam=lambdaq, plot=not params.quiet, quiet=params.quiet, bias=0.1, 
 			component=component, mdegree=params.mdegree)

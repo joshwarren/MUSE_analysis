@@ -13,9 +13,7 @@ if cc.remote:
 	matplotlib.use('Agg') # 20160202 JP to stop lack-of X-windows error
 import matplotlib.pyplot as plt
 import numpy as np
-import glob
 from astropy.io import fits
-import ppxf_util as util
 from voronoi_2d_binning import voronoi_2d_binning
 from errors2_muse import apply_range, get_dataCubeDirectory
 import os
@@ -33,8 +31,8 @@ def check_overwrite(new, old, auto_override=False):
 
 
 
-def binning_spaxels(galaxy, targetSN=None, opt='kin', auto_override=False, debug=False,
-	set_range=None):
+def binning_spaxels(galaxy, targetSN=None, opt='kin', auto_override=False, 
+	debug=False, set_range=None):
 	print '     Voronoi Binning'
 # ----------===============================================---------
 # ----------============ Default parameters ===============---------
@@ -141,17 +139,17 @@ def binning_spaxels(galaxy, targetSN=None, opt='kin', auto_override=False, debug
 					np.nanmedian(galaxy_data[set_range_pix[0]:set_range_pix[1], 
 					bl_delt1*i:bl_delt1*(i+1), bl_delt2*j:bl_delt2*(j+1)], axis=0)
 				noise[bl_delt1*i:bl_delt1*(i+1),bl_delt2*j:bl_delt2*(j+1)] = \
-					np.nanmedian(np.abs(galaxy_noise[set_range_pix[0]:set_range_pix[1], 
-					bl_delt1*i:bl_delt1*(i+1), bl_delt2*j:bl_delt2*(j+1)]), axis=0)
+					np.nanmedian(galaxy_noise[set_range_pix[0]:set_range_pix[1], 
+					bl_delt1*i:bl_delt1*(i+1), bl_delt2*j:bl_delt2*(j+1)], axis=0)
 		# signal_sav = np.array(signal)
 		# noise_sav = np.array(noise)
 		signal = signal.flatten()
 		noise = noise.flatten()
 
-		bad_pix = ~(signal > 0) + ~(noise > 0)
-		signal[bad_pix] = 0
-		noise[bad_pix] = 0
-		noise +=0.000001
+		bad_pix = (signal <= 0) + (noise <= 0)
+		signal[bad_pix] = np.nan
+		noise[bad_pix] = np.nan
+		# noise +=0.000001
 
 	galaxy_data = []
 	del galaxy_data
@@ -168,19 +166,19 @@ def binning_spaxels(galaxy, targetSN=None, opt='kin', auto_override=False, debug
 
 	mask = (np.isfinite(signal)) * (np.isfinite(noise))
 
-	nobin = signal/noise > targetSN*2
+	# nobin = signal/noise > targetSN*2
 
-	signal = signal[mask + ~nobin]
-	noise = noise[mask + ~nobin]
-	x = x[mask + ~nobin]
-	y = y[mask + ~nobin]
-	n_spaxels = np.sum(mask) # include the not-for-binning-bins
+	# signal = signal[mask + ~nobin]
+	# noise = noise[mask + ~nobin]
+	# x = x[mask + ~nobin]
+	# y = y[mask + ~nobin]
+	# n_spaxels = np.sum(mask) # include the not-for-binning-bins
 
-	# signal = signal[mask]
-	# noise = noise[mask]
-	# x = x[mask]
-	# y = y[mask]
-	# n_spaxels = np.sum(mask)
+	signal = signal[mask]
+	noise = noise[mask]
+	x = x[mask]
+	y = y[mask]
+	n_spaxels = np.sum(mask)
 	
 	# fig,ax=plt.subplots()
 	# s1=signal_sav/(flux/s[0])
@@ -215,9 +213,9 @@ def binning_spaxels(galaxy, targetSN=None, opt='kin', auto_override=False, debug
 	# 	xBar = x
 	# 	yBar = y
 
-	xBar = np.append(xBar, x[nobin])
-	yBar = np.append(yBar, y[nobin])
-	binNum = np.append(binNum, np.arange(np.sum(nobin))+max(binNum)+1)
+	# xBar = np.append(xBar, x[nobin])
+	# yBar = np.append(yBar, y[nobin])
+	# binNum = np.append(binNum, np.arange(np.sum(nobin))+max(binNum)+1)
 
 	order = np.argsort(binNum)
 	xBin = np.zeros(n_spaxels)
