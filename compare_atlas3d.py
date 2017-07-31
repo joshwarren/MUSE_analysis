@@ -9,7 +9,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from markers_atlas3d import marker_atlas3d
 from prefig import Prefig
-Prefig(transparent=False)
+# Prefig(transparent=False)
+from astropy import units as u
+from astropy.coordinates import SkyCoord
+from astropy.coordinates import match_coordinates_sky
 
 def angle_to_pc(galaxy, angle):
 	c = 299792 #km/s
@@ -22,92 +25,189 @@ def angle_to_pc(galaxy, angle):
 	z=z[i_gal]
 	return np.radians(angle/(60.0*60.0)) * z*c/H*10**6 # pc
 
+class galaxy(object):
+	def __init__(self, **kwargs):
+		self.name = ''
+		self.lambda_Re = np.nan
+		self.ellipticity = np.nan
+		self.T_type = np.nan
+		self.structure = ''
+		
+		for k, v in kwargs.iteritems():
+			setattr(self, k, v)
+
+	@property
+	def FR(self):
+		return (self.lambda_Re > 0.08 + self.ellipticity/4) + (
+			self.ellipticity > 0.4)
+	@property
+	def E(self):
+		return self.T_type < -3.5
+	@property
+	def no_rot(self):
+		return self.structure=='NRR/LV'
+	@property
+	def complex_rot(self):
+		return self.structure=='NRR/NF'
+	@property
+	def KDC(self):
+		return (self.structure=='NRR/KDC') + (self.structure=='NRR/CRC') + \
+			(self.structure=='RR/CRC')
+	@property
+	def counter_rot(self):
+		return (self.structure=='NRR/2s') + (self.structure=='RR/2s')
+	@property
+	def regular_rot(self):
+		return (self.structure=='RR/NF') + (self.structure=='RR/2m') + \
+			(self.structure=='RR/KT')
+	@property
+	def a(self): # No Rotation
+		return self.kin_group == 'a'
+	@property
+	def b(self): # Complex Rotation
+		return self.kin_group == 'b'
+	@property
+	def c(self): # KDC
+		return self.kin_group == 'c'
+	@property
+	def d(self): # Counter-rotating disks
+		return self.kin_group == 'd'
+	@property
+	def e(self): # Regular Rotator
+		return self.kin_group == 'e'
+	@property
+	def f(self): # Unclassified - have included with complex vel
+		return self.kin_group == 'f'
+
+
+class galaxy_list(list):
+	def __init__(self):
+		pass
+
+	def add_galaxy(self, g):
+		if g.name not in self.names:
+			self.append(g)
+	def add_radio(self, galaxies, radio):
+		for g in self:
+			if g.name in galaxies:
+				if '<' in radio[galaxies==g.name][0]:
+					g.radio_limit = float(radio[galaxies==g.name][0].strip('<'))
+					g.radio = np.nan
+				else: 
+					g.radio_limit = np.nan
+					g.radio = float(radio[galaxies==g.name][0])
+			else:
+				g.radio = np.nan
+				g.radio_limit = np.nan
+
+	def add_first(self, first_coords, first_radio):
+		first_coords = SkyCoord(first_coords, unit=(u.hourangle, u.deg))
+		for g in self:
+			idx, ang,_ = match_coordinates_sky(g.coords, first_coords)
+			if ang.arcsec < 30:
+				g.first_index = idx
+				g.distance_to_first = ang.arcsec
+				g.first_radio = np.log10((first_radio[idx]/1000*u.Jy * \
+					4*np.pi*(g.distance*10**6*u.pc)**2).decompose().value) # in W/Hz
+				g.first_coords = first_coords[idx]
+			else:
+				g.first_index = np.nan
+				g.distance_to_first = np.nan
+				g.first_radio = np.nan
+				g.first_coords = np.nan
+		for g in self:
+			if np.sum([g2.first_index==g.first_index for g2 in self]) > 1:
+				if g.distance_to_first != np.min([g2.distance_to_first for g2 
+					in self if g2.first_index == g.first_index]):
+					g.first_index = np.nan
+					g.distance_to_first = np.nan
+					g.first_radio = np.nan
+					g.first_coords = np.nan
+	def create_galaxy(self, name, **kwargs):
+		if name not in self.names:
+			kwargs['name'] = name
+			self.append(galaxy(**kwargs))
+		else:
+			raise 'Galaxy named %s already in the galaxy_list object' % (name)
+
+	def __getattr__(self, attr):
+		return np.array([getattr(g, attr) for g in self])
+
+	@property
+	def names(self):
+		return [g.name for g in self]
+
+
+
 def compare_atlas3d():
 	print 'Compare to Atlas3d/SAURON'
 
 ## ----------============== Ellipticity vs lambda_Re ==============----------
 	print 'FR/SR'
-	museGalaxiesFile = "%s/Data/muse/analysis/galaxies2.txt" % (cc.base_dir)
-	vimosGalaxiesFile = "%s/Data/vimos/analysis/galaxies2.txt" % (cc.base_dir)
-	muse_classify_file = "%s/Data/muse/analysis/galaxies_classify.txt" % (cc.base_dir)
-	vimos_classify_file = "%s/Data/vimos/analysis/galaxies_classify_by_eye.txt" % (
-		cc.base_dir)
+	
 
-
-	lambda_Re_muse, ellipticity_muse =  np.loadtxt(museGalaxiesFile, unpack=True, 
-		skiprows=1, usecols=(1,2))
-	galaxies_muse =  np.loadtxt(museGalaxiesFile, unpack=True, skiprows=1, usecols=(0,), 
-		dtype=str)
-
-	lambda_Re_vimos, ellipticity_vimos =  np.loadtxt(vimosGalaxiesFile, unpack=True, 
-		skiprows=1, usecols=(1,2))
-	galaxies_vimos =  np.loadtxt(vimosGalaxiesFile, unpack=True, skiprows=1, usecols=(0,), 
-		dtype=str)
 
 	fig, ax = plt.subplots()
 
 	# Plot Atlas3d results NB: all atlas3d tables are in alphabetical order
+	atlas3d_file = '%s/Data/atlas3d/I_table3.dat' % (cc.base_dir)
+	RA_atlas, dec_atlas, distance_atlas, M_k_atlas, T_type = np.loadtxt(
+		atlas3d_file, unpack=True, usecols=(1,2,7,8,10))
+	galaxies_atlas = np.loadtxt(atlas3d_file, unpack=True, usecols=(0), dtype=str)
 	atlas3d_file = '%s/Data/atlas3d/III_tableB1.dat' % (cc.base_dir)
 	ellipticity_atlas, lambda_Re_atlas = np.loadtxt(atlas3d_file, unpack=True, 
 		usecols=(2,7), dtype=float)
 	atlas3d_file = '%s/Data/atlas3d/II_tableD1.dat' % (cc.base_dir)
 	structure_atlas = np.loadtxt(atlas3d_file, unpack=True, usecols=(13,), dtype=str)
-	atlas3d_file = '%s/Data/atlas3d/I_table3.dat' % (cc.base_dir)
-	M_k_atlas, T_type = np.loadtxt(atlas3d_file, unpack=True, usecols=(8,10))
-	galaxies_atlas = np.loadtxt(atlas3d_file, unpack=True, usecols=(0), dtype=str)
-	E = T_type < -3.5
 	
-	no_rot_muse = structure_atlas=='NRR/LV'
-	complex_rot_muse = structure_atlas=='NRR/NF'
-	KDC_atlas = (structure_atlas=='NRR/KDC') + (structure_atlas=='NRR/CRC') + \
-		(structure_atlas=='RR/CRC')
-	counter_rot_muse = (structure_atlas=='NRR/2s') + (structure_atlas=='RR/2s')
-	regular_rot_muse = (structure_atlas=='RR/NF') + (structure_atlas=='RR/2m') + \
-		(structure_atlas=='RR/KT')
+	atlas_gals = galaxy_list()
+	for i, n in enumerate(galaxies_atlas):
+		atlas_gals.create_galaxy(n, 
+			M_k = M_k_atlas[i], 
+			distance = distance_atlas[i],
+			coords = SkyCoord(str(RA_atlas[i])+' '+str(dec_atlas[i]), unit='deg'),
+			ellipticity = ellipticity_atlas[i],
+			lambda_Re = lambda_Re_atlas[i],
+			structure = structure_atlas[i])
+
 
 	# S0s
-	ax.scatter(ellipticity_atlas[no_rot_muse*~E], lambda_Re_atlas[no_rot_muse*~E], 
+	ax.scatter(atlas_gals.ellipticity[atlas_gals.no_rot*~atlas_gals.E], 
+		atlas_gals.lambda_Re[atlas_gals.no_rot*~atlas_gals.E], 
 		marker=marker_atlas3d(0), c='lightgrey', alpha=0.5, lw=0,
 		label=r'Atlas3D S0: $T>-3.5$')
-	ax.scatter(ellipticity_atlas[complex_rot_muse*~E], 
-		lambda_Re_atlas[complex_rot_muse*~E], marker=marker_atlas3d(1),
-		c='lightgrey', alpha=0.5, lw=0)
-	ax.scatter(ellipticity_atlas[KDC_atlas*~E], lambda_Re_atlas[KDC_atlas*~E], 
+	ax.scatter(atlas_gals.ellipticity[atlas_gals.complex_rot*~atlas_gals.E], 
+		atlas_gals.lambda_Re[atlas_gals.complex_rot*~atlas_gals.E], 
+		marker=marker_atlas3d(1), c='lightgrey', alpha=0.5, lw=0)
+	ax.scatter(atlas_gals.ellipticity[atlas_gals.KDC*~atlas_gals.E], 
+		atlas_gals.lambda_Re[atlas_gals.KDC*~atlas_gals.E], 
 		marker=marker_atlas3d(2), c='lightgrey', alpha=0.5, lw=0)
-	ax.scatter(ellipticity_atlas[counter_rot_muse*~E], 
-		lambda_Re_atlas[counter_rot_muse*~E], marker=marker_atlas3d(3),
-		c='lightgrey', alpha=0.5, lw=0)
-	ax.plot(ellipticity_atlas[regular_rot_muse*~E], 
-		lambda_Re_atlas[regular_rot_muse*~E], marker=marker_atlas3d(4),
-		c='lightgrey', alpha=0.5, lw=0, markerfacecolor='none')
+	ax.scatter(atlas_gals.ellipticity[atlas_gals.counter_rot*~atlas_gals.E], 
+		atlas_gals.lambda_Re[atlas_gals.counter_rot*~atlas_gals.E], 
+		marker=marker_atlas3d(3), c='lightgrey', alpha=0.5, lw=0)
+	ax.plot(atlas_gals.ellipticity[atlas_gals.regular_rot*~atlas_gals.E], 
+		atlas_gals.lambda_Re[atlas_gals.regular_rot*~atlas_gals.E], 
+		marker=marker_atlas3d(4), c='lightgrey', alpha=0.5, lw=0, 
+		markerfacecolor='none')
 
 	# Ellipticals
-	ax.scatter(ellipticity_atlas[no_rot_muse*E], lambda_Re_atlas[no_rot_muse*E], 
+	ax.scatter(atlas_gals.ellipticity[atlas_gals.no_rot*atlas_gals.E], 
+		atlas_gals.lambda_Re[atlas_gals.no_rot*atlas_gals.E], 
 		marker=marker_atlas3d(0), c='k', alpha=0.5, lw=0, 
 		label=r'Atlas3D E: $T \leq -3.5$')
-	ax.scatter(ellipticity_atlas[complex_rot_muse*E], 
-		lambda_Re_atlas[complex_rot_muse*E], marker=marker_atlas3d(1), c='k', alpha=0.5, 
-		lw=0)
-	ax.scatter(ellipticity_atlas[KDC_atlas*E], lambda_Re_atlas[KDC_atlas*E], 
+	ax.scatter(atlas_gals.ellipticity[atlas_gals.complex_rot*atlas_gals.E], 
+		atlas_gals.lambda_Re[atlas_gals.complex_rot*atlas_gals.E], 
+		marker=marker_atlas3d(1), c='k', alpha=0.5, lw=0)
+	ax.scatter(atlas_gals.ellipticity[atlas_gals.KDC*atlas_gals.E], 
+		atlas_gals.lambda_Re[atlas_gals.KDC*atlas_gals.E], 
 		marker=marker_atlas3d(2), c='k', alpha=0.5, lw=0)
-	ax.scatter(ellipticity_atlas[counter_rot_muse*E], 
-		lambda_Re_atlas[counter_rot_muse*E], marker=marker_atlas3d(3), c='k', alpha=0.5, 
-		lw=0)
-	ax.plot(ellipticity_atlas[regular_rot_muse*E], 
-		lambda_Re_atlas[regular_rot_muse*E], marker=marker_atlas3d(4), c='k', alpha=0.5, 
-		lw=0, markerfacecolor='none')
+	ax.scatter(atlas_gals.ellipticity[atlas_gals.counter_rot*atlas_gals.E], 
+		atlas_gals.lambda_Re[atlas_gals.counter_rot*atlas_gals.E], 
+		marker=marker_atlas3d(3), c='k', alpha=0.5, lw=0)
+	ax.plot(atlas_gals.ellipticity[atlas_gals.regular_rot*atlas_gals.E], 
+		atlas_gals.lambda_Re[atlas_gals.regular_rot*atlas_gals.E], 
+		marker=marker_atlas3d(4), c='k', alpha=0.5, lw=0, markerfacecolor='none')
 	
-	# Join MUSE and VIMOS
-	for i_muse, g in enumerate(galaxies_muse):
-		if g in galaxies_vimos:
-			i_vimos = np.where(galaxies_vimos==g)[0][0]
-			if i_muse == 0: # add just one label to legend
-				ax.plot([ellipticity_muse[i_muse], ellipticity_vimos[i_vimos]], 
-					[lambda_Re_muse[i_muse],lambda_Re_vimos[i_vimos]], 'k--', zorder=1,
-					label='same galaxy in MUSE and VIMOS')
-			else:
-				ax.plot([ellipticity_muse[i_muse], ellipticity_vimos[i_vimos]], 
-					[lambda_Re_muse[i_muse],lambda_Re_vimos[i_vimos]], 'k--', zorder=1)
 
 	ell = np.arange(0.01,0.99,0.01)
 
@@ -135,52 +235,93 @@ def compare_atlas3d():
 
 
 	# MUSE
-	gals_muse2, group_muse = np.loadtxt(muse_classify_file, unpack=True, usecols=(0,8), 
-		dtype=str, skiprows=1)
-	gal_order = [np.where(galaxies_muse==g)[0][0] for g in gals_muse2]
-	a_muse = (group_muse=='a')[gal_order] # No rotation
-	b_muse = (group_muse=='b')[gal_order] # Complex rotation
-	c_muse = (group_muse=='c')[gal_order] # KDC
-	d_muse = (group_muse=='d')[gal_order] # Counter-rotating disks
-	e_muse = (group_muse=='e')[gal_order] # Regular rotator
-	f_muse = (group_muse=='f')[gal_order] # Unclassified
+	museGalaxiesFile = "%s/Data/muse/analysis/galaxies2.txt" % (cc.base_dir)
+	muse_classify_file = "%s/Data/muse/analysis/galaxies_classify.txt" % (cc.base_dir)
 
-	ax.scatter(ellipticity_muse[a_muse], lambda_Re_muse[a_muse], 
+	lambda_Re_muse, ellipticity_muse =  np.loadtxt(museGalaxiesFile, unpack=True, 
+		skiprows=1, usecols=(1,2))
+	galaxies_muse =  np.loadtxt(museGalaxiesFile, unpack=True, skiprows=1, 
+		usecols=(0,), dtype=str)
+	
+
+	gals_muse2, group_muse = np.loadtxt(muse_classify_file, unpack=True, 
+		usecols=(0,8), dtype=str, skiprows=1)
+
+	muse_gals = galaxy_list()
+	for i in range(len(galaxies_muse)):
+		muse_gals.create_galaxy(galaxies_muse[i], 
+			lambda_Re=lambda_Re_muse[i],
+			ellipticity=ellipticity_muse[i])
+		i2 = np.where(gals_muse2 == galaxies_muse[i])[0][0]
+		muse_gals[i].kin_group = group_muse[i2]
+
+	ax.scatter(muse_gals.ellipticity[muse_gals.a], muse_gals.lambda_Re[muse_gals.a], 
 		marker=marker_atlas3d(0), c='b', lw=0, label='MUSE')
-	ax.scatter(ellipticity_muse[b_muse], lambda_Re_muse[b_muse], 
+	ax.scatter(muse_gals.ellipticity[muse_gals.b], muse_gals.lambda_Re[muse_gals.b], 
 		marker=marker_atlas3d(1), c='b', lw=0)
-	ax.scatter(ellipticity_muse[c_muse], lambda_Re_muse[c_muse], 
+	ax.scatter(muse_gals.ellipticity[muse_gals.c], muse_gals.lambda_Re[muse_gals.c], 
 		marker=marker_atlas3d(2), c='b', lw=0)
-	ax.scatter(ellipticity_muse[d_muse], lambda_Re_muse[d_muse], 
+	ax.scatter(muse_gals.ellipticity[muse_gals.d], muse_gals.lambda_Re[muse_gals.d], 
 		marker=marker_atlas3d(3), c='b', lw=0)
-	ax.plot(ellipticity_muse[e_muse], lambda_Re_muse[e_muse], 
+	ax.plot(muse_gals.ellipticity[muse_gals.e], muse_gals.lambda_Re[muse_gals.e], 
 		marker=marker_atlas3d(4), c='b', lw=0, markerfacecolor='none')
 
 
 	# VIMOS
-	gals_vimos2, group_vimos = np.loadtxt(vimos_classify_file, unpack=True, usecols=(0,8), 
-		dtype=str, skiprows=1)
-	print group_vimos=='f'
-	gal_order = [np.where(galaxies_vimos==g)[0][0] for g in gals_vimos2]
-	a_vimos = (group_vimos=='a')[gal_order] # No rotation
-	b_vimos = (group_vimos=='b')[gal_order] # Complex rotation
-	c_vimos = (group_vimos=='c')[gal_order] # KDC
-	d_vimos = (group_vimos=='d')[gal_order] # Counter-rotating disks
-	e_vimos = (group_vimos=='e')[gal_order] # Regular rotator
-	f_vimos = (group_vimos=='f')[gal_order] # Unclassified - have included with complex vel
+	vimosGalaxiesFile = "%s/Data/vimos/analysis/galaxies2.txt" % (cc.base_dir)
+	vimos_classify_file = "%s/Data/vimos/analysis/galaxies_classify_by_eye.txt" % (
+		cc.base_dir)
 
-	ax.scatter(ellipticity_vimos[a_vimos], lambda_Re_vimos[a_vimos], 
+	lambda_Re_vimos, ellipticity_vimos =  np.loadtxt(vimosGalaxiesFile, unpack=True, 
+		skiprows=1, usecols=(1,2))
+	galaxies_vimos =  np.loadtxt(vimosGalaxiesFile, unpack=True, skiprows=1, 
+		usecols=(0,), dtype=str)
+	
+	gals_vimos2, group_vimos = np.loadtxt(vimos_classify_file, unpack=True, 
+		usecols=(0,8), dtype=str, skiprows=1)
+
+	vimos_gals = galaxy_list()
+	for i in range(len(galaxies_vimos)):
+		vimos_gals.create_galaxy(galaxies_vimos[i], lambda_Re=lambda_Re_vimos[i],
+			ellipticity=ellipticity_vimos[i])
+		i2 = np.where(gals_vimos2 == galaxies_vimos[i])[0][0]
+		vimos_gals[i].kin_group = group_vimos[i2]
+
+	ax.scatter(vimos_gals.ellipticity[vimos_gals.a], 
+		vimos_gals.lambda_Re[vimos_gals.a], 
 		marker=marker_atlas3d(0), c='r', lw=0, label='VIMOS')
-	ax.scatter(ellipticity_vimos[b_vimos], lambda_Re_vimos[b_vimos], 
+	ax.scatter(vimos_gals.ellipticity[vimos_gals.b], 
+		vimos_gals.lambda_Re[vimos_gals.b], 
 		marker=marker_atlas3d(1), c='r', lw=0)
-	ax.scatter(ellipticity_vimos[f_vimos], lambda_Re_vimos[f_vimos], 
+	ax.scatter(vimos_gals.ellipticity[vimos_gals.f], 
+		vimos_gals.lambda_Re[vimos_gals.f], 
 		marker=marker_atlas3d(1), c='r', lw=0)
-	ax.scatter(ellipticity_vimos[c_vimos], lambda_Re_vimos[c_vimos], 
+	ax.scatter(vimos_gals.ellipticity[vimos_gals.c], 
+		vimos_gals.lambda_Re[vimos_gals.c], 
 		marker=marker_atlas3d(2), c='r', lw=0)
-	ax.scatter(ellipticity_vimos[d_vimos], lambda_Re_vimos[d_vimos], 
+	ax.scatter(vimos_gals.ellipticity[vimos_gals.d], 
+		vimos_gals.lambda_Re[vimos_gals.d], 
 		marker=marker_atlas3d(3), c='r', lw=0)
-	ax.plot(ellipticity_vimos[e_vimos], lambda_Re_vimos[e_vimos], 
+	ax.plot(vimos_gals.ellipticity[vimos_gals.e], 
+		vimos_gals.lambda_Re[vimos_gals.e], 
 		marker=marker_atlas3d(4), c='r', lw=0, markerfacecolor='none')
+
+	# Join MUSE and VIMOS
+	label=True
+	for i_muse, g in enumerate(muse_gals):
+		if g.name in vimos_gals.names:
+			i_vimos = np.where(vimos_gals.name==g.name)[0][0]
+			if label: # add just one label to legend
+				ax.plot([muse_gals.ellipticity[i_muse], 
+					vimos_gals.ellipticity[i_vimos]], 
+					[muse_gals.lambda_Re[i_muse],vimos_gals.lambda_Re[i_vimos]], 
+					'k--', zorder=1, label='same galaxy in MUSE and VIMOS')
+				label = False
+			else:
+				ax.plot([muse_gals.ellipticity[i_muse], 
+					vimos_gals.ellipticity[i_vimos]], 
+					[muse_gals.lambda_Re[i_muse],vimos_gals.lambda_Re[i_vimos]], 
+					'k--', zorder=1)
 
 	ax.set_title('Atlas3D Fast/Slow Rotator Classification scheme')
 	ax.set_xlabel(r'$\epsilon$')
@@ -213,22 +354,22 @@ def compare_atlas3d():
 	expectedSRs = 0
 	expectedSRs_err = 0
 
-	FR_atlas = (lambda_Re_atlas > 0.08 + ellipticity_atlas/4) + (ellipticity_atlas > 0.4)
-	FR_vimos = (lambda_Re_vimos > 0.08 + ellipticity_vimos/4) + (ellipticity_vimos > 0.4)
-	FR_muse = (lambda_Re_muse > 0.08 + ellipticity_muse/4) + (ellipticity_muse > 0.4)
 	for i, ell in enumerate(np.arange(0,0.9,0.1)):
-		ell_bin_atlas = (ellipticity_atlas >= ell ) * (ellipticity_atlas < ell+0.1)
-		SRfraction_atlas.append(np.sum(~FR_atlas*ell_bin_atlas)/
+		ell_bin_atlas = (atlas_gals.ellipticity >= ell ) * (
+			atlas_gals.ellipticity < ell+0.1)
+		SRfraction_atlas.append(np.sum(~atlas_gals.FR*ell_bin_atlas)/
 			float(np.sum(ell_bin_atlas)))
-		ell_uncert_bin_atlas = np.sqrt(SRfraction_atlas[i] * (1 - SRfraction_atlas[i])/
-			np.sum(ell_bin_atlas))
+		ell_uncert_bin_atlas = np.sqrt(SRfraction_atlas[i] * (
+			1 - SRfraction_atlas[i])/np.sum(ell_bin_atlas))
 
-		ell_bin_vimos = (ellipticity_vimos >= ell ) * (ellipticity_vimos < ell+0.1)
-		SRfraction_vimos.append(np.sum(~FR_vimos*ell_bin_vimos)/
+		ell_bin_vimos = (vimos_gals.ellipticity >= ell ) * (
+			vimos_gals.ellipticity < ell+0.1)
+		SRfraction_vimos.append(np.sum(~vimos_gals.FR*ell_bin_vimos)/
 			float(np.sum(ell_bin_vimos)))
 
-		ell_bin_muse = (ellipticity_muse >= ell ) * (ellipticity_muse < ell+0.1)
-		SRfraction_muse.append(np.sum(~FR_muse*ell_bin_muse)/
+		ell_bin_muse = (muse_gals.ellipticity >= ell ) * (
+			muse_gals.ellipticity < ell+0.1)
+		SRfraction_muse.append(np.sum(~muse_gals.FR*ell_bin_muse)/
 			float(np.sum(ell_bin_muse)))
 
 		expectedSRs = np.nansum((np.sum(ell_bin_vimos) * SRfraction_atlas[i], 
@@ -265,13 +406,17 @@ def compare_atlas3d():
 	# Save plot
 	fig.savefig('%s/Data/muse/analysis/lambda_R_ellipticity.png' % (cc.base_dir))
 	plt.close()	
+
+
+
+	kjasdkjaskjfhsdjkfh
 ## ----------============ K-band magnitude vs lambda_R ===========----------
 	print 'K-band magnitude vs lambda_Re'
 	Prefig(size=(16,12*1.7), transparent=False)
 	fig, ax = plt.subplots(3,1, sharex=True,  gridspec_kw = {'height_ratios':[1, 1, 3]})
-	ax[2].scatter(M_k_atlas[FR_atlas], lambda_Re_atlas[FR_atlas], marker='x', c='k', 
+	ax[2].scatter(M_k_atlas[FR_atlas], atlas_gals.lambda_Re[FR_atlas], marker='x', c='k', 
 		label='Atlas3D Fast Rotators')
-	ax[2].scatter(M_k_atlas[~FR_atlas], lambda_Re_atlas[~FR_atlas], marker='^', c='k', 
+	ax[2].scatter(M_k_atlas[~FR_atlas], atlas_gals.lambda_Re[~FR_atlas], marker='^', c='k', 
 		label='Atlas3D Slow Rotators')
 
 	GalaxiesFile = '%s/Data/galaxies_properties.txt' % (cc.base_dir)
@@ -288,13 +433,13 @@ def compare_atlas3d():
 		i_gal = np.where(galaxies==g)[0][0]
 		m_gals.append(i_gal)
 
-	ax[2].scatter(M_k[v_gals][FR_vimos], lambda_Re_vimos[FR_vimos], c='r', marker='x',
+	ax[2].scatter(M_k[v_gals][FR_vimos], vimos_gals.lambda_Re[FR_vimos], c='r', marker='x',
 		label='VIMOS Fast Rotators')
-	ax[2].scatter(M_k[v_gals][~FR_vimos], lambda_Re_vimos[~FR_vimos], c='r', marker='^',
+	ax[2].scatter(M_k[v_gals][~FR_vimos], vimos_gals.lambda_Re[~FR_vimos], c='r', marker='^',
 		label='VIMOS Slow Rotators')
-	ax[2].scatter(M_k[m_gals][FR_muse], lambda_Re_muse[FR_muse], c='b', marker='x',
+	ax[2].scatter(M_k[m_gals][FR_muse], muse_gals.lambda_Re[FR_muse], c='b', marker='x',
 		label='MUSE Fast Rotators')
-	ax[2].scatter(M_k[m_gals][~FR_muse], lambda_Re_muse[~FR_muse], c='b', marker='^',
+	ax[2].scatter(M_k[m_gals][~FR_muse], muse_gals.lambda_Re[~FR_muse], c='b', marker='^',
 		label='MUSE Slow Rotators')
 
 	# Join MUSE and VIMOS
@@ -304,12 +449,12 @@ def compare_atlas3d():
 			i_vimos = np.where(galaxies_vimos==g)[0][0]
 			if first: # add just one label to legend
 				ax[2].plot([M_k[m_gals][i_muse],M_k[v_gals][i_vimos]], 
-					[lambda_Re_muse[i_muse], lambda_Re_vimos[i_vimos]], 'k--', 
+					[muse_gals.lambda_Re[i_muse], vimos_gals.lambda_Re[i_vimos]], 'k--', 
 					zorder=1, label='same galaxy in MUSE and VIMOS')
 				first = False
 			else:
 				ax[2].plot([M_k[m_gals][i_muse],M_k[v_gals][i_vimos]], 
-					[lambda_Re_muse[i_muse], lambda_Re_vimos[i_vimos]], 'k--', 
+					[muse_gals.lambda_Re[i_muse], vimos_gals.lambda_Re[i_vimos]], 'k--', 
 					zorder=1)
 
 
@@ -474,6 +619,7 @@ def compare_atlas3d():
 	galaxies_atlas2, radio_atlas = np.loadtxt(atlas3d_file, unpack=True, usecols=(0,10), 
 		skiprows=2, dtype=str)
 	m = np.array(['<' not in r for r in radio_atlas])
+	m[m] = ~np.isnan(radio_atlas[m].astype(float))
 	m2 = np.array([g in galaxies_atlas2 for g in galaxies_atlas])
 
 	fig, ax = plt.subplots()
@@ -495,7 +641,64 @@ def compare_atlas3d():
 	ax.set_ylabel(r'$\log P_{1.4\mathrm{GHz}}$')
 
 	fig.savefig('%s/Data/muse/analysis/radio_power_M_k.png' % (cc.base_dir))
+	plt.close('all')
+
+## ----------=========== Radio power (FIRST) vs M_k ===============----------
+	fig, ax = plt.subplots()
+
+	ax.scatter(M_k[v_gals][FR_vimos], radio[v_gals][FR_vimos], color='b', 
+		label='VIMOS Fast Rotators')
+	ax.scatter(M_k[v_gals][~FR_vimos], radio[v_gals][~FR_vimos], color='c',
+		label = 'VIMOS Slow Rotators')
+
+	
+
+
+
+
+
+	
+	atlas_gals.add_radio(galaxies_atlas2, radio_atlas)
+
+	first_file = '%s/Data/atlas3d/atlas_in_first.txt' % (cc.base_dir)
+	RA_h, RA_m, RA_s, dec_d, dec_m, dec_s, radio_first = np.loadtxt(first_file,
+		unpack=True, usecols=(5,6,7,8,9,10,13), skiprows=4, 
+		dtype=str)#'int,int,float,int,int,float,float')
+	radio_first = radio_first.astype(float)
+
+	coords_first = []
+	for i in range(len(RA_h)):
+		coords_first.append(RA_h[i]+' '+RA_m[i]+' '+RA_s[i]+' '+dec_d[i]+' '+
+			dec_m[i]+' '+dec_s[i])
+	atlas_gals.add_first(coords_first, radio_first)
+
+	ax.scatter(atlas_gals.M_k[atlas_gals.FR], atlas_gals.first_radio[atlas_gals.FR],
+		color='r', label='FIRST Fast Rotators')
+	ax.scatter(atlas_gals.M_k[~atlas_gals.FR], 
+		atlas_gals.first_radio[~atlas_gals.FR], color='orange', 
+		label='FIRST Slow Roatators')
+
+	ax.scatter(atlas_gals.M_k[atlas_gals.FR], atlas_gals.radio[atlas_gals.FR], 
+		color='r', marker='x', label='Atlas3d Fast Rotators')
+	ax.scatter(atlas_gals.M_k[~atlas_gals.FR], atlas_gals.radio[~atlas_gals.FR], 
+		color='orange', marker='x', label='Atlas3d Slow Rotators')
+	
+	
+	for i, g in enumerate(atlas_gals):
+		ax.plot([g.M_k, g.M_k], [g.first_radio, g.radio], c='k', ls='--')
+		# if ~np.isnan(g.first_radio):
+		# 	ax.text(g.M_k, g.first_radio, g.name, )
+
+	ax.invert_xaxis()
+	plt.legend(facecolor='w')
+
+	ax.set_title('K-band magnitude vs FIRST Radio Power')
+	ax.set_xlabel(r'$M_k \mathrm{(mag)}$')
+	ax.set_ylabel(r'$\log P_{1.4\mathrm{GHz}}$')
+
+	fig.savefig('%s/Data/muse/analysis/first_radio_power_M_k.png' % (cc.base_dir))
 	plt.close()
+
 ## ----------================ Core age vs KDC size ================----------
 	print 'KDC size/age'
 	muse_core_file = "%s/Data/muse/analysis/galaxies_core.txt" % (cc.base_dir)
