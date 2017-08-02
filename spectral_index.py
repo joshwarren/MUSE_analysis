@@ -76,6 +76,7 @@ for g in atlas_gals:
 
 selected = atlas_gals.vlss_selected + atlas_gals.wenss_selected
 with open('%s/Data/atlas3d/selected_galaxies.txt' % (cc.base_dir), 'w') as file:
+	file.write('Galaxy   WENSS_flux   WENSS_flag  VLSS_flux  VLSS_flag\n')
 	for i, g in enumerate(np.array(atlas_gals)[selected]):
 		file.write(g.name+'  '+str(g.wenss_projected_2_7)+'  '+
 			str(int(g.wenss_selected))+'  '+str(g.vlss_projected_2_7)+'  '+
