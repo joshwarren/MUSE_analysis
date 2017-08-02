@@ -46,22 +46,12 @@ def KDC_pop(galaxy):
 	params = set_params(opt='pop')
 	params.reps = 10
 
-	data_file = "%s/Data/vimos/analysis/galaxies.txt" % (cc.base_dir)
-	z_gals, vel_gals, sig_gals = np.loadtxt(data_file, unpack=True, skiprows=1, 
-		usecols=(1,2,3))
-	galaxy_gals = np.loadtxt(data_file, skiprows=1, usecols=(0,),dtype=str)
-	i_gal = np.where(galaxy_gals==galaxy)[0][0]
-	vel = vel_gals[i_gal]
-	sig = sig_gals[i_gal]
-	z = z_gals[i_gal]
-
-
 	spec, noise, lam = get_specFromAperture(galaxy, app_size=1.0)
 	CD = lam[1] - lam[0]
 	spec, lam, cut = apply_range(spec, window=201, repeats=3, 
 		lam=lam, return_cuts=True, set_range=params.set_range, n_sigma=2)
 	noise = noise[cut]
-	lamRange = np.array([lam[0],lam[-1]])/(1+z)
+	lamRange = np.array([lam[0],lam[-1]])
 
 	pp = run_ppxf(galaxy, spec, noise, lamRange, CD, params, produce_plot=False)
 
@@ -83,14 +73,17 @@ def KDC_pop(galaxy):
 	met_unc_gals[i_gal] = pop.unc_met
 	alp_gals[i_gal] = pop.alpha
 	alp_unc_gals[i_gal] = pop.unc_alp
-
+ 
 	# Save plot from pop before clearing from memory
 	f = pop.fig
 	ax = pop.ax
 	OIII_pos = np.argmin(np.abs(pp.lam - 5007))
-	peak_width = 15
+	peak_width = 20
+	OIII_pos += np.argmax(pop.e_line_spec[OIII_pos - peak_width:OIII_pos + peak_width]
+		) - peak_width
 	flux = np.trapz(pop.e_line_spec[OIII_pos - peak_width:OIII_pos + 
 		peak_width], x=pp.lam[OIII_pos - peak_width:OIII_pos + peak_width])
+
 	OIII_eqw_gals[i_gal] = flux/pop.continuum[OIII_pos]
 	
 	i_OIII = np.where('[OIII]5007d' in [e for e in pp.templatesToUse 
@@ -110,7 +103,7 @@ def KDC_pop(galaxy):
 	spec, lam, cut = apply_range(spec, window=201, repeats=3, 
 		lam=lam, return_cuts=True, set_range=params.set_range, n_sigma=2)
 	noise = noise[cut]
-	lamRange = np.array([lam[0],lam[-1]])/(1+z)
+	lamRange = np.array([lam[0],lam[-1]])
 
 	
 
@@ -151,7 +144,7 @@ def KDC_pop(galaxy):
 
 
 if __name__ == '__main__':
-	for gal in ['ic4296', 'ngc1316', 'ngc1399']:
+	for gal in ['ic1459', 'ic4296', 'ngc1316', 'ngc1399']:
 		print gal
 		KDC_pop(gal)
 	# KDC_pop('ic4296')

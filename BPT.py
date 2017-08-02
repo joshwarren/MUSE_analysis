@@ -63,7 +63,8 @@ def BPT(galaxy, D=None, opt='kin'):
 			SF = (y < 0.72/(x - 0.32) + 1.30) * (x < 0.32) * ~large_err
 
 			y_line1 = 0.72/(x_line1 - 0.32) + 1.30
-			ax[i].plot(x_line1, y_line1,'k')
+			m = y_line1 < 1
+			ax[i].plot(x_line1[m], y_line1[m],'k')
 
 			y_line2 = 1.89 * x_line1 + 0.76
 			m = y_line2 > y_line1
@@ -83,7 +84,8 @@ def BPT(galaxy, D=None, opt='kin'):
 			SF = (0.61/(x - 0.47) + 1.19 > y) * (x < 0.47) * ~large_err
 
 			y_line1 = 0.61/(x_line1 - 0.47) + 1.19
-			ax[i].plot(x_line1, y_line1,'k')
+			m = y_line1 < 1
+			ax[i].plot(x_line1[m], y_line1[m],'k')
 
 			lab = '[NII]'
 
@@ -95,7 +97,8 @@ def BPT(galaxy, D=None, opt='kin'):
 			SF = (y < 0.73/(x + 0.59) + 1.33) * (x < -0.59) * ~large_err
 
 			y_line1 = 0.73/(x_line1 + 0.59) + 1.33
-			ax[i].plot(x_line1, y_line1,'k')
+			m = y_line1 < 1
+			ax[i].plot(x_line1[m], y_line1[m],'k')
 
 			y_line2 = 1.18 * x_line1 + 1.30
 			m = y_line2 > y_line1

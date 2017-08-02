@@ -181,6 +181,8 @@ class population(object):
 
 	def plot_probability_distribution(self, saveTo=None, f=None, ax_array=None):
 		import matplotlib.pyplot as plt
+		from prefig import Prefig 
+		Prefig(transparent=False)
 
 		if f is None:
 			f, ax_array = plt.subplots(2,2)
@@ -214,8 +216,8 @@ class population(object):
 		plt.tight_layout()
 
 		if saveTo is not None and self.pp is None:
-			if not os.path.exists(saveTo):
-				os.makedirs(saveTo)
+			if not os.path.exists(os.path.dirname(saveTo)):
+				os.makedirs(os.path.dirname(saveTo))
 			f.savefig(saveTo)
 
 		self.fig = f

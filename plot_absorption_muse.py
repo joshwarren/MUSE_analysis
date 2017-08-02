@@ -19,9 +19,14 @@ def plot_absorption(galaxy, opt='pop', D=None, uncert=True):
 	lines = [#'G4300', 'Fe4383', 'Ca4455', 'Fe4531', 
 		'H_beta', 'Fe5015', 
 		# 'Mg_1', 'Mg_2', 
-		'Mg_b', 'Fe5270', 'Fe5335', 'Fe5406', 'Fe5709', 'Fe5782', 'NaD', 'TiO1', 'TiO2']
+		'Mg_b', 'Fe5270', 'Fe5335', 'Fe5406', 'Fe5709', 'Fe5782', 'NaD', 'TiO1', 
+		'TiO2']
 	# limits = {#'G4300', 'Fe4383', 'Ca4455', 'Fe4531', 
 	# 	'H_beta':[1.0,2.9], 'Fe5015':[3.5,5.9], 'Mg_b':[3.1,4.7]}
+	titles={'H_beta':r'H$_\beta$', 'Fe5015':'Fe5015', 'Mg_b':r'Mg$_b$', 
+		'Fe5270':'Fe5270', 'Fe5335':'Fe5335', 'Fe5406':'Fe5406', 
+		'Fe5709':'Fe5709', 'Fe5782':'Fe5782', 'NaD':'NaD', 'TiO1':'TiO1', 
+		'TiO2':'TiO2'}
 
 	print 'Absorption lines'
 
@@ -63,19 +68,22 @@ def plot_absorption(galaxy, opt='pop', D=None, uncert=True):
 		# 	abmin = limits[line][0]
 		# 	abmax = limits[line][1]
 
-		ax_array[int(np.floor(i/2)),i%2] = plot_velfield_nointerp(D.x, D.y, D.bin_num, 
-			D.xBar, D.yBar, D.absorption_line(line), header, vmin=abmin, vmax=abmax,
-			nodots=True, colorbar=True, label='Index strength ('+r'$\AA$'+')', 
-			title=line, ax=ax_array[int(np.floor(i/2)),i%2], cmap='gnuplot2', 
-			flux_unbinned=D.unbinned_flux, signal_noise=D.SNRatio, signal_noise_target=30)
+		ax_array[int(np.floor(i/2)),i%2] = plot_velfield_nointerp(D.x, D.y, 
+			D.bin_num, D.xBar, D.yBar, ab_line, header, 
+			vmin=abmin, vmax=abmax, nodots=True, colorbar=True, 
+			label='Index strength ('+r'$\AA$'+')', title=titles[line], 
+			ax=ax_array[int(np.floor(i/2)),i%2], cmap='gnuplot2', 
+			flux_unbinned=D.unbinned_flux, signal_noise=D.SNRatio, 
+			signal_noise_target=30)
 
 		if uncert:
 			abmin, abmax = set_lims(ab_uncert)
 
-			ax_array_uncert[int(np.floor(i/2)),i%2] = plot_velfield_nointerp(D.x, D.y, 
-				D.bin_num, D.xBar, D.yBar, ab_uncert, header, vmin=abmin, vmax=abmax,
-				nodots=True, colorbar=True, label='Index strength ('+r'$\AA$'+')', 
-				title=line, ax=ax_array_uncert[int(np.floor(i/2)),i%2], cmap='gnuplot2', 
+			ax_array_uncert[int(np.floor(i/2)),i%2] = plot_velfield_nointerp(D.x, 
+				D.y, D.bin_num, D.xBar, D.yBar, ab_uncert, header, 
+				vmin=abmin, vmax=abmax, nodots=True, colorbar=True, 
+				label='Index strength ('+r'$\AA$'+')', title=titles[line], 
+				ax=ax_array_uncert[int(np.floor(i/2)),i%2], cmap='gnuplot2', 
 				flux_unbinned=D.unbinned_flux, signal_noise=D.SNRatio, 
 				signal_noise_target=30)
 
@@ -105,6 +113,12 @@ def plot_absorption(galaxy, opt='pop', D=None, uncert=True):
 		ax_array_uncert[1,1].set_ylabel('')
 		f_uncert.suptitle(galaxy.upper() + ' Uncertainties')
 		f_uncert.savefig(saveTo)#, bbox_inches="tight")
+
+	saveTo = '%s/SNR.png' % (out_plots)
+	plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, D.SNRatio, header, 
+		nodots=True, colorbar=True, label='S/N', show_bin_numbers=True,
+		title='Signal to Noise Ratio', flux_unbinned=D.unbinned_flux, save=saveTo, 
+		close=True)
 
 	return D
 
