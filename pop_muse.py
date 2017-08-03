@@ -179,7 +179,8 @@ class population(object):
 
 #############################################################################
 
-	def plot_probability_distribution(self, saveTo=None, f=None, ax_array=None):
+	def plot_probability_distribution(self, saveTo=None, f=None, ax_array=None,
+		label=''):
 		import matplotlib.pyplot as plt
 		from prefig import Prefig 
 		Prefig(transparent=False)
@@ -194,15 +195,17 @@ class population(object):
 		else:
 			f.suptitle('Probability Distribution')
 		ax_array[0,0].hist(self.samples[:,0],bins=40,histtype='step',normed=True, 
-			alpha=alpha)
+			alpha=alpha, label='Probability Distribution%s' % (label))
 		ax_array[0,1].hist(self.samples[:,1],bins=40,histtype='step',normed=True, 
 			alpha=alpha)
 		ax_array[1,0].hist(self.samples[:,2],bins=40,histtype='step',normed=True, 
 			alpha=alpha)
 
 		ax_array[0,0].axvline(self.age - self.unc_age, color='r', alpha=alpha)
-		ax_array[0,0].axvline(self.age + self.unc_age, color='r', alpha=alpha)
-		ax_array[0,0].axvline(self.age, alpha=alpha)
+		ax_array[0,0].axvline(self.age + self.unc_age, color='r', alpha=alpha,
+			label='Uncertainty of population fit%s' % (label))
+		ax_array[0,0].axvline(self.age, alpha=alpha,
+			label='Bestfitting population%s' % (label))
 		ax_array[0,1].axvline(self.metallicity - self.unc_met, color='r', alpha=alpha)
 		ax_array[0,1].axvline(self.metallicity + self.unc_met, color='r', alpha=alpha)
 		ax_array[0,1].axvline(self.metallicity, alpha=alpha)
@@ -214,6 +217,10 @@ class population(object):
 		ax_array[1,0].set_title('Alpha/Fe ratio')
 		ax_array[1,1].axis('off')
 		plt.tight_layout()
+
+		if self.pp is None:
+			h, l = ax_array[0,0].get_legend_handle_labels()
+			ax_array[1,1].legend(h,l)
 
 		if saveTo is not None and self.pp is None:
 			if not os.path.exists(os.path.dirname(saveTo)):

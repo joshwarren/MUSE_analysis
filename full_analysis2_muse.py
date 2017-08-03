@@ -25,9 +25,9 @@ from compare_atlas3d import compare_atlas3d
 
 galaxies = [
 			'ic1459', 
-			# 'ic4296',
-			# 'ngc1316',
-			# 'ngc1399'
+			'ic4296',
+			'ngc1316',
+			'ngc1399'
 			]
 # galaxies = ['ic1459']
 # galaxies = ['ic4296']
@@ -70,8 +70,8 @@ for galaxy in galaxies:
 		# use_kinemetry(galaxy)
 
 		D = None
-		D = pickler(galaxy, discard=discard, norm=norm, opt='pop'+MC_dir)
-		D = plot_absorption(galaxy, D=D, opt='pop'+MC_dir, uncert=False)
+		# D = pickler(galaxy, discard=discard, norm=norm, opt='pop'+MC_dir)
+		# D = plot_absorption(galaxy, D=D, opt='pop'+MC_dir, uncert=True)
 		plot_stellar_pop(galaxy, opt='pop'+MC_dir, D=D)
 	except Exception as e:
 		gal_err.append(galaxy)

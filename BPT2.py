@@ -38,15 +38,13 @@ def BPT(galaxy, D=None, opt='kin'):
 		D = pickle.load(pickleFile)
 		pickleFile.close()
 
-	for bin in D.bin:
-		for e in bin.e_line.itervalues():
-			e.__threshold__ = 0
+	D.__threshold__ = 0
 # ------------=============== BPT diagram =================----------
 	# fig, ax = plt.subplots(1,3, sharey=True)
 	for i, l in enumerate(['[NII]6583d', '[SII]6716', '[OI]6300d']):
 
-		y = np.log(D.e_line['[OIII]5007d'].flux/D.e_line['Hbeta'].flux)
-		x = np.log(D.e_line[l].flux/D.e_line['Halpha'].flux)
+		y = np.log10(D.e_line['[OIII]5007d'].flux/D.e_line['Hbeta'].flux)
+		x = np.log10(D.e_line[l].flux/D.e_line['Halpha'].flux)
 
 		y_err = np.sqrt((D.e_line['[OIII]5007d'].flux.uncert/
 			D.e_line['[OIII]5007d'].flux)**2 +

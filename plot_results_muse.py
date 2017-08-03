@@ -264,9 +264,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 		D = pickle.load(pickleFile)
 		pickleFile.close()
 
-	for bin in D.bin:
-		for e in bin.e_line.itervalues():
-			e.__threshold__ = 0
+	D.__threshold__ = 3.0
 
 	if D.norm_method != norm:
 		D.norm_method = norm

@@ -12,6 +12,8 @@ from errors2_muse import get_dataCubeDirectory, run_ppxf, set_params, apply_rang
 from pop_muse import population
 from KDC_pop import get_areaInAperture
 from Bin import trapz_uncert
+from prefig import Prefig 
+Prefig()
 
 def get_specFromAperture(galaxy, app_size=1.0, inside=True, res=0.2):
 	f = fits.open(get_dataCubeDirectory(galaxy))
@@ -56,7 +58,7 @@ def KDC_pop(galaxy):
 	pp = run_ppxf(galaxy, spec, noise, lamRange, CD, params, produce_plot=False)
 
 	pop = population(pp=pp, galaxy=galaxy)
-	pop.plot_probability_distribution()
+	pop.plot_probability_distribution(label=' of core region')
 
 	data_file = "%s/Data/muse/analysis/galaxies_core.txt" % (cc.base_dir)
 	age_gals, age_unc_gals, met_gals, met_unc_gals, alp_gals, alp_unc_gals, \
@@ -109,10 +111,12 @@ def KDC_pop(galaxy):
 
 	pp_outside = run_ppxf(galaxy, spec, noise, lamRange, CD, params, produce_plot=False)
 	pop_outside = population(pp=pp_outside, galaxy=galaxy)
-	pop_outside.plot_probability_distribution(f=f, ax_array=ax)
+	pop_outside.plot_probability_distribution(f=f, ax_array=ax, label=' of outer region')
 
 	pop_outside.fig.suptitle('%s Probability Distribution within inner 1 arcsec' % (
-		galaxy.upper()))
+		galaxy.upper()), y=0.985)
+	h, l = pop_outside.ax[0,0].get_legend_handles_labels()
+	pop_outside.ax[1,1].legend(h, l, loc=1)
 	pop_outside.fig.savefig('%s/Data/muse/analysis/%s/pop_1arcsec.png' % (cc.base_dir, 
 		galaxy))
 
