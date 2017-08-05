@@ -463,9 +463,10 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 				im_type=" (" + im_type + ")"
 
 			SNR = D.SNRatio
+			SN_target_kine = SN_target
 			if pl != 'stellar':
 				SNR = D.gas_dynamics_SN
-				SN_target = 5
+				SN_target_kine = 6
 
 
 			for k in D.components[pl].plot.keys():

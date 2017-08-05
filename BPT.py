@@ -34,7 +34,7 @@ def BPT(galaxy, D=None, opt='kin'):
 		D = pickle.load(pickleFile)
 		pickleFile.close()
 
-	D.__threshold__ = 0
+	D.__threshold__ = 3
 # ------------=============== BPT diagram =================----------
 	fig, ax = plt.subplots(1,3, sharey=True)
 	for i, l in enumerate(['[NII]6583d', '[SII]6716', '[OI]6300d']):
@@ -150,6 +150,6 @@ def BPT(galaxy, D=None, opt='kin'):
 
 if __name__=='__main__':
 	from BPT2 import BPT as BPT2
-	for gal in ['ic1459','ic4296','ngc1316']:#,'ngc1399']:
+	for gal in ['ic1459','ic4296','ngc1316','ngc1399']:
 		D = BPT(gal)
 		BPT2(gal, D=D)

@@ -38,7 +38,7 @@ def BPT(galaxy, D=None, opt='kin'):
 		D = pickle.load(pickleFile)
 		pickleFile.close()
 
-	D.__threshold__ = 0
+	D.__threshold__ = 3
 # ------------=============== BPT diagram =================----------
 	# fig, ax = plt.subplots(1,3, sharey=True)
 	for i, l in enumerate(['[NII]6583d', '[SII]6716', '[OI]6300d']):

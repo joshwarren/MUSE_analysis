@@ -611,7 +611,7 @@ def run_ppxf(galaxy, bin_lin, bin_lin_noise, lamRange, CDELT, params, produce_pl
 	sig = sig_gals[i_gal]
 	z = z_gals[i_gal]
 
-	lamRange /= (1+z)
+	lamRange = lamRange/(1+z)
 	FWHM_gal = params.FWHM_gal/(1+z) # Adjust resolution in Angstrom
 ## ----------============= Stellar templates ===============---------
 	stellar_templates = get_stellar_templates(params.FWHM_gal)
@@ -638,7 +638,9 @@ def run_ppxf(galaxy, bin_lin, bin_lin_noise, lamRange, CDELT, params, produce_pl
 	lambdaq = np.exp(logLam_bin)
 ## ----------=============== Emission lines ================---------
 	goodPixels = determine_goodpixels(logLam_bin,stellar_templates.lamRange_template, 
-		vel, z, gas=params.gas!=0, mask=mask_sky)#galaxy=='ic1459')
+		vel, z, gas=params.gas!=0, mask=mask_sky)
+	# goodPixels = determine_goodpixels(logLam_bin,stellar_templates.lamRange_template, 
+	# 	vel, z, gas=True, mask=mask_sky)
 	goodPixels = np.array([g for g in goodPixels if (~np.isnan(bin_log[g]))])
 
 	e_templates = get_emission_templates(params.gas, lamRange, 
