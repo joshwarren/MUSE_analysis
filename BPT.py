@@ -89,6 +89,15 @@ def BPT(galaxy, D=None, opt='kin'):
 
 			ax[i].set_xlim([-2, 1])
 
+			distance = np.zeros(len(x))
+			for i in range(len(distance)):
+				distance[i] = np.sqrt(np.min((x_line1[m] - x[i])**2 + 
+					(y_line1[m] - y[i])**2))
+			limit = 1 # if distance is greater than limit then consider it completely 
+					#	in it's region.
+			distance[distance > limit] = limit
+			distance[SF] *= -1
+
 		elif l == '[OI]6300d':
 			Seyfert2 = ((y > 0.73/(x + 0.59) + 1.33) + (x > -0.59)) * (y > 1.18 * x + 1.30) * ~large_err
 			LINER = ((y > 0.73/(x + 0.59) + 1.33) + (x > -0.59)) * (y < 1.18 * x + 1.30) * ~large_err
@@ -147,11 +156,72 @@ def BPT(galaxy, D=None, opt='kin'):
 	add_('radio', 'r', ax, galaxy)
 	plt.close()
 
+
+# ------------================= BPT map2 ===================----------
+	Prefig(size=(16,12), transparent=False)
+	f = fits.open(get_dataCubeDirectory(galaxy))
+	header = f[1].header
+	f.close()
+	saveTo = '%s/plots/AGN_map2.png' % (output)
+	ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, distance, header, 
+		vmin=-1.3, vmax=1.3, nodots=True, title='Map of AGN', save=saveTo, res=0.2, 
+		flux_unbinned=D.unbinned_flux, center=center)
+	ax.saveTo = saveTo
+	add_('radio', 'r', ax, galaxy)
+	plt.close()
+
+# ------------============== WHaN2 diagram ================----------
+	Prefig(size=(16,12*3), transparent=False)
+	fig, ax = plt.subplots(3)
+	x = np.log10(D.e_line['[NII]6583d'].flux/D.e_line['Halpha'].flux)
+	y = np.log10(D.e_line['Halpha'].equiv_width)
+
+	Ha_Hapeak = D.e_line['Halpha'].flux/np.nanmax(D.e_line['Halpha'].flux)
+	p1 = Ha_Hapeak <= 0.2
+	p2 = Ha_Hapeak > 0.2
+	c = np.array(np.sqrt((D.xBar-center[0])**2 +(D.yBar-center[1])**2))
+
+	passive = (D.e_line['Halpha'].equiv_width<0.5) * (
+		D.e_line['[NII]6583d'].equiv_width<0.5)
+
+	ax[0].scatter(x, y,c=c)
+	ax[0].scatter(x[passive],y[passive],marker='x',c='r')
+
+
+	xlim = ax[0].get_xlim()
+	ylim = ax[0].get_ylim()
+	xlim = [-2,0.75]
+	ylim = [-1,1.2]
+
+	ax[1].scatter(x[p1], y[p1],c=c[p1], vmin=np.min(c), vmax=np.max(c))
+	ax[1].scatter(x[p1*passive],y[p1*passive],marker='x',c='r')
+	ax[1].text(-1.9,-0.8,r'0 $<$ H$_\alpha$/H$_\alpha^{\mathrm{peak}}$ $\leq$ 0.2')
+
+	ax[2].scatter(x[p2], y[p2],c=c[p2], vmin=np.min(c), vmax=np.max(c))
+	ax[2].scatter(x[p2*passive],y[p2*passive],marker='x',c='r')
+	ax[2].text(-1.9,-0.8, r'0.2 $<$ H$_\alpha$/H$_\alpha^{\mathrm{peak}}$ $\leq$ 1')
+	
+
+	# Dianotics lines from R Cid Fernandes et.al. 2011 MNRAS 413 1687
+	for a in ax:
+		a.axhline(np.log10(3), ls=':', c='k') # 
+		a.plot([-0.4,-0.4],[np.log10(3),ylim[1]], ls=':', c='k')
+		a.plot([-0.4,xlim[1]],[np.log10(6),np.log10(6)], ls=':', c='k')
+		a.set_xlim(xlim)
+		a.set_ylim(ylim)
+		a.set_ylabel(r'log(EW(H$_\alpha$)/$\AA$)')
+		a.set_xlabel(r'log([NII]/H$_\alpha$)')
+		a.text(-1.9,1,'Star Forming')
+		a.text(-0.35,1,'strong AGN')
+		a.text(-0.35,0.55,'weak AGN')
+		a.text(-1.9,0.25,'Retired Galaxies')
+	fig.suptitle('WHaN2 plot')
+
+	fig.savefig('%s/plots/WHaN2.png' % (output))
+
 	return D
 
 
 if __name__=='__main__':
-	from BPT2 import BPT as BPT2
 	for gal in ['ic1459','ic4296','ngc1316','ngc1399']:
 		D = BPT(gal)
-		BPT2(gal, D=D)
