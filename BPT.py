@@ -115,10 +115,11 @@ def BPT(galaxy, D=None, opt='kin'):
 		LINER_combined *= LINER
 		SF_combined *= SF
 
-		ax[i].errorbar(x[Seyfert2], y[Seyfert2], yerr=y_err[Seyfert2], 
-			xerr=x_err[Seyfert2], c='r', fmt='.')
+		
 		ax[i].errorbar(x[LINER], y[LINER], yerr=y_err[LINER], xerr=x_err[LINER], c='g', 
 			fmt='.')
+		ax[i].errorbar(x[Seyfert2], y[Seyfert2], yerr=y_err[Seyfert2], 
+			xerr=x_err[Seyfert2], c='r', fmt='.')
 		ax[i].errorbar(x[SF], y[SF], yerr=y_err[SF], xerr=x_err[SF], c='b', fmt='.')
 
 		ax[0].set_ylabel(r'log([OIII]/$H_\beta$)')
@@ -129,6 +130,7 @@ def BPT(galaxy, D=None, opt='kin'):
 		os.makedirs(os.path.dirname(saveTo))  
 	fig.savefig(saveTo)
 	plt.close()
+	Prefig(size=(16,12), transparent=False)
 # ------------================= BPT map ===================----------
 	m = np.ones(D.number_of_bins)*np.nan
 	m[Seyfert2_combined] = +1

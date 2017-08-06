@@ -149,7 +149,7 @@ def BPT(galaxy, D=None, opt='kin'):
 	# fig.savefig(saveTo)
 	# plt.close()
 # ------------================= BPT map ===================----------
-
+	Prefig(size=(16,12), transparent=False)
 	f = fits.open(get_dataCubeDirectory(galaxy))
 	header = f[1].header
 	f.close()
@@ -166,7 +166,7 @@ def BPT(galaxy, D=None, opt='kin'):
 	x = np.log10(D.e_line['[NII]6583d'].flux/D.e_line['Halpha'].flux)
 	y = np.log10(D.e_line['Halpha'].equiv_width)
 
-	Ha_Hapeak = D.e_line['Halpha'].flux/np.max(D.e_line['Halpha'].flux)
+	Ha_Hapeak = D.e_line['Halpha'].flux/np.nanmax(D.e_line['Halpha'].flux)
 	p1 = Ha_Hapeak <= 0.2
 	p2 = Ha_Hapeak > 0.2
 	c = np.array(np.sqrt((D.xBar-center[0])**2 +(D.yBar-center[1])**2))

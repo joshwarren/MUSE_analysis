@@ -537,7 +537,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 					flux_unbinned=D.unbinned_flux, nodots=True, colorbar=True, 
 					label=CBLabel,galaxy = galaxy.upper(), redshift = z,
 					title=title, ax=ax, signal_noise=SNR,
-					signal_noise_target=SN_target, center=center)
+					signal_noise_target=SN_target_kine, center=center)
 				# add_R_e(ax, galaxy, pa=pa)
 				if plots:
 					plt.show()
@@ -646,6 +646,10 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 
 			cA = D.e_components[len(D.e_components)-i-1]
 			cB = D.e_components[len(D.e_components)-i+n-m]
+
+			# Always put Balmer lines on the denominator
+			if ('[' in cA) and ('H' in cB):
+				cA, cB = cB, cA
 
 			line_ratio = np.log10(D.e_line[cB].flux/D.e_line[cA].flux)
 			if 'OIII' in cA:
