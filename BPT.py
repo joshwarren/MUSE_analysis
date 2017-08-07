@@ -90,9 +90,9 @@ def BPT(galaxy, D=None, opt='kin'):
 			ax[i].set_xlim([-2, 1])
 
 			distance = np.zeros(len(x))
-			for i in range(len(distance)):
-				distance[i] = np.sqrt(np.min((x_line1[m] - x[i])**2 + 
-					(y_line1[m] - y[i])**2))
+			for j in range(len(distance)):
+				distance[j] = np.sqrt(np.min((x_line1[m] - x[j])**2 + 
+					(y_line1[m] - y[j])**2))
 			limit = 1 # if distance is greater than limit then consider it completely 
 					#	in it's region.
 			distance[distance > limit] = limit
