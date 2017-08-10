@@ -155,7 +155,8 @@ def compare_atlas3d():
 			coords = SkyCoord(str(RA_atlas[i])+' '+str(dec_atlas[i]), unit='deg'),
 			ellipticity = ellipticity_atlas[i],
 			lambda_Re = lambda_Re_atlas[i],
-			structure = structure_atlas[i])
+			structure = structure_atlas[i],
+			T_type = T_type[i])
 
 	# Circle selected Atlas3D galaxies
 	atlas_selected_file = '%s/Data/atlas3d/selected_galaxies.txt' % (cc.base_dir)
@@ -180,39 +181,39 @@ def compare_atlas3d():
 	# S0s
 	ax.scatter(atlas_gals.ellipticity[atlas_gals.a*~atlas_gals.E], 
 		atlas_gals.lambda_Re[atlas_gals.a*~atlas_gals.E], 
-		marker=marker_atlas3d(0), c='lightgrey', alpha=0.5, lw=0,
+		marker=marker_atlas3d(0), c='lightgrey', alpha=0.7, lw=0,
 		label=r'Atlas3D S0: $T>-3.5$')
 	ax.scatter(atlas_gals.ellipticity[atlas_gals.b*~atlas_gals.E], 
 		atlas_gals.lambda_Re[atlas_gals.b*~atlas_gals.E], 
-		marker=marker_atlas3d(1), c='lightgrey', alpha=0.5, lw=0)
+		marker=marker_atlas3d(1), c='lightgrey', alpha=0.7, lw=0)
 	ax.scatter(atlas_gals.ellipticity[atlas_gals.c*~atlas_gals.E], 
 		atlas_gals.lambda_Re[atlas_gals.c*~atlas_gals.E], 
-		marker=marker_atlas3d(2), c='lightgrey', alpha=0.5, lw=0)
+		marker=marker_atlas3d(2), c='lightgrey', alpha=0.7, lw=0)
 	ax.scatter(atlas_gals.ellipticity[atlas_gals.d*~atlas_gals.E], 
 		atlas_gals.lambda_Re[atlas_gals.d*~atlas_gals.E], 
-		marker=marker_atlas3d(3), c='lightgrey', alpha=0.5, lw=0)
+		marker=marker_atlas3d(3), c='lightgrey', alpha=0.7, lw=0)
 	ax.plot(atlas_gals.ellipticity[atlas_gals.e*~atlas_gals.E], 
 		atlas_gals.lambda_Re[atlas_gals.e*~atlas_gals.E], 
-		marker=marker_atlas3d(4), c='lightgrey', alpha=0.5, lw=0, 
+		marker=marker_atlas3d(4), c='lightgrey', alpha=0.7, lw=0, 
 		markerfacecolor='none')
 
 	# Ellipticals
 	ax.scatter(atlas_gals.ellipticity[atlas_gals.a*atlas_gals.E], 
 		atlas_gals.lambda_Re[atlas_gals.a*atlas_gals.E], 
-		marker=marker_atlas3d(0), c='k', alpha=0.5, lw=0, 
+		marker=marker_atlas3d(0), c='k', alpha=0.7, lw=0, 
 		label=r'Atlas3D E: $T \leq -3.5$')
 	ax.scatter(atlas_gals.ellipticity[atlas_gals.b*atlas_gals.E], 
 		atlas_gals.lambda_Re[atlas_gals.b*atlas_gals.E], 
-		marker=marker_atlas3d(1), c='k', alpha=0.5, lw=0)
+		marker=marker_atlas3d(1), c='k', alpha=0.7, lw=0)
 	ax.scatter(atlas_gals.ellipticity[atlas_gals.c*atlas_gals.E], 
 		atlas_gals.lambda_Re[atlas_gals.c*atlas_gals.E], 
-		marker=marker_atlas3d(2), c='k', alpha=0.5, lw=0)
+		marker=marker_atlas3d(2), c='k', alpha=0.7, lw=0)
 	ax.scatter(atlas_gals.ellipticity[atlas_gals.d*atlas_gals.E], 
 		atlas_gals.lambda_Re[atlas_gals.d*atlas_gals.E], 
-		marker=marker_atlas3d(3), c='k', alpha=0.5, lw=0)
+		marker=marker_atlas3d(3), c='k', alpha=0.7, lw=0)
 	ax.plot(atlas_gals.ellipticity[atlas_gals.e*atlas_gals.E], 
 		atlas_gals.lambda_Re[atlas_gals.e*atlas_gals.E], 
-		marker=marker_atlas3d(4), c='k', alpha=0.5, lw=0, markerfacecolor='none')
+		marker=marker_atlas3d(4), c='k', alpha=0.7, lw=0, markerfacecolor='none')
 	
 
 	ell = np.arange(0.01,0.99,0.01)
@@ -925,7 +926,7 @@ def compare_atlas3d():
 	ax[0].set_ylabel(r'log(P$_\mathrm{1.4GHz}$)')
 	ax[1].set_ylabel('Radio spectral index')
 	ax[1].set_xlabel(r'q$_{24}$')
-	ax[0].set_title('Radio properties')
+	ax[0].set_title('Radio properties of our sample')
 
 	ax[1].legend(facecolor='w', loc=4)
 	ax[0].tick_params(top=True, bottom=True, direction='in')
