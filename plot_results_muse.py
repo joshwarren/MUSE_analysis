@@ -566,7 +566,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 
 		average_residuals = np.zeros(D.number_of_bins)
 		for i, bin in enumerate(D.bin):
-			residuals = (bin.spectrum - bin.bestfit)/bin.spectrum
+			residuals = np.abs(bin.spectrum - bin.bestfit)/bin.spectrum
 			# remove edge pixels
 			residuals = np.delete(residuals, [np.arange(5), 
 				len(residuals)+np.arange(-5,0)], axis=0)
