@@ -478,7 +478,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 				CBLabel = None
 				if k == "vel":
 					title = 'Velocity'
-					CBLabel = "V (km s$^{-1}$)"
+					CBLabel = r"V (km s$^{-1}$)"
 					symmetric=True
 
 				if  k == "sigma":
@@ -489,9 +489,12 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 				if k == "h3":
 					title = 'h3'
 					symmetric = True
+					CBLabel = r"h$_3$ (km s$^{-1}$)"
 
 				if k == "h4":
 					title = 'h4'
+					CBLabel = r"h$_4$ (km s$^{-1}$)"
+
 
 
 				if c == "stellar":
@@ -563,7 +566,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 
 		average_residuals = np.zeros(D.number_of_bins)
 		for i, bin in enumerate(D.bin):
-			residuals = np.abs(bin.spectrum - bin.bestfit)
+			residuals = (bin.spectrum - bin.bestfit)/bin.spectrum
 			# remove edge pixels
 			residuals = np.delete(residuals, [np.arange(5), 
 				len(residuals)+np.arange(-5,0)], axis=0)
@@ -578,15 +581,14 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 		minres, maxres = set_lims(average_residuals, positive=True)
 
 		CBLabel = "Residuals"
-		title = str.capitalize(residual) + \
-		" Residuals of Bestfit to Normalised Spectrum"
+		title = "Fractional " + str.capitalize(residual) + " Residuals"
 		saveTo = "%s/%s_residual.png" % (out_nointerp, residual)
 
 		ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar,
 			average_residuals, header, vmin=minres, vmax=maxres, 
 			flux_type='notmag', nodots=True, colorbar=True, 
 			label=CBLabel, galaxy = galaxy.upper(), title=title, 
-			save=saveTo, close=True, center=center)
+			save=saveTo, close=True, center=center, flux_unbinned=D.unbinned_flux)
 		if plots:
 			plt.show()
 # # ------------=============== Plot Chi2/DOF =============----------
@@ -707,7 +709,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 
 	for i, a in enumerate(ax_array):
 		f.add_axes(a)
-		#a.axis('tight')
+		a.axis('tight')
 		f.add_axes(a.cax)
 		if hasattr(a,'ax2'): f.add_axes(a.ax2)
 		if hasattr(a,'ax3'): f.add_axes(a.ax3)
