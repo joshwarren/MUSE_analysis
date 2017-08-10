@@ -863,7 +863,78 @@ def compare_atlas3d():
 	fig.savefig('%s/Data/muse/analysis/OIIIew_radio.png' % (cc.base_dir))	
 	plt.close()
 
-	
+## ----------========== Radio spectral index ===========----------
+	Prefig(size=(16,12*2), transparent=False)
+
+	galaxy_properties2_file = '%s/Data/galaxies_properties2.txt' % (cc.base_dir)
+	q24, q24_err, spec_index, spec_index_err = np.loadtxt(galaxy_properties2_file,
+		unpack=True, usecols=(1,2,3,4), skiprows=1)
+	galaxies = np.loadtxt(galaxy_properties2_file, usecols=(0,), skiprows=1, dtype=str)
+
+	for g in vimos_gals:
+		if g.name in galaxies:
+			i = np.where(galaxies == g.name)[0][0]
+			g.q24 = q24[i]
+			g.q24_err = q24_err[i]
+			g.spec_index = spec_index[i]
+			g.spec_index_err = spec_index_err[i]
+
+	for g in muse_gals:
+		if g.name in galaxies:
+			i = np.where(galaxies == g.name)[0][0]
+			g.q24 = q24[i]
+			g.q24_err = q24_err[i]
+			g.spec_index = spec_index[i]
+			g.spec_index_err = spec_index_err[i]
+
+
+
+	fig,ax =plt.subplots(2, sharex=True)
+	ax[0].scatter(vimos_gals.q24[vimos_gals.FR], vimos_gals.radio[vimos_gals.FR], 
+		marker='x', c='k')
+	ax[1].scatter(vimos_gals.q24[vimos_gals.FR], vimos_gals.spec_index[vimos_gals.FR], 
+		marker='x', c='k', label='Fast Rotators')
+
+	ax[0].scatter(vimos_gals.q24[~vimos_gals.FR], vimos_gals.radio[~vimos_gals.FR], 
+		marker='^', c='k')
+	ax[1].scatter(vimos_gals.q24[~vimos_gals.FR], vimos_gals.spec_index[~vimos_gals.FR], 
+		marker='^', c='k', label = 'Slow Rotators')
+
+	# Use MUSE too to include ngc1316
+	ax[0].scatter(muse_gals.q24[muse_gals.FR], muse_gals.radio[muse_gals.FR], 
+		marker='x', c='k')
+	ax[1].scatter(muse_gals.q24[muse_gals.FR], muse_gals.spec_index[muse_gals.FR], 
+		marker='x', c='k')
+
+	ax[0].scatter(muse_gals.q24[~muse_gals.FR], muse_gals.radio[~muse_gals.FR], 
+		marker='^', c='k')
+	ax[1].scatter(muse_gals.q24[~muse_gals.FR], muse_gals.spec_index[~muse_gals.FR], 
+		marker='^', c='k')
+
+	for a in ax:
+		a.axvspan(0.8,1.2, alpha=0.4)
+	ax[0].axhline(24, ls=':', c='k')
+	ax[1].axhline(-0.5, ls=':', c='k')
+	lim = ax[0].get_xlim()
+	ax[0].text(lim[0]*0.97, 24.05, 'High-powered')
+	ax[0].text(lim[0]*0.97, 23.85, 'Low-powered')
+
+	ax[1].text(lim[0]*0.97, -0.47, 'Flat')
+	ax[1].text(lim[0]*0.97, -0.65, 'Steep')
+
+	ax[0].set_ylabel(r'log(P$_\mathrm{1.4GHz}$)')
+	ax[1].set_ylabel('Radio spectral index')
+	ax[1].set_xlabel(r'q$_{24}$')
+	ax[0].set_title('Radio properties')
+
+	ax[1].legend(facecolor='w', loc=4)
+	ax[0].tick_params(top=True, bottom=True, direction='in')
+	ax[1].tick_params(top=True, direction='in')
+	fig.subplots_adjust(hspace=0)
+	fig.savefig('%s/Data/muse/analysis/radio_spectral_index.png' % (cc.base_dir))
+
+	plt.close('all')
+	Prefig(size=(16,12), transparent=False)
 
 if __name__=='__main__':
 	compare_atlas3d()
