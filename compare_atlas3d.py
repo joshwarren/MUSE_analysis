@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from markers_atlas3d import marker_atlas3d
 from prefig import Prefig
 Prefig(transparent=False)
+from astropy.io import fits
 from astropy import units as u
 from astropy.coordinates import SkyCoord
 from astropy.coordinates import match_coordinates_sky
@@ -110,6 +111,32 @@ class galaxy_list(list):
 					g.distance_to_first = np.nan
 					g.first_radio = np.nan
 					g.first_coords = np.nan
+
+
+	def add_nvss(self, nvss_ra, nvss_dec, nvss_radio):
+		nvss_coords = SkyCoord(nvss_ra, nvss_dec, unit=u.deg)
+		for g in self:
+			idx, ang,_ = match_coordinates_sky(g.coords, nvss_coords)
+			if ang.arcsec < 30:
+				g.nvss_index = idx
+				g.distance_to_nvss = ang.arcsec
+				g.nvss_radio = np.log10((nvss_radio[idx]/1000*u.Jy * \
+					4*np.pi*(g.distance*10**6*u.pc)**2).decompose().value) # in W/Hz
+				g.nvss_coords = nvss_coords[idx]
+			else:
+				g.nvss_index = np.nan
+				g.distance_to_nvss = np.nan
+				g.nvss_radio = np.nan
+				g.nvss_coords = np.nan
+		for g in self:
+			if np.sum([g2.nvss_index==g.nvss_index for g2 in self]) > 1:
+				if g.distance_to_nvss != np.min([g2.distance_to_nvss for g2 
+					in self if g2.nvss_index == g.nvss_index]):
+					g.nvss_index = np.nan
+					g.distance_to_nvss = np.nan
+					g.nvss_radio = np.nan
+					g.nvss_coords = np.nan
+
 	def create_galaxy(self, name, **kwargs):
 		if name not in self.names:
 			kwargs['name'] = name
@@ -126,7 +153,7 @@ class galaxy_list(list):
 
 
 
-def compare_atlas3d():
+def compare_atlas3d(too_many_FR=True):
 	print 'Compare to Atlas3d/SAURON'
 
 ## ----------============== Ellipticity vs lambda_Re ==============----------
@@ -264,17 +291,6 @@ def compare_atlas3d():
 		i2 = np.where(gals_muse2 == galaxies_muse[i])[0][0]
 		muse_gals[i].kin_group = group_muse[i2]
 
-	# ax.scatter(muse_gals.ellipticity[muse_gals.a], muse_gals.lambda_Re[muse_gals.a], 
-	# 	marker=marker_atlas3d(0), c='b', lw=0, label='MUSE')
-	# ax.scatter(muse_gals.ellipticity[muse_gals.b], muse_gals.lambda_Re[muse_gals.b], 
-	# 	marker=marker_atlas3d(1), c='b', lw=0)
-	# ax.scatter(muse_gals.ellipticity[muse_gals.c], muse_gals.lambda_Re[muse_gals.c], 
-	# 	marker=marker_atlas3d(2), c='b', lw=0)
-	# ax.scatter(muse_gals.ellipticity[muse_gals.d], muse_gals.lambda_Re[muse_gals.d], 
-	# 	marker=marker_atlas3d(3), c='b', lw=0)
-	# ax.plot(muse_gals.ellipticity[muse_gals.e], muse_gals.lambda_Re[muse_gals.e], 
-	# 	marker=marker_atlas3d(4), c='b', lw=0, markerfacecolor='none')
-
 
 	# VIMOS
 	vimosGalaxiesFile = "%s/Data/vimos/analysis/galaxies2.txt" % (cc.base_dir)
@@ -352,60 +368,61 @@ def compare_atlas3d():
 
 	plt.legend(handles=[h1,h2,h3,h4,h5], facecolor='w', loc=5)
 
-	# Show fraction of Slow Rotators in background of plot per elliptiity bin with 
-	# width 0.1
-	SRfraction_atlas = []
-	SRfraction_vimos = []
-	SRfraction_muse = []
-	expectedSRs = 0
-	expectedSRs_err = 0
+	if too_many_FR:
+		# Show fraction of Slow Rotators in background of plot per elliptiity bin with 
+		# width 0.1
+		SRfraction_atlas = []
+		SRfraction_vimos = []
+		SRfraction_muse = []
+		expectedSRs = 0
+		expectedSRs_err = 0
 
-	for i, ell in enumerate(np.arange(0,0.9,0.1)):
-		ell_bin_atlas = (atlas_gals.ellipticity >= ell ) * (
-			atlas_gals.ellipticity < ell+0.1)
-		SRfraction_atlas.append(np.sum(~atlas_gals.FR*ell_bin_atlas)/
-			float(np.sum(ell_bin_atlas)))
-		ell_uncert_bin_atlas = np.sqrt(SRfraction_atlas[i] * (
-			1 - SRfraction_atlas[i])/np.sum(ell_bin_atlas))
+		for i, ell in enumerate(np.arange(0,0.9,0.1)):
+			ell_bin_atlas = (atlas_gals.ellipticity >= ell ) * (
+				atlas_gals.ellipticity < ell+0.1)
+			SRfraction_atlas.append(np.sum(~atlas_gals.FR*ell_bin_atlas)/
+				float(np.sum(ell_bin_atlas)))
+			ell_uncert_bin_atlas = np.sqrt(SRfraction_atlas[i] * (
+				1 - SRfraction_atlas[i])/np.sum(ell_bin_atlas))
 
-		ell_bin_vimos = (vimos_gals.ellipticity >= ell ) * (
-			vimos_gals.ellipticity < ell+0.1)
-		SRfraction_vimos.append(np.sum(~vimos_gals.FR*ell_bin_vimos)/
-			float(np.sum(ell_bin_vimos)))
+			ell_bin_vimos = (vimos_gals.ellipticity >= ell ) * (
+				vimos_gals.ellipticity < ell+0.1)
+			SRfraction_vimos.append(np.sum(~vimos_gals.FR*ell_bin_vimos)/
+				float(np.sum(ell_bin_vimos)))
 
-		ell_bin_muse = (muse_gals.ellipticity >= ell ) * (
-			muse_gals.ellipticity < ell+0.1)
-		SRfraction_muse.append(np.sum(~muse_gals.FR*ell_bin_muse)/
-			float(np.sum(ell_bin_muse)))
+			ell_bin_muse = (muse_gals.ellipticity >= ell ) * (
+				muse_gals.ellipticity < ell+0.1)
+			SRfraction_muse.append(np.sum(~muse_gals.FR*ell_bin_muse)/
+				float(np.sum(ell_bin_muse)))
 
-		expectedSRs = np.nansum((np.sum(ell_bin_vimos) * SRfraction_atlas[i], 
-			expectedSRs))
-		expectedSRs_err = np.sqrt(expectedSRs_err**2 + (
-			ell_uncert_bin_atlas * np.sum(ell_bin_vimos))**2)
+			expectedSRs = np.nansum((np.sum(ell_bin_vimos) * SRfraction_atlas[i], 
+				expectedSRs))
+			expectedSRs_err = np.sqrt(expectedSRs_err**2 + (
+				ell_uncert_bin_atlas * np.sum(ell_bin_vimos))**2)
 
 
-	SRfraction_atlas.insert(0,SRfraction_atlas[0])
-	SRfraction_vimos.insert(0,SRfraction_vimos[0])
-	SRfraction_muse.insert(0,SRfraction_muse[0])
+		SRfraction_atlas.insert(0,SRfraction_atlas[0])
+		SRfraction_vimos.insert(0,SRfraction_vimos[0])
+		SRfraction_muse.insert(0,SRfraction_muse[0])
 
-	SRfraction_atlas = np.array(SRfraction_atlas)
-	SRfraction_vimos = np.array(SRfraction_vimos)
-	SRfraction_muse = np.array(SRfraction_muse)
+		SRfraction_atlas = np.array(SRfraction_atlas)
+		SRfraction_vimos = np.array(SRfraction_vimos)
+		SRfraction_muse = np.array(SRfraction_muse)
 
-	SRfraction_atlas[np.isnan(SRfraction_atlas)] = 0
-	SRfraction_vimos[np.isnan(SRfraction_vimos)] = 0
-	SRfraction_muse[np.isnan(SRfraction_muse)] = 0
+		SRfraction_atlas[np.isnan(SRfraction_atlas)] = 0
+		SRfraction_vimos[np.isnan(SRfraction_vimos)] = 0
+		SRfraction_muse[np.isnan(SRfraction_muse)] = 0
 
-	ax2 = ax.twinx()
-	ax2.set_ylabel('Fraction of Slow Rotators in ellipticity bin', rotation=270, 
-		labelpad=25)
-	ax2.plot(np.arange(0,1,0.1), SRfraction_atlas, color='k', alpha=0.3, ls='steps')
-	ax2.plot(np.arange(0,1,0.1), SRfraction_vimos, color='r', alpha=0.3, ls='steps')
-	ax2.plot(np.arange(0,1,0.1), SRfraction_muse, color='b', alpha=0.3, ls='steps')
-	ax2.text(0.02,0.9, 
-		"Expected # of SRs in our sample \n   based on Atlas3D: (%.2f+/-%.2f)/10" % (
-			expectedSRs, expectedSRs_err))
-	ax2.set_ylim([0,1.05])
+		ax2 = ax.twinx()
+		ax2.set_ylabel('Fraction of Slow Rotators in ellipticity bin', rotation=270, 
+			labelpad=25)
+		ax2.plot(np.arange(0,1,0.1), SRfraction_atlas, color='k', alpha=0.3, ls='steps')
+		ax2.plot(np.arange(0,1,0.1), SRfraction_vimos, color='r', alpha=0.3, ls='steps')
+		ax2.plot(np.arange(0,1,0.1), SRfraction_muse, color='b', alpha=0.3, ls='steps')
+		ax2.text(0.02,0.9, 
+			"Expected # of SRs in our sample \n   based on Atlas3D: (%.2f+/-%.2f)/10" % (
+				expectedSRs, expectedSRs_err))
+		ax2.set_ylim([0,1.05])
 	ax.set_xlim([0, 0.9])
 	ax.set_ylim([0, 0.8])
 
@@ -499,7 +516,6 @@ def compare_atlas3d():
 	ax[0].set_ylabel('Fraction of SR')
 	ax[2].invert_xaxis()
 
-
 	# Show fraction of Slow Rotators in background of plot per M_k bin with width 0.5
 	SRfraction_atlas = []
 	SRfraction_vimos = []
@@ -554,9 +570,10 @@ def compare_atlas3d():
 	ax[0].plot(steps, SRfraction_vimos, color='r', ls='steps--')
 	ax[0].plot(steps, SRfraction_muse, color='b', ls='steps--')
 	ax[0].set_ylim([-0.05,1.05])
-	ax[0].text(-21,0.75, 
-		"Expected # of SRs in our sample \n   based on Atlas3D: (%.2f+/-%.2f)/10" % (
-			expectedSRs, expectedSRs_err))
+	if too_many_FR:
+		ax[0].text(-21,0.75, 
+			"Expected # of SRs in our sample \n   based on Atlas3D: (%.2f+/-%.2f)/10" % (
+				expectedSRs, expectedSRs_err))
 
 	fig.suptitle('K-band magnitude distribution for F/S rotators')
 	fig.savefig('%s/Data/muse/analysis/lambda_R_M_k.png' % (cc.base_dir))
@@ -575,35 +592,35 @@ def compare_atlas3d():
 		atlas_gals.ellipticity[atlas_gals.selected_27], marker='o', edgecolor='r',
 		facecolors='none', s=150, lw=1, label='Atlas3D subsample from 2.7GHz')
 
+	if too_many_FR:
+		M_k_steps = [-27,-25,-24,-23,-22,-21]
+		ell_steps = np.arange(0,0.9,0.1)
+		expectedSRs = 0
+		expectedSRs_err = 0
+		for i in range(len(M_k_steps)-1):
+			ax.axvline(M_k_steps[i], c='k', alpha=0.5)
+			for j in range(len(ell_steps)-1):
+				for gals in [vimos_gals, atlas_gals]:
+					M = (gals.M_k >= M_k_steps[i]) * (gals.M_k < M_k_steps[i+1])
+					E = (gals.ellipticity >= ell_steps[j]) * (
+						gals.ellipticity < ell_steps[j+1])
+					if gals.label == 'VIMOS':
+						n_vimos_in_bin = np.sum(M*E)
+					elif gals.label == 'Atlas3D':
+						SRfraction_atlas_bin = np.sum(~gals.FR[M*E])/float(np.sum(M*E))
 
-	M_k_steps = [-27,-25,-24,-23,-22,-21]
-	ell_steps = np.arange(0,0.9,0.1)
-	expectedSRs = 0
-	expectedSRs_err = 0
-	for i in range(len(M_k_steps)-1):
-		ax.axvline(M_k_steps[i], c='k', alpha=0.5)
-		for j in range(len(ell_steps)-1):
-			for gals in [vimos_gals, atlas_gals]:
-				M = (gals.M_k >= M_k_steps[i]) * (gals.M_k < M_k_steps[i+1])
-				E = (gals.ellipticity >= ell_steps[j]) * (
-					gals.ellipticity < ell_steps[j+1])
-				if gals.label == 'VIMOS':
-					n_vimos_in_bin = np.sum(M*E)
-				elif gals.label == 'Atlas3D':
-					SRfraction_atlas_bin = np.sum(~gals.FR[M*E])/float(np.sum(M*E))
+						expectedSRs = np.nansum([expectedSRs, 
+							n_vimos_in_bin*SRfraction_atlas_bin])
+						expectedSRs_err = np.sqrt(np.nansum(
+							[expectedSRs_err**2, ((SRfraction_atlas_bin * (
+							1 - SRfraction_atlas_bin)/np.sum(M*E)) * n_vimos_in_bin)**2]))
 
-					expectedSRs = np.nansum([expectedSRs, 
-						n_vimos_in_bin*SRfraction_atlas_bin])
-					expectedSRs_err = np.sqrt(np.nansum(
-						[expectedSRs_err**2, ((SRfraction_atlas_bin * (
-						1 - SRfraction_atlas_bin)/np.sum(M*E)) * n_vimos_in_bin)**2]))
+		for e in ell_steps:
+			ax.axhline(e, c='k', alpha=0.5)
 
-	for e in ell_steps:
-		ax.axhline(e, c='k', alpha=0.5)
-
-	ax.text(-21.5, 0.8, 
-		"Expected # of SRs in our sample \n   based on Atlas3D: (%.2f+/-%.2f)/10" % (
-			expectedSRs, expectedSRs_err))
+		ax.text(-21.5, 0.8, 
+			"Expected # of SRs in our sample \n   based on Atlas3D: (%.2f+/-%.2f)/10" % (
+				expectedSRs, expectedSRs_err))
 
 	ax.set_title('K-band magnitude to elliticity relationship')
 	ax.set_xlabel(r'$M_k \mathrm{(mag)}$')
@@ -643,17 +660,17 @@ def compare_atlas3d():
 	plt.close('all')
 
 ## ----------=========== Radio power (FIRST) vs M_k ===============----------
-	print 'Radio Power (with FIRST) vs M_K'
+	print 'Radio Power (with FIRST) vs M_k'
 	fig, ax = plt.subplots()
 
-	for gals in [vimos_gals, atlas_gals]:
+	for gals in [vimos_gals]:#, atlas_gals]:
 		ax.scatter(gals.M_k[gals.FR], gals.radio[gals.FR], color=gals.color, marker='x',
 			label='%s Fast Rotators' % (gals.label))
 		ax.scatter(gals.M_k[~gals.FR], gals.radio[~gals.FR], color=gals.color, marker='^',
 			label = '%s Slow Rotators' % (gals.label))
-	ax.scatter(atlas_gals.M_k[atlas_gals.selected_27], 
-		atlas_gals.radio[atlas_gals.selected_27], marker='o', edgecolor='r',
-		facecolors='none', s=150, lw=1, label='Atlas3D subsample from 2.7GHz')
+	# ax.scatter(atlas_gals.M_k[atlas_gals.selected_27], 
+	# 	atlas_gals.radio[atlas_gals.selected_27], marker='o', edgecolor='r',
+	# 	facecolors='none', s=150, lw=1, label='Atlas3D subsample from 2.7GHz')
 	
 
 	# Add the FIRST radio power to Atlas galaxies
@@ -673,14 +690,37 @@ def compare_atlas3d():
 		color='orange', marker='x', label='FIRST Fast Rotators')
 	ax.scatter(atlas_gals.M_k[~atlas_gals.FR], atlas_gals.first_radio[~atlas_gals.FR], 
 		color='orange', marker='^', label='FIRST Slow Roatators')
+	# ax.scatter(atlas_gals.M_k[atlas_gals.selected_27], 
+	# 	atlas_gals.first_radio[atlas_gals.selected_27], marker='o', edgecolor='r',
+	# 	facecolors='none', s=150, lw=1)
+
+	# for i, g in enumerate(atlas_gals):
+	# 	ax.plot([g.M_k, g.M_k], [g.first_radio, g.radio], c='k', ls='--')
+
+	# Add NVSS
+	f = fits.open('%s/Data/atlas3d/FIRST_NVSS.fits' % (cc.base_dir))
+	d = f[1].data
+	f.close()
+	radio_nvss = d.NVSS_FLUX
+	m = radio_nvss!=-99
+	radio_nvss = radio_nvss[m]
+	nvss_ra = d.RA[m]
+	nvss_dec = d.DEC[m]
+	atlas_gals.add_nvss(nvss_ra, nvss_dec, radio_nvss)
+
+	ax.scatter(atlas_gals.M_k[atlas_gals.FR], atlas_gals.nvss_radio[atlas_gals.FR],
+		color='g', marker='x', label='NVSS Fast Rotators')
+	ax.scatter(atlas_gals.M_k[~atlas_gals.FR], atlas_gals.nvss_radio[~atlas_gals.FR], 
+		color='g', marker='^', label='NVSS Slow Roatators')
 	ax.scatter(atlas_gals.M_k[atlas_gals.selected_27], 
-		atlas_gals.first_radio[atlas_gals.selected_27], marker='o', edgecolor='r',
-		facecolors='none', s=150, lw=1)
+		atlas_gals.nvss_radio[atlas_gals.selected_27], marker='o', edgecolor='r',
+		facecolors='none', s=150, lw=1, label='Atlas3D subsample from 2.7GHz')
 
 	for i, g in enumerate(atlas_gals):
-		ax.plot([g.M_k, g.M_k], [g.first_radio, g.radio], c='k', ls='--')
-		# if ~np.isnan(g.first_radio):
-		# 	ax.text(g.M_k, g.first_radio, g.name, )
+		ax.plot([g.M_k, g.M_k], [g.nvss_radio, g.first_radio], c='k', ls='--')
+
+
+
 
 	ax.invert_xaxis()
 	plt.legend(facecolor='w')
@@ -850,9 +890,9 @@ def compare_atlas3d():
 			else: g.OIIIew = np.nan
 		else: g.OIIIew = np.nan
 
-	ax.scatter(atlas_gals.OIIIew, atlas_gals.radio, marker='x', c='k', label='Atlas3D')
+	ax.scatter(atlas_gals.OIIIew, atlas_gals.nvss_radio, marker='x', c='k', label='Atlas3D')
 	ax.scatter(atlas_gals.OIIIew[atlas_gals.selected_27], 
-		atlas_gals.radio[atlas_gals.selected_27], marker='o', edgecolor='r',
+		atlas_gals.nvss_radio[atlas_gals.selected_27], marker='o', edgecolor='r',
 		facecolors='none', s=150, lw=1, label='Atlas3D subsample from 2.7GHz')
 
 	ax.axvline(np.log(0.8), color='k', linestyle=':', label='AGN limit')
@@ -915,10 +955,15 @@ def compare_atlas3d():
 	for a in ax:
 		a.axvspan(0.8,1.2, alpha=0.4)
 	ax[0].axhline(24, ls=':', c='k')
+	ax[0].axhline(25.5, ls=':', c='k')
 	ax[1].axhline(-0.5, ls=':', c='k')
 	lim = ax[0].get_xlim()
-	ax[0].text(lim[0]*0.97, 24.05, 'High-powered')
-	ax[0].text(lim[0]*0.97, 23.85, 'Low-powered')
+	ax[0].text(lim[0]*0.97, 25.55, 'High-powered')
+	ax[0].text(lim[0]*0.97, 25.39, 'Intermediate-powered')
+	ax[0].text(lim[0]*0.97, 24.05, 'Intermediate-powered')
+	ax[0].text(lim[0]*0.97, 23.89, 'Low-powered')
+	ylim = ax[0].get_ylim()
+	ax[0].set_ylim([ylim[0], ylim[1]+0.2])
 
 	ax[1].text(lim[0]*0.97, -0.47, 'Flat')
 	ax[1].text(lim[0]*0.97, -0.65, 'Steep')
@@ -935,7 +980,69 @@ def compare_atlas3d():
 	fig.savefig('%s/Data/muse/analysis/radio_spectral_index.png' % (cc.base_dir))
 
 	plt.close('all')
-	Prefig(size=(16,12), transparent=False)
+	Prefig(subplots=(1,3), transparent=False)
+## ----------====== Domponstrate volume-incompleteness =======----------
+	print 'Demponstrating incompleteness'
+
+	file = "%s/Data/vimos/analysis/galaxies.txt" % (cc.base_dir)
+	z = np.loadtxt(file, usecols=(1,), skiprows=1, unpack=True)
+	galaxies = np.loadtxt(file, usecols=(0,), skiprows=1, unpack=True, dtype=str)
+
+	for gals in [vimos_gals, muse_gals]:
+		for g in gals:
+			i_gal = np.where(galaxies == g.name)[0][0]
+			g.z=z[i_gal]
+
+	fig, ax = plt.subplots(3, sharex=True)
+	for gals in [vimos_gals, muse_gals]:
+		ax[0].scatter(gals.z[gals.FR], gals.lambda_Re[gals.FR],
+			marker='x', c=gals.color, label='%s Fast Rotators' % (gals.label))
+		ax[0].scatter(gals.z[~gals.FR], gals.lambda_Re[~gals.FR],
+			marker='^', c=gals.color, label='%s Slow Rotators' % (gals.label))
+
+		ax[1].scatter(gals.z[gals.FR], gals.M_k[gals.FR],
+			marker='x', c=gals.color, label='%s Fast Rotators' % (gals.label))
+		ax[1].scatter(gals.z[~gals.FR], gals.M_k[~gals.FR],
+			marker='^', c=gals.color, label='%s Slow Rotators' % (gals.label))
+
+		ax[2].scatter(gals.z[gals.FR], gals.radio[gals.FR],
+			marker='x', c=gals.color, label='%s Fast Rotators' % (gals.label))
+		ax[2].scatter(gals.z[~gals.FR], gals.radio[~gals.FR],
+			marker='^', c=gals.color, label='%s Slow Rotators' % (gals.label))
+
+
+	first = True
+	for i_muse, g in enumerate(galaxies_muse):
+		if g in galaxies_vimos:
+			i_vimos = np.where(galaxies_vimos==g)[0][0]
+			if first: # add just one label to legend
+				ax[0].plot([muse_gals.z[i_muse], vimos_gals.z[i_vimos]], 
+					[muse_gals.lambda_Re[i_muse],vimos_gals.lambda_Re[i_vimos]], 'k--', 
+					zorder=1, label='same galaxy in MUSE and VIMOS')
+				ax[2].plot([muse_gals.z[i_muse], vimos_gals.z[i_vimos]], 
+					[muse_gals.radio[i_muse],vimos_gals.radio[i_vimos]], 'k--', 
+					zorder=1, label='same galaxy in MUSE and VIMOS')
+				first = False
+			else:
+				ax[0].plot([muse_gals.z[i_muse], vimos_gals.z[i_vimos]], 
+					[muse_gals.lambda_Re[i_muse],vimos_gals.lambda_Re[i_vimos]], 'k--', 
+					zorder=1)
+				ax[2].plot([muse_gals.z[i_muse], vimos_gals.z[i_vimos]], 
+					[muse_gals.radio[i_muse],vimos_gals.radio[i_vimos]], 'k--', 
+					zorder=1)
+
+	ax[2].legend(facecolor='w')
+	ax[2].set_xlabel('Redshift')
+	ax[2].set_ylabel(r'Radio power (log P$_\mathrm{2.7 GHz}$)')
+	ax[1].set_ylabel(r'M$_k$')
+	ax[1].invert_yaxis()
+	ax[0].set_ylabel(r'$\lambda_\mathrm{Re}$')
+	ax[0].set_title('Redshift dependance of sample')
+	
+	ax[0].tick_params(top=True, bottom=True, direction='in')
+	ax[1].tick_params(top=True, direction='in')
+	fig.subplots_adjust(hspace=0)
+	fig.savefig('%s/Data/muse/analysis/redshift_dependance.png' % (cc.base_dir))
 
 if __name__=='__main__':
-	compare_atlas3d()
+	compare_atlas3d(too_many_FR=False)
