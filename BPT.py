@@ -12,6 +12,8 @@ from astropy.io import fits
 from errors2_muse import get_dataCubeDirectory
 import os
 from prefig import Prefig
+from sauron_colormap import sauron
+
 
 
 def BPT(galaxy, D=None, opt='kin'):
@@ -37,6 +39,8 @@ def BPT(galaxy, D=None, opt='kin'):
 	D.__threshold__ = 3
 # ------------=============== BPT diagram =================----------
 	fig, ax = plt.subplots(1,3, sharey=True)
+	Prefig(size=(16,12))
+	fig2, ax2 = plt.subplots()
 	for i, l in enumerate(['[NII]6583d', '[SII]6716', '[OI]6300d']):
 
 		y = np.log10(D.e_line['[OIII]5007d'].flux/D.e_line['Hbeta'].flux)
@@ -44,9 +48,9 @@ def BPT(galaxy, D=None, opt='kin'):
 
 		y_err = np.sqrt((D.e_line['[OIII]5007d'].flux.uncert/
 			D.e_line['[OIII]5007d'].flux)**2 +
-			(D.e_line['Hbeta'].flux.uncert/D.e_line['Hbeta'].flux)**2)
+			(D.e_line['Hbeta'].flux.uncert/D.e_line['Hbeta'].flux)**2)/np.log(10)
 		x_err = np.sqrt((D.e_line[l].flux.uncert/D.e_line[l].flux)**2 +
-			(D.e_line['Halpha'].flux.uncert/D.e_line['Halpha'].flux)**2)
+			(D.e_line['Halpha'].flux.uncert/D.e_line['Halpha'].flux)**2)/np.log(10)
 
 		large_err = (x_err > 0.5) + (y_err > 0.5)
 
@@ -84,10 +88,13 @@ def BPT(galaxy, D=None, opt='kin'):
 			y_line1 = 0.61/(x_line1 - 0.47) + 1.19
 			m = y_line1 < 1
 			ax[i].plot(x_line1[m], y_line1[m],'k')
+			ax2.plot(x_line1[m], y_line1[m],'k')
 
 			lab = '[NII]'
 
 			ax[i].set_xlim([-2, 1])
+			ax2.set_xlim([-2, 1])
+			ax2.set_ylim([-1.2, 1.5])
 
 			distance = np.zeros(len(x))
 			for j in range(len(distance)):
@@ -96,7 +103,17 @@ def BPT(galaxy, D=None, opt='kin'):
 			limit = 1 # if distance is greater than limit then consider it completely 
 					#	in it's region.
 			distance[distance > limit] = limit
-			distance[SF] *= -1
+			distance[SF] *= -limit
+
+			try:
+				# color = sauron((distance - min(distance))/(max(distance) - min(distance)))
+				# ax2.errorbar(x, y, yerr=y_err, xerr=x_err, c=color, fmt='.')
+				ax2.scatter(x, y, c=distance, cmap=sauron, vmin=-limit, vmax=limit)
+			except:
+				print 'This did not work cotton. Galaxy: %s'%(galaxy)
+
+			ax2.set_ylabel(r'log([OIII]/$H_\beta$)')
+			ax2.set_xlabel(r'log(%s/$H_\alpha$)' % (lab))
 
 		elif l == '[OI]6300d':
 			Seyfert2 = ((y > 0.73/(x + 0.59) + 1.33) + (x > -0.59)) * (y > 1.18 * x + 1.30) * ~large_err
@@ -138,6 +155,7 @@ def BPT(galaxy, D=None, opt='kin'):
 	if not os.path.exists(os.path.dirname(saveTo)):
 		os.makedirs(os.path.dirname(saveTo))  
 	fig.savefig(saveTo)
+	fig2.savefig('%s/plots/BPT2.png' % (output))
 	plt.close()
 	Prefig(size=(16,12), transparent=False)
 # ------------================= BPT map ===================----------
@@ -218,7 +236,64 @@ def BPT(galaxy, D=None, opt='kin'):
 	fig.suptitle('WHaN2 plot')
 
 	fig.savefig('%s/plots/WHaN2.png' % (output))
+	plt.close()
+# ------------=============== MEx diagram =================----------
+	# from Atlas3D XXXI (Section 6.2.1)
+	fig, ax = plt.subplots()
+	y = np.log10(D.e_line['[OIII]5007d'].flux/D.e_line['Hbeta'].flux)
+	y_err = np.sqrt((D.e_line['[OIII]5007d'].flux.uncert/
+		D.e_line['[OIII]5007d'].flux)**2 + (D.e_line['Hbeta'].flux.uncert/
+		D.e_line['Hbeta'].flux)**2)/np.log(10)
 
+	large_err = y_err**2 > 1
+	m = ~large_err * (D.e_line['[OIII]5007d'].equiv_width < 0.8)
+	ax.errorbar(D.components['stellar'].plot['sigma'][m], y[m], c='b',
+		xerr = D.components['stellar'].plot['sigma'].uncert[m], yerr=y_err[m], fmt='.')
+
+	m = ~large_err * (D.e_line['[OIII]5007d'].equiv_width >= 0.8)
+	ax.errorbar(D.components['stellar'].plot['sigma'][m], y[m], c='r',
+		xerr = D.components['stellar'].plot['sigma'].uncert[m], yerr=y_err[m], fmt='.')
+
+	ax.axvline(70, c='k')
+	ax.axhline(np.log10(0.5), c='k')
+	ax.axhline(np.log10(1), c='k')
+
+	x_line = np.arange(70,1000,1)
+	y_line = 1.6*10**-3 * x_line + 0.33
+	ax.plot(x_line, y_line, c='k')
+
+	ylim = ax.get_ylim()
+	yrange = ylim[1] - ylim[0]
+	ax.text(60, ylim[0] +0.96 * yrange, 'SF')
+	ax.text(75, 0.55, 'Seyfert 2')
+	ax.text(75, 0.15, 'LINER')
+	ax.text(75, -0.23, 'Transition')
+
+	ax.set_xlabel(r'$\sigma_\ast$')
+	ax.set_ylabel(r'log [OIII]d/H$_\beta$')
+	ax.set_title('Mass-excitation (MEx) diagnotics for %s' % (galaxy.upper()))
+
+	fig.savefig('%s/plots/MEx.png' % (output))
+# ------------============== SAURON diagram ===============----------
+	# from SAURON XVI.
+	fig, ax = plt.subplots()
+	# y and y_err as MEx above
+
+	x = np.log10(D.e_line['[NI]d'].flux/D.e_line['Hbeta'].flux)
+	x_err = np.sqrt((D.e_line['[NI]d'].flux.uncert/
+		D.e_line['[NI]d'].flux)**2 + (D.e_line['Hbeta'].flux.uncert/
+		D.e_line['Hbeta'].flux)**2)/np.log(10)
+
+
+	ax.errorbar(x, y, xerr = x_err, yerr = y_err, fmt='.')
+
+	ax.set_xlim([-2.5, 0.5])
+	ax.set_ylim([-1.5, 1.5])
+	ax.set_xlabel(r'log [NI]d/H$_\beta$')
+	ax.set_ylabel(r'log [OIII]d/H$_\beta$')
+	ax.set_title('SAURON diagnotics for %s' % (galaxy.upper()))
+
+	fig.savefig('%s/plots/SAURON_diagnoistic.png' % (output))
 	return D
 
 
