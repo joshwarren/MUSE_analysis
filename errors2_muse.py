@@ -29,14 +29,14 @@ c = 299792.458 # speed of light in km/s
 
 #-----------------------------------------------------------------------------
 class set_params(object):
-	def __init__(self, opt='kin'):
+	def __init__(self, opt='kin', reps=1000):
 		self.quiet = True
 		self.gas = 1 # 0   No gas emission lines
 					# 1   Probe ionised gas
 					# 2   Seperate gases heated by shocks (OIII and NI) and by SF gas
 					#     (Hb and Hd)
 					# 3   All gas seperate.
-		self.reps = 100 ## number of monte carlo reps per bin.
+		self.reps = reps ## number of monte carlo reps per bin.
 		self.FWHM_gal = 2.3 # MUSE documentation
 		self.set_range = np.array([2000,7410])#5500])
 		self.stellar_moments = 2 # number of componants to calc with ppxf (see 

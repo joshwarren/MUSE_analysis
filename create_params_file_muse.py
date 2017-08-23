@@ -37,7 +37,7 @@ if 'pop' in opt:
 
 		for i in range(n_bins):
 			# if 'kin' in opt:
-			f.write("python pop_muse.py " + str(gal) + " " + opt + " " + str(i) + 
+			f.write("python pop.py muse " + str(gal) + " " + opt + " " + str(i) + 
 				"\n")
 f.write("push.sh 'Glamdring MUSE run finished'")
 

@@ -20,8 +20,9 @@ from plot_stellar_pop_muse import plot_stellar_pop
 from use_kinemetry_muse import use_kinemetry
 from classify_muse import classify
 import traceback, sys
-from BPT import BPT
+from BPT_muse import BPT
 from compare_atlas3d import compare_atlas3d
+from fit_disk_muse import fit_disk
 
 galaxies = [
 			'ic1459', 
@@ -53,7 +54,7 @@ for galaxy in galaxies:
 	D = None
 	print galaxy
 	try:
-		# D = pickler(galaxy, discard=discard, norm=norm, opt='kin'+MC_dir)
+		D = pickler(galaxy, discard=discard, norm=norm, opt='kin'+MC_dir)
 		# D = sav_for_kinemetry(galaxy, opt='kin'+MC_dir, D=D)
 		# D = plot_results(galaxy, discard=discard, overplot = {'radio':'r', 'CO':'c'}, 
 		# 	residual="median", norm=norm, D=D, show_bin_num=True, mapping=m, 
@@ -62,8 +63,10 @@ for galaxy in galaxies:
 		# D = kinematics(galaxy, discard=discard, D=D, opt='kin') # Only run 
 		# # 														# for opt='kin'
 		# D = rotation_curve(galaxy, D=D, opt='kin'+MC_dir) 
-		BPT(galaxy, D=D, opt='kin'+MC_dir)
+		# BPT(galaxy, D=D, opt='kin'+MC_dir)
 		# plt.close("all")
+		fit_disk(galaxy, D=D, opt='kin'+MC_dir)
+
 
 		# Requires the IDL kinemetry routine to have been run. 
 		# classify(galaxy)

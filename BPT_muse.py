@@ -238,6 +238,7 @@ def BPT(galaxy, D=None, opt='kin'):
 	fig.savefig('%s/plots/WHaN2.png' % (output))
 	plt.close()
 # ------------=============== MEx diagram =================----------
+	Prefig()
 	# from Atlas3D XXXI (Section 6.2.1)
 	fig, ax = plt.subplots()
 	y = np.log10(D.e_line['[OIII]5007d'].flux/D.e_line['Hbeta'].flux)
@@ -248,19 +249,31 @@ def BPT(galaxy, D=None, opt='kin'):
 	large_err = y_err**2 > 1
 	m = ~large_err * (D.e_line['[OIII]5007d'].equiv_width < 0.8)
 	ax.errorbar(D.components['stellar'].plot['sigma'][m], y[m], c='b',
-		xerr = D.components['stellar'].plot['sigma'].uncert[m], yerr=y_err[m], fmt='.')
+		xerr = D.components['stellar'].plot['sigma'].uncert[m], yerr=y_err[m], fmt='.',
+		label='EW([OIII]) < 0.8')
 
 	m = ~large_err * (D.e_line['[OIII]5007d'].equiv_width >= 0.8)
 	ax.errorbar(D.components['stellar'].plot['sigma'][m], y[m], c='r',
-		xerr = D.components['stellar'].plot['sigma'].uncert[m], yerr=y_err[m], fmt='.')
+		xerr = D.components['stellar'].plot['sigma'].uncert[m], yerr=y_err[m], fmt='.',
+		label=r'EW([OIII]) $\ge 0.8$')
 
-	ax.axvline(70, c='k')
-	ax.axhline(np.log10(0.5), c='k')
-	ax.axhline(np.log10(1), c='k')
+	ax.legend(facecolor='w')
+
+	
 
 	x_line = np.arange(70,1000,1)
 	y_line = 1.6*10**-3 * x_line + 0.33
 	ax.plot(x_line, y_line, c='k')
+
+	ax.set_xlim([0, min(max(D.components['stellar'].plot['sigma'][m]), 500)])
+	ax.set_ylim([-1.2, 1.5])
+
+	ax.axvline(70, c='k')
+	ax.axhline(np.log10(0.5), 
+		xmin=70./min(max(D.components['stellar'].plot['sigma'][m]), 500), c='k')
+	ax.axhline(np.log10(1), 
+		xmin=70./min(max(D.components['stellar'].plot['sigma'][m]), 500), c='k')
+
 
 	ylim = ax.get_ylim()
 	yrange = ylim[1] - ylim[0]
