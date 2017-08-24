@@ -20,7 +20,7 @@ def fit_disk(galaxy, D=None, opt='kin'):
 	fig, ax = plt.subplots(2,3)
 
 	f = fits.open(get_dataCubeDirectory(galaxy))
-	header = f[0].header
+	header = f[1].header
 	f.close()
 
 	if D is None:

@@ -56,16 +56,17 @@ for galaxy in galaxies:
 	try:
 		D = pickler(galaxy, discard=discard, norm=norm, opt='kin'+MC_dir)
 		# D = sav_for_kinemetry(galaxy, opt='kin'+MC_dir, D=D)
-		# D = plot_results(galaxy, discard=discard, overplot = {'radio':'r', 'CO':'c'}, 
-		# 	residual="median", norm=norm, D=D, show_bin_num=True, mapping=m, 
-		# 	opt='kin'+MC_dir)
-		# plt.close("all")
+		D = plot_results(galaxy, discard=discard, overplot = {'radio':'r', 'CO':'c'}, 
+			residual="median", norm=norm, D=D, show_bin_num=True, mapping=m, 
+			opt='kin'+MC_dir)
+		plt.close("all")
 		# D = kinematics(galaxy, discard=discard, D=D, opt='kin') # Only run 
 		# # 														# for opt='kin'
 		# D = rotation_curve(galaxy, D=D, opt='kin'+MC_dir) 
 		# BPT(galaxy, D=D, opt='kin'+MC_dir)
 		# plt.close("all")
 		fit_disk(galaxy, D=D, opt='kin'+MC_dir)
+		plt.close("all")
 
 
 		# Requires the IDL kinemetry routine to have been run. 
