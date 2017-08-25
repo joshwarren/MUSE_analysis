@@ -42,6 +42,7 @@ class set_params(object):
 		self.stellar_moments = 2 # number of componants to calc with ppxf (see 
 							# keyword moments in ppxf.pro for more details)
 		self.gas_moments = 4
+		self.narrow_broad = False # Find a narrow and a broad component to each gas line
 		if 'kin' in opt:
 			self.degree = 4  # order of addative Legendre polynomial used to 
 							# correct the template continuum shape during the fit
@@ -145,7 +146,7 @@ class get_stellar_templates(object):
 #-----------------------------------------------------------------------------
 class get_emission_templates(object):
 	def __init__(self, gas, lamRange, logLam_template, FWHM_gal, quiet=True,
-		goodWav=None):
+		goodWav=None, narrow_broad=False):
 		self.element = []
 		self.component = []
 		self.templatesToUse = []
@@ -171,6 +172,16 @@ class get_emission_templates(object):
 					self.component = self.component + [1]
 					self.line_wav.append(line_wav[i])
 			self.element = ['gas']
+			if narrow_broad:
+				for i in range(len(line_name)):
+					if np.sum(mask[:,0] - line_wav[i] > 0) == np.sum(
+						mask[:,1] - line_wav[i] > 0):
+						self.templatesToUse = np.append(self.templatesToUse, 
+							'n_'+line_name[i])
+						self.templates.append(emission_lines[:,i])
+						self.component = self.component + [2]
+						self.line_wav.append(line_wav[i])
+				self.element.append('n_gas')
 		## ----------=============== SF and shocks lines ==============---------
 		if gas == 2:
 			emission_lines, line_name, line_wav = util.emission_lines(
@@ -189,6 +200,22 @@ class get_emission_templates(object):
 						self.component = self.component + [2] 
 					self.line_wav.append(line_wav[i])
 			self.element = ['SF', 'Shocks']
+			if narrow_broad:
+				for i in range(len(line_name)):
+					if np.sum(mask[:,0] - line_wav[i] > 0) == np.sum(
+						mask[:,1] - line_wav[i] > 0):
+						if 'H' in line_name[i]:
+							self.templatesToUse = np.append(self.templatesToUse, 
+								'n_'+line_name[i])
+							self.templates.append(emission_lines[:,i])
+							self.component = self.component + [3]
+						else:
+							self.templatesToUse = np.append(self.templatesToUse, 
+								'n_'+line_name[i])
+							self.templates.append(emission_lines[:,i])
+							self.component = self.component + [4] 
+						self.line_wav.append(line_wav[i])
+				self.element.extend(['n_SF', 'n_Shocks'])
 		## ----------=========== All lines inderpendantly ==============---------
 		if gas == 3:
 			emission_lines, line_name, line_wav = util.emission_lines(
@@ -207,6 +234,20 @@ class get_emission_templates(object):
 					self.templates.append(emission_lines[:,i])
 					self.element.append(aph_lin[i])
 					self.line_wav.append(line_wav[i])
+			if narrow_broad:
+				n_lines = max(self.component)
+				for i in range(len(line_name)):
+					if np.sum(mask[:,0] - line_wav[i] > 0) == np.sum(
+						mask[:,1] - line_wav[i] > 0):
+						self.templatesToUse = np.append(self.templatesToUse, 
+							'n_'+line_name[i])
+
+						# line listed alphabetically
+						self.component = self.component + n_lines + \
+							[np.where(line_name[i] == aph_lin)[0][0]+1]
+						self.templates.append(emission_lines[:,i])
+						self.element.append('n_'+aph_lin[i])
+						self.line_wav.append(line_wav[i])
 		self.templates = np.array(self.templates).T
 		if gas:	self.ntemp = self.templates.shape[1]
 		else: self.ntemp = 0
@@ -492,18 +533,17 @@ def get_dataCubeDirectory(galaxy):
 			self.CO = mystring2('')
 			self.xray = mystring2('')
 
-	if cc.device == 'uni':
+	if cc.device == 'uni' or 'home' in cc.device:
 		dir = '%s/Data/muse' % (cc.base_dir)
+		offsets_file = '%s/Data/offsets.txt' % (cc.base_dir)
 	elif cc.device == 'glamdring':
 		dir = '%s/muse_cubes' % (cc.base_dir)
-	elif 'home' in cc.device:
-		dir = '%s/Data/muse' % (cc.base_dir)
+		offsets_file = '%s/offsets.txt' % (cc.base_dir)
 
 	dataCubeDirectory = mystring('%s/%s/%s.clipped.fits' %  (dir, galaxy, galaxy))
 	dataCubeDirectory.CO = mystring2("%s/Data/alma/%s-mom0.fits" % (cc.base_dir, galaxy))
 
 	# Using offsets file
-	offsets_file = '%s/Data/offsets.txt' % (cc.base_dir)
 	file_headings = np.genfromtxt(offsets_file, dtype=str, max_rows=1)
 	galaxies, CO_RA, CO_dec = np.loadtxt(offsets_file, dtype=str, usecols=(0,19,20), 
 		skiprows=2, unpack=True)
@@ -553,12 +593,15 @@ def get_dataCubeDirectory(galaxy):
 		# dataCubeDirectory.xray = '%s/Data/Chandra/N1399_full.fits' % (cc.base_dir)
 
 	# Extracting offsets (found by eye)
-	col *= 2
-	dataCubeDirectory.radio.RAoffset, dataCubeDirectory.radio.decoffset = \
-		np.genfromtxt(offsets_file, unpack=True, usecols=(col-1, col), dtype=str,
-		skip_header=2, missing_values='-', filling_values='nan')[:, i_gal]
-	dataCubeDirectory.radio.RAoffset = float(dataCubeDirectory.radio.RAoffset.strip('*'))
-	dataCubeDirectory.radio.decoffset = float(dataCubeDirectory.radio.decoffset.strip('*'))
+	if 'Data' in dataCubeDirectory.radio:
+		col *= 2
+		dataCubeDirectory.radio.RAoffset, dataCubeDirectory.radio.decoffset = \
+			np.genfromtxt(offsets_file, unpack=True, usecols=(col-1, col), dtype=str,
+			skip_header=2, missing_values='-', filling_values='nan')[:, i_gal]
+		dataCubeDirectory.radio.RAoffset = float(
+			dataCubeDirectory.radio.RAoffset.strip('*'))
+		dataCubeDirectory.radio.decoffset = float(
+			dataCubeDirectory.radio.decoffset.strip('*'))
 
 	return dataCubeDirectory
 #-----------------------------------------------------------------------------
@@ -680,7 +723,8 @@ def run_ppxf(galaxy, bin_lin, bin_lin_noise, lamRange, CDELT, params, produce_pl
 	goodPixels = np.array([g for g in goodPixels if (~np.isnan(bin_log[g]))])
 
 	e_templates = get_emission_templates(params.gas, lamRange, 
-		stellar_templates.logLam_template, FWHM_gal, goodWav=lambdaq[goodPixels])
+		stellar_templates.logLam_template, FWHM_gal, goodWav=lambdaq[goodPixels],
+		narrow_broad=params.narrow_broad)
 
 	if params.gas:
 		templates = np.column_stack((stellar_templates.templates, e_templates.templates))
@@ -691,7 +735,12 @@ def run_ppxf(galaxy, bin_lin, bin_lin_noise, lamRange, CDELT, params, produce_pl
 		e_templates.templatesToUse)
 	element = ['stellar'] + e_templates.element
 
-	start = [[vel, sig]] * (max(component) + 1)
+	if not params.narrow_broad:
+		start = [[vel, sig]] * (max(component) + 1)
+	else:
+		start = [[vel, sig]] * (max(component)/2 + 1)
+		# Start narrow line component at half of broad line
+		start.extend([[vel, sig/2]] * (max(component)/2))
 	moments = [params.stellar_moments] + [params.gas_moments] * max(component)
 ## ----------============== The bestfit part ===============---------
 	# noise = np.abs(noise)

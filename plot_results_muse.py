@@ -159,8 +159,7 @@ def add_R_e(ax, galaxy, discard=0, pa=0):
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
-def add_(overplot, color, ax, galaxy, scale='log', close=False, debug=False, FoV=None):
-# def add_(overplot, color, ax, galaxy, close=False):
+def add_(overplot, color, ax, galaxy, scale='lin', close=False, debug=False, FoV=None):
 	image_dir=getattr(get_dataCubeDirectory(galaxy), overplot)
 	
 	if os.path.exists(image_dir):
@@ -191,7 +190,9 @@ def add_(overplot, color, ax, galaxy, scale='log', close=False, debug=False, FoV
 		if scale == 'log':
 			image = np.log10(image)
 		elif scale == 'lin':
-			pass
+			m = np.nanmean(image)
+			s = np.nanstd(image)
+			image[image<m+s] = np.nan
 		else:
 			raise ValueError("'scale' keyword has invaild value: %s" % (scale))
 

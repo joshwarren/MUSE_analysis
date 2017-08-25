@@ -36,16 +36,16 @@ galaxies = [
 # galaxies = ['ngc1399']
 
 m=mapping()
-m.SNR = False
-m.image = False
-m.equivalent_width = False
-m.amp_noise = False
-m.kinematics = False
+# m.SNR = False
+# m.image = False
+# m.equivalent_width = False
+# m.amp_noise = False
+# m.kinematics = False
 # m.plot_resid = False
-m.line_ratios = False
+# m.line_ratios = False
 
 discard = 0
-norm = 'lws' #'lwv'
+norm = 'fit_disk' # 'lws' #'lwv'
 MC_dir=''#'_low_res'
 
 # Arrays for error catching
@@ -54,7 +54,7 @@ for galaxy in galaxies:
 	D = None
 	print galaxy
 	try:
-		D = pickler(galaxy, discard=discard, norm=norm, opt='kin'+MC_dir)
+		# D = pickler(galaxy, discard=discard, norm=norm, opt='kin'+MC_dir)
 		# D = sav_for_kinemetry(galaxy, opt='kin'+MC_dir, D=D)
 		D = plot_results(galaxy, discard=discard, overplot = {'radio':'r', 'CO':'c'}, 
 			residual="median", norm=norm, D=D, show_bin_num=True, mapping=m, 
@@ -65,8 +65,8 @@ for galaxy in galaxies:
 		# D = rotation_curve(galaxy, D=D, opt='kin'+MC_dir) 
 		# BPT(galaxy, D=D, opt='kin'+MC_dir)
 		# plt.close("all")
-		fit_disk(galaxy, D=D, opt='kin'+MC_dir)
-		plt.close("all")
+		# fit_disk(galaxy, D=D, opt='kin'+MC_dir)
+		# plt.close("all")
 
 
 		# Requires the IDL kinemetry routine to have been run. 
