@@ -33,7 +33,7 @@ galaxies = [
 # galaxies = ['ic1459']
 # galaxies = ['ic4296']
 # galaxies = ['ngc1316']
-# galaxies = ['ngc1399']
+galaxies = ['ngc1399']
 
 m=mapping()
 # m.SNR = False
@@ -46,7 +46,7 @@ m=mapping()
 
 discard = 0
 norm = 'fit_disk' # 'lws' #'lwv'
-MC_dir=''#'_low_res'
+MC_dir='_highSN' #'_low_res'
 
 # Arrays for error catching
 gal_err, err, trace =[], [], []

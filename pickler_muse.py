@@ -91,7 +91,7 @@ def pickler(galaxy, discard=0, norm="lwv", opt="kin", override=False):
 			if not matrix[j,0].isdigit():
 				line = matrix[j,0]
 				D.bin[i].components[matrix[j,0]] = emission_line(D.bin[i],
-					line,lines[line],matrix[j,1:].astype(float))
+					line,lines[line.strip('n_')],matrix[j,1:].astype(float))
 				# Skip step if file is empty.
 				with warnings.catch_warnings():
 					warnings.simplefilter('error')
@@ -100,7 +100,7 @@ def pickler(galaxy, discard=0, norm="lwv", opt="kin", override=False):
 							'%s/gas_uncert_spectrum/%s/%i.dat' % (vin_dir_gasMC, line, i))
 					except Warning:
 						pass
-				D.add_e_line(matrix[j,0],lines[matrix[j,0]])
+				D.add_e_line(matrix[j,0],lines[line.strip('n_')])
 
 		#Setting the weighting given to the gas templates 
 		temp_name, temp_weight = np.loadtxt("%s/temp_weights/%d.dat" % (
@@ -123,10 +123,13 @@ def pickler(galaxy, discard=0, norm="lwv", opt="kin", override=False):
 		os.path.isdir(os.path.join(vin_dir_gasMC + "/gas", d))]
 
 	if len(componants) == 0: gas =0
-	elif 'gas' in componants: gas = 1
-	elif 'Shocks' in componants and 'SF' in componants: gas = 2
-	else: gas = 3
-	D.gas = gas
+	elif 'gas' in componants: D.gas = 1
+	elif 'Shocks' in componants and 'SF' in componants: D.gas = 2
+	else: D.gas = 3
+
+	if any(['n_' in c for c in componants]): D.broad_narrow = True
+	else: D.broad_narrow = False
+
 
 	for c in D.list_components:
 		dynamics = {'vel':np.zeros(D.number_of_bins)*np.nan, 
@@ -144,13 +147,22 @@ def pickler(galaxy, discard=0, norm="lwv", opt="kin", override=False):
 			c_in_bin = np.loadtxt(glamdring_file, unpack=True, usecols=(0,), 
 				dtype=str)
 
-			if gas == 1 and c != 'stellar':
-				c_type = 'gas'
-			elif gas == 2 and c != 'stellar':
-				if 'H' in c:
-					c_type = 'SF'
+			if D.gas == 1 and c != 'stellar':
+				if 'n_' not in c:
+					c_type = 'gas'
 				else:
-					c_type = 'Shocks'
+					c_type = 'n_gas'
+			elif D.gas == 2 and c != 'stellar':
+				if 'n_' not in c:
+					if 'H' in c:
+						c_type = 'SF'
+					else:
+						c_type = 'Shocks'
+				else:
+					if 'H' in c:
+						c_type = 'n_SF'
+					else:
+						c_type = 'n_Shocks'
 			else:
 				c_type = c
 

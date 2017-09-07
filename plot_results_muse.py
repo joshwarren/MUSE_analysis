@@ -91,7 +91,7 @@ class mapping(object):
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
-def set_lims(v, positive=False, symmetric=False, n_std=3):
+def set_lims(v, positive=False, symmetric=False, n_std=5):
 	if all(~np.isfinite(v)):
 		return 0, 0
 
@@ -159,18 +159,23 @@ def add_R_e(ax, galaxy, discard=0, pa=0):
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
-def add_(overplot, color, ax, galaxy, scale='lin', close=False, debug=False, FoV=None):
-	image_dir=getattr(get_dataCubeDirectory(galaxy), overplot)
-	
+def add_(overplot, color, ax, galaxy, scale=None, close=False, radio_band=None, 
+	debug=False, FoV=None):
+	image_dir=getattr(get_dataCubeDirectory(galaxy, radio_band=radio_band), overplot)
+	if scale is None:
+		if image_dir.default_scale is not None:
+			scale = image_dir.default_scale
+		else:
+			scale = 'lin'
 	if os.path.exists(image_dir):
 		f = fits.open(image_dir)[0]
-
 		# ****** NB: NOTE THE -VE SIGN ON CDELT1 ******
 		x = (np.arange(f.header['NAXIS1']) - f.header['CRPIX1']) *\
-			-f.header['CDELT1'] + f.header['CRVAL1'] + image_dir.RAoffset/(60.**2)
-		y = (np.arange(f.header['NAXIS2'])-f.header['CRPIX2']) *\
-			f.header['CDELT2'] + f.header['CRVAL2'] + image_dir.decoffset/(60.**2)
+			-abs(f.header['CDELT1']) + f.header['CRVAL1'] + (image_dir.RAoffset/(60.**2))
+		y = (np.arange(f.header['NAXIS2']) - f.header['CRPIX2']) *\
+			f.header['CDELT2'] + f.header['CRVAL2'] + (image_dir.decoffset/(60.**2))
 	
+		x, y = np.meshgrid(x,y)
 		#remove random extra dimenisons.
 		s = np.array(f.data.shape)
 		if any(s==1):
@@ -181,18 +186,19 @@ def add_(overplot, color, ax, galaxy, scale='lin', close=False, debug=False, FoV
 		ylim = ax.get_ylim()
 
 		# Discard noise from outer parts of the galaxy -  for radio
-		if overplot == 'radio':
+		if overplot == 'radio' or scale =='lin':
 			lim = np.nanmean(image) + np.nanstd(image)
 			image[image < lim] = lim
-		else:
-			Warning('Are you sure the x axis has the correct sign?')
 
 		if scale == 'log':
 			image = np.log10(image)
 		elif scale == 'lin':
-			m = np.nanmean(image)
-			s = np.nanstd(image)
-			image[image<m+s] = np.nan
+			pass
+			# m = np.nanmean(image)
+			# s = np.nanstd(image)
+			# image[image<m+s] = np.nan
+		elif scale == 'sqrt':
+			image = np.sqrt(image)
 		else:
 			raise ValueError("'scale' keyword has invaild value: %s" % (scale))
 
@@ -220,7 +226,6 @@ def add_(overplot, color, ax, galaxy, scale='lin', close=False, debug=False, FoV
 			ydiff = ylim[1] - ylim[0]
 			ycent = np.mean(ylim)
 			ax.set_ylim(np.array([-1,1])*ydiff*FoV/2. + ycent)
-
 
 		leg = ax.legend(facecolor='w')
 
@@ -358,6 +363,8 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 				c_title = r'H$_\gamma$'
 			else:
 				c_title = c
+			if 'n_' in c_title or 'n_' in c:
+				c_title = 'Narrow line ' + c_title.strip('n_')
 
 			f_title = "%s Flux" % (c_title)
 			fh_title = "%s Flux Histogram" % (c_title)
@@ -451,6 +458,8 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 				c_title = r'H$_\gamma$'
 			else:
 				c_title = c
+			if 'n_' in c_title or 'n_' in c:
+				c_title = 'Narrow line ' + c_title.strip('n_')
 
 			amp_title = '%s Amplitude to Noise ratio' % (c_title)
 			amp_min, amp_max = set_lims(D.e_line[c].amp_noise, positive=True)
@@ -469,13 +478,13 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 
 			im_type = c
 			pl = c
-			if im_type == "gas":
+			if "gas" in im_type:
 				im_type=""
 				pl = 'Hbeta'
-			elif im_type == "SF":
+			elif "SF" in im_type:
 				im_type=" (Star Forming)"
 				pl = '[OIII]5007d'
-			elif im_type == "Shocks":
+			elif "Shocks" in im_type:
 				im_type=" (Shocking)"
 				pl = 'Hbeta'
 			elif 'Hbeta' in im_type:
@@ -486,6 +495,10 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 				im_type=" (OIII)"
 			else:
 				im_type=" (" + im_type + ")"
+
+			if 'n_' in im_type or 'n_' in c:
+				im_type = 'Narrow line ' + im_type.strip('n_')
+				pl = 'n_' + pl.strip('n_')
 
 			SNR = D.SNRatio
 			SN_target_kine = SN_target
@@ -643,7 +656,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 	# 		add_(o, c, ax1, galaxy, header, close=True)
 # ------------============ Line ratio maps ==============----------
 	# if any('OIII' in o for o in D.list_components) and line_ratios:
-	if len(D.list_components) > 2 and mapping.line_ratios:
+	if len(D.list_components) > 2 and mapping.line_ratios and not D.broad_narrow:
 		print "    line ratios"
 
 		CBtitle = r'$H_\alpha/H_\beta/2.8$'
@@ -741,7 +754,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 		
 		if not os.path.exists(os.path.dirname(a.saveTo)):
 			os.makedirs(os.path.dirname(a.saveTo))
-		plt.savefig(a.saveTo)#, bbox_inches="tight")
+		plt.savefig(a.saveTo, bbox_inches="tight")
 
 		if overplot:
 			for o, c in overplot.iteritems():
