@@ -245,7 +245,8 @@ def add_(overplot, color, ax, galaxy, scale=None, close=False, radio_band=None,
 
 #-----------------------------------------------------------------------------
 def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False, 
-	overplot={}, show_bin_num=False, D=None, mapping=mapping(), opt='kin'):	
+	overplot={}, show_bin_num=False, D=None, mapping=mapping(), opt='kin',
+	sauron_method=False):	
 
 	pa = {'ic1459':0, 'ic4296':0, 'ngc1316':0, 'ngc1399':0}
 
@@ -295,6 +296,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 		pickleFile.close()
 
 	D.__threshold__ = 3.0
+	D.sauron = sauron_method
 
 	if D.norm_method != norm:
 		D.norm_method = norm

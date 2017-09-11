@@ -593,13 +593,14 @@ def apply_range(spec, lam=None, set_range=None, return_cuts=False):
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
-def get_dataCubeDirectory(galaxy):
+def get_dataCubeDirectory(galaxy, radio_band=None):
 	class mystring2(str):
 		def __init__(self, s):
 			str.__init__(s)
 			self.RAoffset = 0 # offset in arcsec
 			self.decoffset = 0
 			self.band = ''
+			self.default_scale = None
 
 	class mystring(str):
 		def __init__(self, s):
@@ -624,11 +625,6 @@ def get_dataCubeDirectory(galaxy):
 	file_headings = np.genfromtxt(offsets_file, dtype=str, max_rows=1)
 	galaxies, CO_RA, CO_dec = np.loadtxt(offsets_file, dtype=str, usecols=(0,19,20), 
 		skiprows=2, unpack=True)
-	CO_RA[CO_RA=='-'] = 'nan'
-	CO_dec[CO_dec=='-'] = 'nan'
-	i_gal = np.where(galaxies == galaxy)[0][0]
-	dataCubeDirectory.CO.RAoffset = np.float(CO_RA[i_gal].strip('*'))
-	dataCubeDirectory.CO.decoffset = np.float(CO_dec[i_gal].strip('*'))
 	
 	if galaxy == 'ic1459':
 		dataCubeDirectory.original = '%s/%s/ADP.2016-06-21T08:30:08.251.fits' % (
@@ -641,36 +637,46 @@ def get_dataCubeDirectory(galaxy):
 		# dataCubeDirectory.xray = '%s/Data/Chandra/IC4296_full.fits' % (
 		# 	cc.base_dir)
 
-		dataCubeDirectory.radio = mystring2('%s/Data/VLA/' % (cc.base_dir) +
-			'Southern_RG_VLA/IC4296.LBAND.IMAGE.FITS')
-		dataCubeDirectory.radio.band = 'L band (1.45 GHz)'
-		col = np.where(file_headings=='MUSE-VLA_L')[0][0]
-
-		# dataCubeDirectory.radio = mystring2('%s/Data/VLA/' % (cc.base_dir) +
-		# 	'Southern_RG_VLA/IC4296.CBAND.IMAGE.FITS')
-		# dataCubeDirectory.radio.band = 'C band (4.87 GHz)'
-		# col = np.where(file_headings=='MUSE-VLA_C')[0][0]
+		if radio_band is None or radio_band == 'L':
+			dataCubeDirectory.radio = mystring2('%s/Data/VLA/' % (cc.base_dir) +
+				'Southern_RG_VLA/IC4296.LBAND.IMAGE.FITS')
+			dataCubeDirectory.radio.band = 'L band (1.45 GHz)'
+			col = np.where(file_headings=='MUSE-VLA_L')[0][0]
+		elif radio_band =='C':
+			dataCubeDirectory.radio = mystring2('%s/Data/VLA/' % (cc.base_dir) +
+				'Southern_RG_VLA/IC4296.CBAND.IMAGE.FITS')
+			dataCubeDirectory.radio.band = 'C band (4.87 GHz)'
+			col = np.where(file_headings=='MUSE-VLA_C')[0][0]
 	elif galaxy == 'ngc1316':
 		dataCubeDirectory.original = '%s/%s/ADP.2016-06-20T15:14:47.831.fits' % (
 			dir, galaxy)
 
-		# Very low resolution and very large FoV
-		# dataCubeDirectory.radio = mystring2('%s/Data/VLA/%s/' % (cc.base_dir,
-		# 	galaxy) +
-		# 	'NGC_1316-I-20cm-fev1989-i.fits')
-		# dataCubeDirectory.radio.band = 'L band (1.45 GHz)'
-		# col = np.where(file_headings=='MUSE-VLA_L')[0][0]
-		
-		dataCubeDirectory.radio = mystring2('%s/Data/VLA/%s/%s_4.9GHz.fits' % (
-			cc.base_dir, galaxy, galaxy))
-		dataCubeDirectory.radio.band = 'C band (4.87 GHz)'
-		col = np.where(file_headings=='MUSE-VLA_C')[0][0]
+		if radio_band == 'L':
+			# Very low resolution and very large FoV
+			dataCubeDirectory.radio = mystring2('%s/Data/VLA/%s/' % (cc.base_dir,
+				galaxy) +
+				'NGC_1316-I-20cm-fev1989-i.fits')
+			dataCubeDirectory.radio.band = 'L band (1.45 GHz)'
+			col = np.where(file_headings=='MUSE-VLA_L')[0][0]
+		elif radio_band =='C' or radio_band is None:
+			dataCubeDirectory.radio = mystring2('%s/Data/VLA/%s/%s_4.9GHz.fits' % (
+				cc.base_dir, galaxy, galaxy))
+			dataCubeDirectory.radio.band = 'C band (4.87 GHz)'
+			col = np.where(file_headings=='MUSE-VLA_C')[0][0]
+			default_scale = 'log'
 
 		# dataCubeDirectory.xray = '%s/Data/Chandra/N1316_full.fits' % (cc.base_dir)
 	elif galaxy == 'ngc1399':
 		dataCubeDirectory.original = '%s/%s/ADP.2016-06-21T08:50:02.757.fits' % (
 			dir, galaxy)
 		# dataCubeDirectory.xray = '%s/Data/Chandra/N1399_full.fits' % (cc.base_dir)
+
+	# Extraction of CO offsets
+	CO_RA[CO_RA=='-'] = 'nan'
+	CO_dec[CO_dec=='-'] = 'nan'
+	i_gal = np.where(galaxies == galaxy)[0][0]
+	dataCubeDirectory.CO.RAoffset = np.float(CO_RA[i_gal].strip('*'))
+	dataCubeDirectory.CO.decoffset = np.float(CO_dec[i_gal].strip('*'))
 
 	# Extracting offsets (found by eye)
 	if 'Data' in dataCubeDirectory.radio:
