@@ -387,8 +387,8 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 				D.e_line[c].flux, header, vmin=f_min, vmax=f_max, colorbar=True, 
 				nodots=True, label=fCBtitle, title=f_title, ax=ax, redshift=z,
 				flux_unbinned=D.unbinned_flux, center=center, 
-				galaxy=galaxy.upper(), signal_noise=D.e_line[c].amp_noise, 
-				signal_noise_target=5)
+				galaxy=galaxy.upper())#, signal_noise=D.e_line[c].amp_noise, 
+				# signal_noise_target=5)
 				#cmap = 'gist_yarg')
 			ax_array.append(ax)
 			f.delaxes(ax)
@@ -430,7 +430,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 				D.e_line[c].equiv_width, header, vmin=eq_min, vmax=eq_max, 
 				colorbar=True, nodots=True, label=eqCBtitle, title=eq_title, 
 				ax=ax, flux_unbinned=D.unbinned_flux, 
-				signal_noise=D.e_line[c].amp_noise, signal_noise_target=5, 
+				# signal_noise=D.e_line[c].amp_noise, signal_noise_target=5, 
 				center=center, galaxy=galaxy.upper(), redshift=z)
 			ax_array.append(ax)
 			f.delaxes(ax)
@@ -506,7 +506,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 			SN_target_kine = SN_target
 			if pl != 'stellar':
 				SNR = D.gas_dynamics_SN
-				SN_target_kine = 6
+				SN_target_kine = 5
 
 
 			for k in D.components[pl].plot.keys():

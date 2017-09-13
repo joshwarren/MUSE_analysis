@@ -74,7 +74,7 @@ for galaxy in galaxies:
 		# use_kinemetry(galaxy)
 
 		D = None
-		D = pickler(galaxy, discard=discard, norm=norm, opt='pop'+MC_dir)
+		# D = pickler(galaxy, discard=discard, norm=norm, opt='pop'+MC_dir)
 		
 		D = plot_results(galaxy, discard=discard, overplot = {'radio':'r', 'CO':'c'}, 
 			residual="median", norm=norm, D=D, show_bin_num=True, mapping=m, 
