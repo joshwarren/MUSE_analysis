@@ -822,8 +822,8 @@ class run_ppxf(ppxf):
 				bin_lin_noise = np.sqrt(np.nansum(galaxy_noise**2, axis=(1,2)))
 
 				lam = np.arange(s[0])*CDELT_spec + CRVAL_spec
-				self._bin_lin, lam, cut = apply_range(bin_lin, lam=lam, return_cuts=True, 
-					set_range=params.set_range)
+				self._bin_lin, lam, cut = apply_range(bin_lin, lam=lam, 
+					return_cuts=True, set_range=params.set_range)
 				self._lamRange = np.array([lam[0],lam[-1]])
 				self._bin_lin_noise = bin_lin_noise[cut]
 				self._lamRange = self._lamRange/(1+self._z)
@@ -861,6 +861,16 @@ class run_ppxf(ppxf):
 			self.run()
 		else:
 			self.run()
+		# else:
+		# 	if velscale is None:
+		# 		raise ValueError('Velscale must be set')
+		# 	self._velscale = velscale
+		# 	self._bin_log = bin_lin
+		# 	self._logLam_bin = np.arange(np.log(lamRange[0]), np.log(lamRange[1]), 
+		# 		velscale)
+		# 	self._bin_log_noise = bin_lin_noise
+		# 	self._stellar_templates = get_stellar_templates(self._params.FWHM_gal)
+		# 	self.run()
 
 	def rebin(self):
 		self._stellar_templates = get_stellar_templates(self._params.FWHM_gal)
