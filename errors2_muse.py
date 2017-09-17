@@ -957,21 +957,7 @@ class run_ppxf(ppxf):
 			mdegree=self._params.mdegree, moments=moments, 
 			degree=self._params.degree, vsyst=dv, component=component, 
 			lam=lambdaq, plot=not self._params.quiet, quiet=self._params.quiet, 
-			produce_plot=self._params.produce_plot)
-
-		if self._params.produce_plot:
-			# Add noise to plot
-			ax2 = self.ax.twinx()
-			ax2.set_ylabel('Residuals, emission lines and Noise', rotation=270,
-				labelpad=12)
-			r = self.ax.get_ylim()[1] - self.ax.get_ylim()[0]
-			mn = np.min(self.bestfit[goodPixels]) - self.ax.get_ylim()[0]
-
-			ax2.plot(self.lam, self.noise, 'purple')
-			self.ax.plot(np.nan, 'purple', label='Noise') # Proxy for legend
-			ax2.axhline(0, linestyle='--', color='k', dashes=(5,5),zorder=10)
-			ax2.set_ylim([-mn, -mn+r])
-			self.ax2 = ax2
+			produce_plot=False)
 
 		self.templatesToUse = templatesToUse
 		self.element = element
@@ -1061,12 +1047,8 @@ class run_ppxf(ppxf):
 			if rep == 2:
 				self.MCgas_uncert_spec = np.std(self.MCgas_uncert_spec, axis=1)
 
-			if (rep == self._params.reps-1) and self._params.gas and \
-				self._params.produce_plot:
-				
-				ax2.plot(lambdaq, np.nansum(self.MCgas_uncert_spec,axis=0), 'c')
-				# Proxy for legend
-				self.ax.plot(np.nan, 'c', label='Emission Line Uncertainty')
+		if self._params.produce_plot:
+			self.fig, self.ax = create_plot(self).produce
 ##############################################################################
 
 
