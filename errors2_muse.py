@@ -24,6 +24,8 @@ else:
 import ppxf_util as util
 from rolling_stats import *
 from ppxf import ppxf
+from errors2 import determine_goodpixels, get_stellar_templates, \
+	get_emission_templates, apply_range
 
 c = 299792.458 # speed of light in km/s
 
@@ -93,22 +95,7 @@ class set_params(object):
 			self._lines = []
 		else:
 			self._lines = list(value)
-	
 # -----------------------------------------------------------------------------
-
-#-----------------------------------------------------------------------------
-def set_lines (lines, logLam_temp, FWHM_gal):
-	# In this routine all lines are free to have independent intensities.
-	# One can fix the intensity ratio of different lines (e.g. the [OIII] doublet)
-	# by placing them in the same emission template
-	lam = np.exp(logLam_temp)
-	#lines = lines[where((lines gt min(lam)) and (lines lt max(lam)))]
-	sigma = FWHM_gal/2.355 # Assumes instrumental sigma is constant in Angstrom
-	emission_lines = np.zeros((len(logLam_temp),len(lines)))
-	for j in range(len(lines)):
-		emission_lines[:,j] = np.exp(-0.5*np.power((lam - lines[j])/sigma,2))
-	return emission_lines
-#-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
 def use_templates(galaxy, glamdring=False):
@@ -123,290 +110,200 @@ def use_templates(galaxy, glamdring=False):
 	return templatesToUse
 #-----------------------------------------------------------------------------
 
-#-----------------------------------------------------------------------------
-class get_stellar_templates(object):
+# #-----------------------------------------------------------------------------
+# class get_stellar_templates(object):
 
-	def __init__(self, FWHM_gal):
-		self.FWHM_tem = 2.5 # Miles library has FWHM of 2.5A.
-		self.FWHM_gal = FWHM_gal
-		self.FWHM_dif = np.sqrt(abs(FWHM_gal**2 - self.FWHM_tem**2))
+# 	def __init__(self, FWHM_gal):
+# 		self.FWHM_tem = 2.5 # Miles library has FWHM of 2.5A.
+# 		self.FWHM_gal = FWHM_gal
+# 		self.FWHM_dif = np.sqrt(abs(FWHM_gal**2 - self.FWHM_tem**2))
 
 
-	def get_templates(self, galaxy, velscale, use_all_temp=False):
-		import glob # for searching for files
-		# Finding the template files
-		# There is some issue with the memory structure of the university macs 
-		# (HFS+), meaning these templates can only be loaded once if located on 
-		# the home directory, but more if on the Data partition...
-		if cc.device != 'uni':
-			templateFiles = glob.glob('%s/models/miles_library/m0[0-9][0-9][0-9]V'
-				 % (cc.home_dir))
-		else:
-			templateFiles = glob.glob('%s/Data/idl_libraries/ppxf/' % (
-				cc.base_dir) + 'MILES_library/m0[0-9][0-9][0-9]V')
+# 	def get_templates(self, galaxy, velscale, use_all_temp=False):
+# 		import glob # for searching for files
+# 		# Finding the template files
+# 		# There is some issue with the memory structure of the university macs 
+# 		# (HFS+), meaning these templates can only be loaded once if located on 
+# 		# the home directory, but more if on the Data partition...
+# 		if cc.device != 'uni':
+# 			templateFiles = glob.glob('%s/models/miles_library/m0[0-9][0-9][0-9]V'
+# 				 % (cc.home_dir))
+# 		else:
+# 			templateFiles = glob.glob('%s/Data/idl_libraries/ppxf/' % (
+# 				cc.base_dir) + 'MILES_library/m0[0-9][0-9][0-9]V')
 
-		# self.wav is wavelength, v2 is spectrum
-		self.wav, v2 = np.loadtxt(templateFiles[0], unpack='True')
+# 		# self.wav is wavelength, v2 is spectrum
+# 		self.wav, v2 = np.loadtxt(templateFiles[0], unpack='True')
 
-		# Using same keywords as fits headers
-		CRVAL_temp = self.wav[0]		# starting wavelength
-		NAXIS_temp = np.shape(v2)[0]   # Number of entries
-		# wavelength increments (resolution?)
-		CDELT_temp = (self.wav[NAXIS_temp-1]-self.wav[0])/(NAXIS_temp-1)
+# 		# Using same keywords as fits headers
+# 		CRVAL_temp = self.wav[0]		# starting wavelength
+# 		NAXIS_temp = np.shape(v2)[0]   # Number of entries
+# 		# wavelength increments (resolution?)
+# 		CDELT_temp = (self.wav[NAXIS_temp-1]-self.wav[0])/(NAXIS_temp-1)
 
-		self.lamRange_template = CRVAL_temp + [0, CDELT_temp*(NAXIS_temp-1)]
+# 		self.lamRange_template = CRVAL_temp + [0, CDELT_temp*(NAXIS_temp-1)]
 
-		log_temp_template, self.logLam_template, _ = \
-			util.log_rebin(self.lamRange_template, self.wav, velscale=velscale)
+# 		log_temp_template, self.logLam_template, _ = \
+# 			util.log_rebin(self.lamRange_template, self.wav, velscale=velscale)
 	
-		if use_all_temp:
-			self.ntemp = len(templateFiles)
-			self.templatesToUse = np.arange(1, self.ntemp + 1)
-		else:
-			self.templatesToUse = use_templates(galaxy, cc.device=='glamdring')
-			self.ntemp = len(self.templatesToUse)
-		self.templates = np.zeros((len(log_temp_template), self.ntemp))
-		self.lin_templates = np.zeros((NAXIS_temp, self.ntemp))
+# 		if use_all_temp:
+# 			self.ntemp = len(templateFiles)
+# 			self.templatesToUse = np.arange(1, self.ntemp + 1)
+# 		else:
+# 			self.templatesToUse = use_templates(galaxy, cc.device=='glamdring')
+# 			self.ntemp = len(self.templatesToUse)
+# 		self.templates = np.zeros((len(log_temp_template), self.ntemp))
+# 		self.lin_templates = np.zeros((NAXIS_temp, self.ntemp))
 
-		## Reading the contents of the files into the array templates. 
-		## Including rebinning them.
-		for i in range(self.ntemp):
-			if use_all_temp:
-				_, self.lin_templates[:,i] = np.loadtxt(templateFiles[i], 
-					unpack='True')
-			else:
-				_, self.lin_templates[:,i] = np.loadtxt(
-					templateFiles[self.templatesToUse[i]], unpack='True')
-			if self.FWHM_tem < self.FWHM_gal:
-				sigma = FWHM_dif/2.355/CDELT_temp # Sigma difference in pixels
-				conv_temp = ndimage.gaussian_filter1d(self.lin_templates[:,i],
-					sigma)
-			else:
-				conv_temp = self.lin_templates[:,i]
-			## Rebinning templates logarthmically
-			log_temp_template, self.logLam_template, _ = util.log_rebin(
-				self.lamRange_template, conv_temp, velscale=velscale)
-			self.templates[:,i] = log_temp_template
-#-----------------------------------------------------------------------------
+# 		## Reading the contents of the files into the array templates. 
+# 		## Including rebinning them.
+# 		for i in range(self.ntemp):
+# 			if use_all_temp:
+# 				_, self.lin_templates[:,i] = np.loadtxt(templateFiles[i], 
+# 					unpack='True')
+# 			else:
+# 				_, self.lin_templates[:,i] = np.loadtxt(
+# 					templateFiles[self.templatesToUse[i]], unpack='True')
+# 			if self.FWHM_tem < self.FWHM_gal:
+# 				sigma = FWHM_dif/2.355/CDELT_temp # Sigma difference in pixels
+# 				conv_temp = ndimage.gaussian_filter1d(self.lin_templates[:,i],
+# 					sigma)
+# 			else:
+# 				conv_temp = self.lin_templates[:,i]
+# 			## Rebinning templates logarthmically
+# 			log_temp_template, self.logLam_template, _ = util.log_rebin(
+# 				self.lamRange_template, conv_temp, velscale=velscale)
+# 			self.templates[:,i] = log_temp_template
+# #-----------------------------------------------------------------------------
 
-#-----------------------------------------------------------------------------
-class get_emission_templates(object):
-	def __init__(self, gas, lamRange, logLam_template, FWHM_gal, quiet=True,
-		goodWav=None, narrow_broad=False, lines=None):
-		if lines == 'all' or lines =='All' or lines =='ALL' or lines is None:
-			lines = ['Hdelta', 'Hgamma', 'Hbeta', 'Halpha', '[OII]3726', 
-				'[OII]3729', '[SII]6716', '[SII]6731', '[OIII]5007d', '[NI]d', 
-				'[OI]6300d', '[NII]6583d']
+# #-----------------------------------------------------------------------------
+# class get_emission_templates(object):
+# 	def __init__(self, gas, lamRange, logLam_template, FWHM_gal, quiet=True,
+# 		goodWav=None, narrow_broad=False, lines=None):
+# 		if lines == 'all' or lines =='All' or lines =='ALL' or lines is None:
+# 			lines = ['Hdelta', 'Hgamma', 'Hbeta', 'Halpha', '[OII]3726', 
+# 				'[OII]3729', '[SII]6716', '[SII]6731', '[OIII]5007d', '[NI]d', 
+# 				'[OI]6300d', '[NII]6583d']
 
-		self.element = []
-		self.component = []
-		self.templatesToUse = []
-		self.templates = []
-		self.line_wav = []
+# 		self.element = []
+# 		self.component = []
+# 		self.templatesToUse = []
+# 		self.templates = []
+# 		self.line_wav = []
 
-		lamRange[0] = max(lamRange[0], min(goodWav))
-		lamRange[1] = min(lamRange[1], max(goodWav))
-		goodWav = goodWav[(goodWav > lamRange[0]) * (goodWav < lamRange[1])]
+# 		lamRange[0] = max(lamRange[0], min(goodWav))
+# 		lamRange[1] = min(lamRange[1], max(goodWav))
+# 		goodWav = goodWav[(goodWav > lamRange[0]) * (goodWav < lamRange[1])]
 
 
-		# This is not particularly robust code
-		if goodWav is not None:
-			w = np.where(np.diff(goodWav) > goodWav[-1]-goodWav[-2])[0]
-			mask = np.array(zip(goodWav[w], goodWav[w+1]))
-		else: 
-			mask = np.array([[lamRange[0],lamRange[0]]])
-		if len(mask) == 0:
-			mask = np.array([[lamRange[0],lamRange[0]]])
-		## ----------============ All lines together ===============---------
-		if gas == 1:
-			emission_lines, line_name, line_wav = util.emission_lines(
-				logLam_template, lamRange, FWHM_gal, quiet=quiet)
+# 		# This is not particularly robust code
+# 		if goodWav is not None:
+# 			w = np.where(np.diff(goodWav) > goodWav[-1]-goodWav[-2])[0]
+# 			mask = np.array(zip(goodWav[w], goodWav[w+1]))
+# 		else: 
+# 			mask = np.array([[lamRange[0],lamRange[0]]])
+# 		if len(mask) == 0:
+# 			mask = np.array([[lamRange[0],lamRange[0]]])
+# 		## ----------============ All lines together ===============---------
+# 		if gas == 1:
+# 			emission_lines, line_name, line_wav = util.emission_lines(
+# 				logLam_template, lamRange, FWHM_gal, quiet=quiet)
 
-			for i in range(len(line_name)):
-				if np.sum(mask[:,0] - line_wav[i] > 0) == np.sum(
-					mask[:,1] - line_wav[i] > 0) and line_name[i] in lines:
+# 			for i in range(len(line_name)):
+# 				if np.sum(mask[:,0] - line_wav[i] > 0) == np.sum(
+# 					mask[:,1] - line_wav[i] > 0) and line_name[i] in lines:
 
-					self.templatesToUse = np.append(self.templatesToUse, 
-						line_name[i])
-					self.templates.append(emission_lines[:,i])
-					self.component = self.component + [1]
-					self.line_wav.append(line_wav[i])
-			self.element = ['gas']
-			if narrow_broad:
-				for i in range(len(line_name)):
-					if np.sum(mask[:,0] - line_wav[i] > 0) == np.sum(
-						mask[:,1] - line_wav[i] > 0) and line_name[i] in lines:
+# 					self.templatesToUse = np.append(self.templatesToUse, 
+# 						line_name[i])
+# 					self.templates.append(emission_lines[:,i])
+# 					self.component = self.component + [1]
+# 					self.line_wav.append(line_wav[i])
+# 			self.element = ['gas']
+# 			if narrow_broad:
+# 				for i in range(len(line_name)):
+# 					if np.sum(mask[:,0] - line_wav[i] > 0) == np.sum(
+# 						mask[:,1] - line_wav[i] > 0) and line_name[i] in lines:
 
-						self.templatesToUse = np.append(self.templatesToUse, 
-							'n_'+line_name[i])
-						self.templates.append(emission_lines[:,i])
-						self.component = self.component + [2]
-						self.line_wav.append(line_wav[i])
-				self.element.append('n_gas')
-		## ----------=============== SF and shocks lines ==============---------
-		if gas == 2:
-			emission_lines, line_name, line_wav = util.emission_lines(
-				logLam_template, lamRange, FWHM_gal, quiet=quiet)
+# 						self.templatesToUse = np.append(self.templatesToUse, 
+# 							'n_'+line_name[i])
+# 						self.templates.append(emission_lines[:,i])
+# 						self.component = self.component + [2]
+# 						self.line_wav.append(line_wav[i])
+# 				self.element.append('n_gas')
+# 		## ----------=============== SF and shocks lines ==============---------
+# 		if gas == 2:
+# 			emission_lines, line_name, line_wav = util.emission_lines(
+# 				logLam_template, lamRange, FWHM_gal, quiet=quiet)
 
-			for i in range(len(line_name)):
-				if np.sum(mask[:,0] - line_wav[i] > 0) == np.sum(
-					mask[:,1] - line_wav[i] > 0) and line_name[i] in lines:
-					if 'H' in line_name[i]:
-						self.templatesToUse = np.append(self.templatesToUse, 
-							line_name[i])
-						self.templates.append(emission_lines[:,i])
-						self.component = self.component + [1]
-					else:
-						self.templatesToUse = np.append(self.templatesToUse, 
-							line_name[i])
-						self.templates.append(emission_lines[:,i])
-						self.component = self.component + [2] 
-					self.line_wav.append(line_wav[i])
-			self.element = ['SF', 'Shocks']
-			if narrow_broad:
-				for i in range(len(line_name)):
-					if np.sum(mask[:,0] - line_wav[i] > 0) == np.sum(
-						mask[:,1] - line_wav[i] > 0) and line_name[i] in lines:
-						if 'H' in line_name[i]:
-							self.templatesToUse = np.append(self.templatesToUse, 
-								'n_'+line_name[i])
-							self.templates.append(emission_lines[:,i])
-							self.component = self.component + [3]
-						else:
-							self.templatesToUse = np.append(self.templatesToUse, 
-								'n_'+line_name[i])
-							self.templates.append(emission_lines[:,i])
-							self.component = self.component + [4] 
-						self.line_wav.append(line_wav[i])
-				self.element.extend(['n_SF', 'n_Shocks'])
-		## ----------=========== All lines inderpendantly ==============---------
-		if gas == 3:
-			emission_lines, line_name, line_wav = util.emission_lines(
-				logLam_template, lamRange, FWHM_gal, quiet=quiet)
+# 			for i in range(len(line_name)):
+# 				if np.sum(mask[:,0] - line_wav[i] > 0) == np.sum(
+# 					mask[:,1] - line_wav[i] > 0) and line_name[i] in lines:
+# 					if 'H' in line_name[i]:
+# 						self.templatesToUse = np.append(self.templatesToUse, 
+# 							line_name[i])
+# 						self.templates.append(emission_lines[:,i])
+# 						self.component = self.component + [1]
+# 					else:
+# 						self.templatesToUse = np.append(self.templatesToUse, 
+# 							line_name[i])
+# 						self.templates.append(emission_lines[:,i])
+# 						self.component = self.component + [2] 
+# 					self.line_wav.append(line_wav[i])
+# 			self.element = ['SF', 'Shocks']
+# 			if narrow_broad:
+# 				for i in range(len(line_name)):
+# 					if np.sum(mask[:,0] - line_wav[i] > 0) == np.sum(
+# 						mask[:,1] - line_wav[i] > 0) and line_name[i] in lines:
+# 						if 'H' in line_name[i]:
+# 							self.templatesToUse = np.append(self.templatesToUse, 
+# 								'n_'+line_name[i])
+# 							self.templates.append(emission_lines[:,i])
+# 							self.component = self.component + [3]
+# 						else:
+# 							self.templatesToUse = np.append(self.templatesToUse, 
+# 								'n_'+line_name[i])
+# 							self.templates.append(emission_lines[:,i])
+# 							self.component = self.component + [4] 
+# 						self.line_wav.append(line_wav[i])
+# 				self.element.extend(['n_SF', 'n_Shocks'])
+# 		## ----------=========== All lines inderpendantly ==============---------
+# 		if gas == 3:
+# 			emission_lines, line_name, line_wav = util.emission_lines(
+# 				logLam_template, lamRange, FWHM_gal, quiet=quiet)
 
-			aph_lin = np.sort(line_name)
+# 			aph_lin = np.sort(line_name)
 
-			for i in range(len(line_name)):
-				if np.sum(mask[:,0] - line_wav[i] > 0) == np.sum(
-					mask[:,1] - line_wav[i] > 0) and line_name[i] in lines:
-					self.templatesToUse = np.append(self.templatesToUse, 
-						line_name[i])
+# 			for i in range(len(line_name)):
+# 				if np.sum(mask[:,0] - line_wav[i] > 0) == np.sum(
+# 					mask[:,1] - line_wav[i] > 0) and line_name[i] in lines:
+# 					self.templatesToUse = np.append(self.templatesToUse, 
+# 						line_name[i])
 
-					# line listed alphabetically
-					self.component = self.component + \
-						[np.where(line_name[i] == aph_lin)[0][0]+1]
-					self.templates.append(emission_lines[:,i])
-					self.element.append(aph_lin[i])
-					self.line_wav.append(line_wav[i])
-			if narrow_broad:
-				n_lines = max(self.component)
-				for i in range(len(line_name)):
-					if np.sum(mask[:,0] - line_wav[i] > 0) == np.sum(
-						mask[:,1] - line_wav[i] > 0) and line_name[i] in lines:
-						self.templatesToUse = np.append(self.templatesToUse, 
-							'n_'+line_name[i])
+# 					# line listed alphabetically
+# 					self.component = self.component + \
+# 						[np.where(line_name[i] == aph_lin)[0][0]+1]
+# 					self.templates.append(emission_lines[:,i])
+# 					self.element.append(aph_lin[i])
+# 					self.line_wav.append(line_wav[i])
+# 			if narrow_broad:
+# 				n_lines = max(self.component)
+# 				for i in range(len(line_name)):
+# 					if np.sum(mask[:,0] - line_wav[i] > 0) == np.sum(
+# 						mask[:,1] - line_wav[i] > 0) and line_name[i] in lines:
+# 						self.templatesToUse = np.append(self.templatesToUse, 
+# 							'n_'+line_name[i])
 
-						# line listed alphabetically
-						self.component = self.component + n_lines + \
-							[np.where(line_name[i] == aph_lin)[0][0]+1]
-						self.templates.append(emission_lines[:,i])
-						self.element.append('n_'+aph_lin[i])
-						self.line_wav.append(line_wav[i])
-		self.templates = np.array(self.templates).T
-		if gas and len(lines) == 1: self.ntemp = 1
-		elif gas: self.ntemp = self.templates.shape[1]
-		else: self.ntemp = 0
-#-----------------------------------------------------------------------------
-
-#-----------------------------------------------------------------------------
-def determine_goodpixels(logLam, lamRangeTemp, vel, z, mask=False, lines='all',
-	invert=False):
-	"""
-	warrenj 20150905 Copied from ppxf_determine_goodPixels.pro
-	
-	ppxf_DETERMINE_GOODPIXELS: Example routine to generate the vector of
-		goodPixels to be used as input keyword for the routine
-		ppxf. This is useful to mask gas emission lines or atmospheric
-		absorptions. It can be trivially adapted to mask different
-		lines. 
-	
-	INPUT PARAMETERS:
-	- LOGLAM: Natural logarithm ALOG(wave) of the wavelength in Angstrom 
-		of each pixel of the log rebinned *galaxy* spectrum.
-	- LAMRANGETEMP: Two elements vectors [lamMin2,lamMax2] with the
-		minimum and maximum wavelength in Angstrom in the stellar
-		*template* used in ppxf. 
-	- VEL: Estimate of the galaxy velocity in km/s.
-	
-	V1.0: Michele Cappellari, Leiden, 9 September 2005
-	V1.01: Made a separate routine and included additional common
-	  emission lines. MC, Oxford 12 January 2012
-	V1.02: Included more lines. MC, Oxford, 7 Januray 2014
-	20150617 warrenj Added Telluric lines (tell) at 5199 (is a blended sky
-	line)
-	20160816 warrenj Added NI doublet 5199.36 and 5201.86
-	20170907 warrenj commented out lines at 5528A and 5535A as I cannot find ID
-	"""
-
-	# dv = lines*0+800d # width/2 of masked gas emission region in km/s
-	dv = 400 # width/2 of masked gas emission region in km/s
-	# flag = bytearray([0]*len(logLam))
-	flag = logLam < 0
-
-	# Marks telluric line
-	tell = 5199
-	flag |= (logLam > np.log(tell) - z - dv/c) \
-		& (logLam < np.log(tell) - z + dv/c) 
-
-	if mask:
-		# flag |= (logLam > np.log(5500)) & (logLam < np.log(5650)) 
-		# flag |= (logLam > np.log(5800)) & (logLam < np.log(6500)) 
-		# flag |= (logLam > np.log(6780)) & (logLam < np.log(7050)) 
-		# flag |= (logLam > np.log(7150)) & (logLam < np.log(lamRangeTemp[1])) 
-
-		flag |= (logLam > np.log(5450)) & (logLam < np.log(5550)) 
-		flag |= (logLam > np.log(5780)) & (logLam < np.log(5950)) 
-		flag |= (logLam > np.log(6120)) & (logLam < np.log(6520)) 
-		flag |= (logLam > np.log(6720)) & (logLam < np.log(7000)) 
-		flag |= (logLam > np.log(7140)) & (logLam < np.log(lamRangeTemp[1])) 
-
-	if lines != 'all':
-		#                 -----[OII]-----   Hdelta    Hgamma   Hbeta;
-		wav = np.array([3726.03, 3728.82, 4101.76, 4340.47, 4861.33, 
-		#    -----[OIII]----- -----[NI]-----      -----[OI]-----   
-			4958.92, 5006.84, 5199.36, 5201.86,  6300.30, 6363.67,
-		#    -----[NII]------  Halpha   -----[SII]-----   
-			6548.03, 6583.41,  6562.80, 6716.47, 6730.85]) #5528, 5535
-
-		if len(lines) != 0 and lines is not None and lines != 'none':
-			# Mask lines in list called 'lines'
-			line_names = ['[OII]3729','[OII]3729','Hdelta', 'Hgamma', 'Hbeta', 
-				'[OIII]5007d', '[OIII]5007d', '[NI]d', '[NI]d', '[OI]6300d', 
-				'[OI]6300d', '[NII]6583d', '[NII]6583d', 'Halpha', '[SII]6716', 
-				'[SII]6731']
-			wav = np.array([l for i, l in enumerate(wav) if 
-				line_names[i] not in lines])
-		else:
-			pass # Mask all lines
-
-		for j in range(len(wav)):
-			flag |= (logLam > np.log(wav[j]) + (vel- dv)/c) \
-				& (logLam < np.log(wav[j]) + (vel+ dv)/c)
-	else:
-		pass # Fit all lines
-
-	flag |= logLam < np.log(lamRangeTemp[0]) + (vel + 900)/c # Mask edges of
-	flag |= logLam > np.log(lamRangeTemp[1]) + (vel - 900)/c # stellar library
-
-	if invert:
-		flag[0:3] = 0 # Mask edge of data
-		flag[-4:]= 0 # to remove edge effects
-		return np.where(flag != 0)[0]
-	else:
-		flag[0:3] = 1 # Mask edge of data
-		flag[-4:]= 1 # to remove edge effects
-		return np.where(flag == 0)[0]
-#-----------------------------------------------------------------------------
+# 						# line listed alphabetically
+# 						self.component = self.component + n_lines + \
+# 							[np.where(line_name[i] == aph_lin)[0][0]+1]
+# 						self.templates.append(emission_lines[:,i])
+# 						self.element.append('n_'+aph_lin[i])
+# 						self.line_wav.append(line_wav[i])
+# 		self.templates = np.array(self.templates).T
+# 		if gas and len(lines) == 1: self.ntemp = 1
+# 		elif gas: self.ntemp = self.templates.shape[1]
+# 		else: self.ntemp = 0
+# #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
 def saveAll(galaxy, bin, pp, opt='kin'):
@@ -567,30 +464,30 @@ def saveAll(galaxy, bin, pp, opt='kin'):
 	pp.fig.savefig(plot_file, bbox_inches="tight")
 #-----------------------------------------------------------------------------
 
-#-----------------------------------------------------------------------------
-def apply_range(spec, lam=None, set_range=None, return_cuts=False):
-	if set_range is not None and lam is None:
-		raise ValueError('lam keyword must be supplied if set_range keyword'+\
-			' is supplied')
-	elif set_range is not None and lam is not None:
-		r = (lam > set_range[0]) * (lam < set_range[1])
-	else:
-		r = np.ones(len(spec)).astype(bool)
-	spec = np.array(spec[r])
-	lam = np.array(lam[r])
+# #-----------------------------------------------------------------------------
+# def apply_range(spec, lam=None, set_range=None, return_cuts=False):
+# 	if set_range is not None and lam is None:
+# 		raise ValueError('lam keyword must be supplied if set_range keyword'+\
+# 			' is supplied')
+# 	elif set_range is not None and lam is not None:
+# 		r = (lam > set_range[0]) * (lam < set_range[1])
+# 	else:
+# 		r = np.ones(len(spec)).astype(bool)
+# 	spec = np.array(spec[r])
+# 	lam = np.array(lam[r])
 
 
-	if lam is not None:
-		if return_cuts:
-			return spec, lam, r
-		else:
-			return spec, lam
-	else:
-		if return_cuts:
-			return spec, r
-		else:
-			return spec
-#-----------------------------------------------------------------------------
+# 	if lam is not None:
+# 		if return_cuts:
+# 			return spec, lam, r
+# 		else:
+# 			return spec, lam
+# 	else:
+# 		if return_cuts:
+# 			return spec, r
+# 		else:
+# 			return spec
+# #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
 def get_dataCubeDirectory(galaxy, radio_band=None):
@@ -763,7 +660,7 @@ def errors2(i_gal=None, opt=None, bin=None):
 ## ----------===============================================---------
 class run_ppxf(ppxf):
 	def __init__(self, galaxy_name, bin_lin, bin_lin_noise, lamRange, CDELT, 
-		params, use_all_temp=False, mask_sky=False, use_gal=False):
+		params, use_all_temp=False, mask_sky=False):
 
 		self._galaxy_name = galaxy_name
 		self._bin_lin = bin_lin
@@ -805,28 +702,6 @@ class run_ppxf(ppxf):
 			save_bin_log = np.array(self._bin_log)
 			save_bin_log_noise = np.array(self._bin_log_noise)
 			save_lamRange = np.array(self._lamRange)
-			
-			# Use whole galaxy to find stellar kinematics
-			if use_gal:
-				dataCubeDirectory = get_dataCubeDirectory(self._galaxy_name)
-				f = fits.open(dataCubeDirectory)
-				galaxy_data, header = f[1].data, f[1].header
-				galaxy_noise = f[2].data
-				f.close()
-
-				CRVAL_spec = header['CRVAL3']
-				CDELT_spec = header['CD3_3']
-				s = galaxy_data.shape
-
-				bin_lin = np.nansum(galaxy_data, axis=(1,2))
-				bin_lin_noise = np.sqrt(np.nansum(galaxy_noise**2, axis=(1,2)))
-
-				lam = np.arange(s[0])*CDELT_spec + CRVAL_spec
-				self._bin_lin, lam, cut = apply_range(bin_lin, lam=lam, 
-					return_cuts=True, set_range=params.set_range)
-				self._lamRange = np.array([lam[0],lam[-1]])
-				self._bin_lin_noise = bin_lin_noise[cut]
-				self._lamRange = self._lamRange/(1+self._z)
 
 			# Find stellar kinematics
 			self.rebin()

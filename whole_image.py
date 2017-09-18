@@ -2,62 +2,91 @@
 import numpy as np
 import os
 from astropy.io import fits
-from errors2_muse import errors2, get_dataCubeDirectory
+from errors2_muse import run_ppxf, set_params, get_dataCubeDirectory
+from errors2 import apply_range
 from checkcomp import checkcomp
 cc = checkcomp()
 
+n_e = 100 # cm^-3
+c = 299792.458 # speed of light in km/s
+H0 = 70 # km/s/Mpc
+
 def whole_image(galaxy):
-	galaxies = np.array(['ic1459', 'ic4296', 'ngc1316', 'ngc1399'])
-	i_gal = np.where(galaxies == galaxy)[0][0]
+	print galaxy
+	if cc.device == 'glamdring':
+		data_file = "%s/analysis/galaxies.txt" % (cc.base_dir)
+	else:
+		data_file = "%s/Data/vimos/analysis/galaxies.txt" % (cc.base_dir)
+	galaxy_gals, z_gals = np.loadtxt(data_file, unpack=True, skiprows=1, 
+		usecols=(0, 1), dtype=str)
+	galaxy_gals = np.loadtxt(data_file, skiprows=1, usecols=(0,),dtype=str)
+	i_gal = np.where(galaxy_gals==galaxy)[0][0]
+	z = float(z_gals[i_gal])
+	D = z*c/H0 # Mpc
+
 
 	f = fits.open(get_dataCubeDirectory(galaxy))
-	s = f[1].data.shape
+	spec = np.nansum(f[1].data, axis=(1,2))
+	noise = np.sqrt(np.nansum(f[2].data, axis=(1,2)))
 
-	x = np.tile(np.arange(s[1]),s[2])
-	y = np.arange(s[1]).repeat(s[2])
-	binNum = np.zeros(s[1]*s[2])
-	
-	xBar = np.array([s[1]/2])
-	yBar = np.array([s[2]/2])
-	xBin = np.ones(s[1] * s[2]) * xBar[0]
-	yBin = np.ones(s[1] * s[2]) * yBar[0]
+	params = set_params(opt='pop', reps=0, temp_mismatch=True, produce_plot=False)
 
-	temp = "{0:5}{1:5}{2:8}{3:10}{4:10}\n"
-	temp2 = "{0:12}{1:12}\n"
+	lam = np.arange(len(spec) - (f[1].header['CRPIX3'] - 1)) * \
+		f[1].header['CDELT3'] + f[1].header['CRVAL3']
+	spec, lam, cut = apply_range(spec, lam=lam, return_cuts=True, 
+		set_range=params.set_range)
+	lamRange = np.array([lam[0],lam[-1]])
+	noise = noise[cut]
 
+	pp = run_ppxf(galaxy, spec, noise, lamRange, f[1].header['CDELT3'], params)
 
-	saveTo = "%s/Data/muse/analysis" % (cc.base_dir)
-	with open("%s/galaxies.txt" % (saveTo), 'r') as f:
-		galaxies = f.readlines()
-	if "SN_kin_whole_gal" not in galaxies[0]:
-		with open("%s/galaxies.txt" % (saveTo), 'w') as f:
-			f.write(galaxies[0]+"   SN_kin_whole_gal \n")
-			for i in xrange(1, len(galaxies)):
-				f.write(galaxies[i] + "   10000 \n")
+	pp.noise = np.min([pp.noise, np.abs(pp.galaxy-pp.bestfit)],axis=0)
+
+	OIII_spec = pp.matrix[:, pp.templatesToUse=='[OIII]5007d'].flatten()
 
 
+	Hb_spec = pp.matrix[:, pp.templatesToUse=='Hbeta'].flatten()
+	Hb_flux = np.trapz(Hb_spec, x=pp.lam)
+	Ha_flux = 2.86 * Hb_flux
 
-	saveTo = "%s/Data/muse/analysis/%s/kin_whole_gal/setup" % (cc.base_dir, galaxy)
+	print 'From Hbeta'
+	Mass = 280 * (D/10)**2 * (Ha_flux*10**-15/10**-14) * (1000/n_e) # Solar masses
+	if max(OIII_spec)/np.median(pp.noise[
+		(pp.lam < 5007./(1 + (pp.sol[1][0] - 300)/c)) *
+		(pp.lam > 5007./(1 + (pp.sol[1][0] + 300)/c))]) > 4:
 
-	if not os.path.exists(saveTo):
-		os.makedirs(saveTo)
+		if max(Hb_spec)/np.median(pp.noise[
+			(pp.lam < 4861./(1 + (pp.sol[1][0] - 300)/c)) *
+			(pp.lam > 4861./(1 + (pp.sol[1][0] + 300)/c))]) > 2.5:
 
-	with open("%s/voronoi_2d_binning_output.txt" % (saveTo), 'w') as f:
-		f.write(temp.format('X"', 'Y"', 'BIN_NUM', 'XBIN', 'YBIN'))
-		for i in range(len(xBin)):
-			f.write(temp.format(str(int(x[i])), str(int(y[i])), str(int(binNum[i])), 
-				str(round(xBin[i],5)), str(round(yBin[i],5))))
+			print '%.2f log10(Solar Masses)' % (np.log10(Mass))
+		else:
+			print '<%.2f log10(Solar Masses)' % (np.log10(Mass))
+	print '<%.2f log10(Solar Masses)' % (np.log10(Mass))
+
+	print 'Direct from Halpha'
+	Ha_spec = pp.matrix[:, pp.templatesToUse=='Halpha'].flatten()
+	Ha_flux = np.trapz(Ha_spec, x=pp.lam)
+	Mass = 280 * (D/10)**2 * (Ha_flux*10**-15/10**-14) * (1000/n_e) # Solar masses
+
+	if max(OIII_spec)/np.median(pp.noise[
+		(pp.lam < 5007./(1 + (pp.sol[1][0] - 300)/c)) *
+		(pp.lam > 5007./(1 + (pp.sol[1][0] + 300)/c))]) > 4:
+
+		if max(Ha_spec)/np.median(pp.noise[
+			(pp.lam < 4861./(1 + (pp.sol[1][0] - 300)/c)) *
+			(pp.lam > 4861./(1 + (pp.sol[1][0] + 300)/c))]) > 2.5:
+			print '%.2f log10(Solar Masses)' % (np.log10(Mass))
+		else:
+			print '<%.2f log10(Solar Masses)' % (np.log10(Mass))
+	print '<%.2f log10(Solar Masses)' % (np.log10(Mass))
 
 
-	with open("%s/voronoi_2d_binning_output2.txt" % (saveTo), 'w') as f:
-		f.write(temp2.format('XBAR','YBAR'))
-		for i in range(len(xBar)):
-			f.write(temp2.format(str(round(xBar[i],5)), str(round(yBar[i],5))))
 
-	errors2(i_gal, 'kin_whole_gal', 0)
 
 
 
 if __name__=='__main__':
-	for g in ['ic1459', 'ic4296', 'ngc1316', 'ngc1399']:
+	galaxies = ['ic1459', 'ic4296', 'ngc1316', 'ngc1399']
+	for g in galaxies:
 		whole_image(g)
