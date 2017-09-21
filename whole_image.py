@@ -6,6 +6,7 @@ from errors2_muse import run_ppxf, set_params, get_dataCubeDirectory
 from errors2 import apply_range
 from checkcomp import checkcomp
 cc = checkcomp()
+import matplotlib.pyplot as plt
 
 n_e = 100 # cm^-3
 c = 299792.458 # speed of light in km/s
@@ -24,28 +25,35 @@ def whole_image(galaxy):
 	z = float(z_gals[i_gal])
 	D = z*c/H0 # Mpc
 
-
+	discard = 70
 	f = fits.open(get_dataCubeDirectory(galaxy))
-	spec = np.nansum(f[1].data, axis=(1,2))
-	noise = np.sqrt(np.nansum(f[2].data, axis=(1,2)))
+	spec = np.nansum(f[1].data[:,discard:-discard,discard:-discard], axis=(1,2))
+	noise = np.sqrt(np.nansum(f[2].data[:,discard:-discard,discard:-discard], 
+		axis=(1,2)))
 
-	params = set_params(opt='pop', reps=0, temp_mismatch=True, produce_plot=False)
+	params = set_params(opt='pop', reps=0, temp_mismatch=True, produce_plot=True)
 
-	lam = np.arange(len(spec) - (f[1].header['CRPIX3'] - 1)) * \
-		f[1].header['CDELT3'] + f[1].header['CRVAL3']
+	lam = (np.arange(len(spec)) - (f[1].header['CRPIX3'] - 1)) * \
+		f[1].header['CD3_3'] + f[1].header['CRVAL3']
 	spec, lam, cut = apply_range(spec, lam=lam, return_cuts=True, 
 		set_range=params.set_range)
 	lamRange = np.array([lam[0],lam[-1]])
 	noise = noise[cut]
+	pp = run_ppxf(galaxy, spec, noise, lamRange, f[1].header['CD3_3'], params)
 
-	pp = run_ppxf(galaxy, spec, noise, lamRange, f[1].header['CDELT3'], params)
+
+
+	pp.ax.ax2.plot(pp.lam, pp.matrix[:, pp.templatesToUse=='Hbeta'].flatten(), 'k')
+	pp.fig.savefig('%s.png'%(galaxy))
 
 	pp.noise = np.min([pp.noise, np.abs(pp.galaxy-pp.bestfit)],axis=0)
 
-	OIII_spec = pp.matrix[:, pp.templatesToUse=='[OIII]5007d'].flatten()
+	OIII_spec = pp.matrix[:, pp.templatesToUse=='[OIII]5007d'].flatten() * \
+		pp.weights[pp.templatesToUse=='[OIII]5007d']
 
 
-	Hb_spec = pp.matrix[:, pp.templatesToUse=='Hbeta'].flatten()
+	Hb_spec = pp.matrix[:, pp.templatesToUse=='Hbeta'].flatten() * \
+		pp.weights[pp.templatesToUse=='Hbeta']
 	Hb_flux = np.trapz(Hb_spec, x=pp.lam)
 	Ha_flux = 2.86 * Hb_flux
 
@@ -59,13 +67,15 @@ def whole_image(galaxy):
 			(pp.lam < 4861./(1 + (pp.sol[1][0] - 300)/c)) *
 			(pp.lam > 4861./(1 + (pp.sol[1][0] + 300)/c))]) > 2.5:
 
-			print '%.2f log10(Solar Masses)' % (np.log10(Mass))
+			print '    %.2f log10(Solar Masses)' % (np.log10(Mass))
 		else:
-			print '<%.2f log10(Solar Masses)' % (np.log10(Mass))
-	print '<%.2f log10(Solar Masses)' % (np.log10(Mass))
+			print '    <%.2f log10(Solar Masses)' % (np.log10(Mass))
+	else:
+		print '    <%.2f log10(Solar Masses)' % (np.log10(Mass))
 
 	print 'Direct from Halpha'
-	Ha_spec = pp.matrix[:, pp.templatesToUse=='Halpha'].flatten()
+	Ha_spec = pp.matrix[:, pp.templatesToUse=='Halpha'].flatten() * \
+		pp.weights[pp.templatesToUse=='Halpha']
 	Ha_flux = np.trapz(Ha_spec, x=pp.lam)
 	Mass = 280 * (D/10)**2 * (Ha_flux*10**-15/10**-14) * (1000/n_e) # Solar masses
 
@@ -74,13 +84,19 @@ def whole_image(galaxy):
 		(pp.lam > 5007./(1 + (pp.sol[1][0] + 300)/c))]) > 4:
 
 		if max(Ha_spec)/np.median(pp.noise[
-			(pp.lam < 4861./(1 + (pp.sol[1][0] - 300)/c)) *
-			(pp.lam > 4861./(1 + (pp.sol[1][0] + 300)/c))]) > 2.5:
-			print '%.2f log10(Solar Masses)' % (np.log10(Mass))
+			(pp.lam < 6563./(1 + (pp.sol[1][0] - 300)/c)) *
+			(pp.lam > 6563./(1 + (pp.sol[1][0] + 300)/c))]) > 2.5:
+			print '    %.2f log10(Solar Masses)' % (np.log10(Mass))
 		else:
-			print '<%.2f log10(Solar Masses)' % (np.log10(Mass))
-	print '<%.2f log10(Solar Masses)' % (np.log10(Mass))
+			print '    <%.2f log10(Solar Masses)' % (np.log10(Mass))
+	else:
+		print '    <%.2f log10(Solar Masses)' % (np.log10(Mass))
 
+	print 'Balmer decrement: %.2f' % (Ha_flux/Hb_flux)
+
+
+	print 'Hbeta %.2f Halpha %.2f' % (Hb_flux, Ha_flux)
+	print 'max Hb %.2f Ha %.2f' %(Hb_spec.max(), Ha_spec.max())
 
 
 
