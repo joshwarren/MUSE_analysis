@@ -22,7 +22,7 @@ from classify_muse import classify
 import traceback, sys
 from BPT_muse import BPT
 from compare_atlas3d import compare_atlas3d
-from fit_disk_muse import fit_disk
+from fit_disk_binned import fit_disk
 
 galaxies = [
 			'ic1459', 
@@ -32,7 +32,7 @@ galaxies = [
 			]
 # galaxies = ['ic1459']
 # galaxies = ['ic4296']
-galaxies = ['ngc1316']
+# galaxies = ['ngc1316']
 # galaxies = ['ngc1399']
 
 m=mapping()
@@ -46,7 +46,7 @@ m=mapping()
 
 discard = 0
 norm = 'fit_disk' # 'lws' #'lwv'
-MC_dir='_sauron_method' #'_low_res'
+MC_dir='' #'_low_res'
 
 # Arrays for error catching
 gal_err, err, trace =[], [], []
@@ -75,13 +75,19 @@ for galaxy in galaxies:
 
 		D = None
 		# D = pickler(galaxy, discard=discard, norm=norm, opt='pop'+MC_dir)
-		
-		D = plot_results(galaxy, discard=discard, overplot = {'radio':'r', 'CO':'c'}, 
-			residual="median", norm=norm, D=D, show_bin_num=True, mapping=m, 
-			opt='pop'+MC_dir, sauron_method=True)
-
-		# D = plot_absorption(galaxy, D=D, opt='pop'+MC_dir, uncert=True)
-		# plot_stellar_pop(galaxy, opt='pop'+MC_dir, D=D)
+		# D = plot_results(galaxy, discard=discard, overplot = {'radio':'r', 'CO':'c'}, 
+		# 	residual="median", norm=norm, D=D, show_bin_num=True, mapping=m, 
+		# 	opt='pop'+MC_dir)
+		# plt.close()
+		# D = plot_absorption(galaxy, D=D, opt='pop'+MC_dir, uncert=True,
+		# 	overplot = {'radio':'r', 'CO':'c'})
+		# plt.close()
+		D = plot_stellar_pop(galaxy, opt='pop'+MC_dir, method='mostlikely',
+			overplot = {'radio':'r', 'CO':'c'}, D=D)
+		plt.close()
+		BPT(galaxy, D=D, opt='pop'+MC_dir)
+		plt.close()
+		D = fit_disk(galaxy, D=D, opt='pop'+MC_dir, instrument='muse')
 	except Exception as e:
 		gal_err.append(galaxy)
 		err.append(e)

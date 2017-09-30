@@ -4,7 +4,7 @@ echo $1
 
 if [ -z $2 ]
 then
-	echo 'Please enter the command as: check.sh [galaxy] [opt_MCdir] [opptional dir]'
+	echo 'Please enter the command as: check_muse.sh [galaxy] [opt_MCdir] [opptional dir]'
 	exit	
 fi
 

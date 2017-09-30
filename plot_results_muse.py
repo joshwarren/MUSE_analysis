@@ -245,8 +245,7 @@ def add_(overplot, color, ax, galaxy, scale=None, close=False, radio_band=None,
 
 #-----------------------------------------------------------------------------
 def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False, 
-	overplot={}, show_bin_num=False, D=None, mapping=mapping(), opt='kin',
-	sauron_method=False):	
+	overplot={}, show_bin_num=False, D=None, mapping=mapping(), opt='kin'):	
 
 	pa = {'ic1459':0, 'ic4296':0, 'ngc1316':0, 'ngc1399':0}
 
@@ -295,8 +294,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 		D = pickle.load(pickleFile)
 		pickleFile.close()
 
-	D.__threshold__ = 3.0
-	D.sauron = sauron_method
+	# D.__threshold__ = 3.0
 
 	if D.norm_method != norm:
 		D.norm_method = norm
@@ -482,7 +480,7 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 			pl = c
 			if "gas" in im_type:
 				im_type=""
-				pl = 'Hbeta'
+				pl = '[OIII]5007d'
 			elif "SF" in im_type:
 				im_type=" (Star Forming)"
 				pl = '[OIII]5007d'
@@ -658,25 +656,27 @@ def plot_results(galaxy, discard=0, norm="lwv", plots=False, residual=False,
 	# 		add_(o, c, ax1, galaxy, header, close=True)
 # ------------============ Line ratio maps ==============----------
 	# if any('OIII' in o for o in D.list_components) and line_ratios:
-	if len(D.list_components) > 2 and mapping.line_ratios and not D.broad_narrow:
+	if len(D.list_components) > 2 and mapping.line_ratios and \
+		not D.broad_narrow:
+		
 		print "    line ratios"
+		if 'Halpha' in D.list_components and 'Hbeta' in D.list_components:
+			CBtitle = r'$H_\alpha/H_\beta/2.8$'
+			saveTo = "%s/lineratio/Dust.png" % (out_nointerp)
+			dust = D.e_line['Halpha'].flux/D.e_line['Hbeta'].flux/2.8
 
-		CBtitle = r'$H_\alpha/H_\beta/2.8$'
-		saveTo = "%s/lineratio/Dust.png" % (out_nointerp)
-		dust = D.e_line['Halpha'].flux/D.e_line['Hbeta'].flux/2.8
+			d_min, d_max = set_lims(dust)
 
-		d_min, d_max = set_lims(dust)
-
-		ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar,
-			dust, header, vmin=d_min, vmax=d_max, colorbar=True,
-			nodots=True, title='Balmer Decrement', label=CBtitle,
-			galaxy = galaxy.upper(), redshift = z, 
-			center=center, save=saveTo, close=not overplot,
-			flux_unbinned=D.unbinned_flux)
-		for o, c in overplot.iteritems():
-			add_(o, c, ax1, galaxy)
-		else:
-			plt.close()
+			ax1 = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar,
+				dust, header, vmin=d_min, vmax=d_max, colorbar=True,
+				nodots=True, title='Balmer Decrement', label=CBtitle,
+				galaxy = galaxy.upper(), redshift = z, 
+				center=center, save=saveTo, close=not overplot,
+				flux_unbinned=D.unbinned_flux)
+			for o, c in overplot.iteritems():
+				add_(o, c, ax1, galaxy)
+			else:
+				plt.close()
 
 		t_num = (len(D.e_components)-1)*len(D.e_components)/2
 		for n in range(t_num):

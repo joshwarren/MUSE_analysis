@@ -29,7 +29,7 @@ out_dir = '%s/Data/muse/analysis' % (cc.base_dir)
 
 
 #-----------------------------------------------------------------------------
-def pickler(galaxy, discard=0, norm="lwv", opt="kin", override=False):
+def pickler(galaxy, discard=0, norm='', opt="kin", override=False):
 	print "    Loading D"
 
 	tessellation_File = "%s/%s/%s/setup/voronoi_2d_binning_output.txt" % (vin_dir, 
@@ -41,7 +41,8 @@ def pickler(galaxy, discard=0, norm="lwv", opt="kin", override=False):
 	vin_dir_gasMC = "%s/%s/%s/MC" % (vin_dir, galaxy, opt)
 	out_pickle = '%s/pickled' % (output)
 
-	# Check tessellation file is older than pPXF outputs (checks vin_dir_gasMC/0.dat only).
+	# Check tessellation file is older than pPXF outputs (checks 
+	# vin_dir_gasMC/0.dat only).
 	if not override:
 		if os.path.getmtime(tessellation_File) > os.path.getmtime('%s/0.dat' % (
 			vin_dir_gasMC)): 
@@ -59,7 +60,7 @@ def pickler(galaxy, discard=0, norm="lwv", opt="kin", override=False):
 					"Use the 'override' keyword to run this routine anyway.")
 # ------------======== Reading the spectrum  ============----------
 	D = Data(np.loadtxt(tessellation_File, unpack=True, skiprows = 1, 
-			usecols=(0,1,2)))
+			usecols=(0,1,2)), sauron=True)
 
 	galaxy_data = fits.getdata(dataCubeDirectory, 0)
 	
@@ -83,9 +84,11 @@ def pickler(galaxy, discard=0, norm="lwv", opt="kin", override=False):
 		
 		# Getting emission templates used
 		lines = {'Hdelta':4101.76, 'Hgamma':4340.47, 'Hbeta':4861.33, 
-			'[OIII]5007d':5004.0,'[NI]d':5200.0, 'Halpha':6562.8, '[SII]6716':6716.0, 
-			'[SII]6731':6731.0, '[OI]6300d':6300.0, '[NII]6583d':6583.0}
-		matrix = np.loadtxt("%s/bestfit/matrix/%d.dat" % (vin_dir_gasMC, i),dtype=str)
+			'[OIII]5007d':5004.0,'[NI]d':5200.0, 'Halpha':6562.8, 
+			'[SII]6716':6716.0, '[SII]6731':6731.0, '[OI]6300d':6300.0, 
+			'[NII]6583d':6583.0}
+		matrix = np.loadtxt("%s/bestfit/matrix/%d.dat" % (vin_dir_gasMC, i),
+			dtype=str)
 		ms = matrix.shape
 		for j in range(ms[0]):
 			if not matrix[j,0].isdigit():
@@ -97,16 +100,11 @@ def pickler(galaxy, discard=0, norm="lwv", opt="kin", override=False):
 					warnings.simplefilter('error')
 					try:
 						D.bin[i].components[line].uncert_spectrum = np.loadtxt(
-							'%s/gas_uncert_spectrum/%s/%i.dat' % (vin_dir_gasMC, line, i))
+							'%s/gas_uncert_spectrum/%s/%i.dat' % (vin_dir_gasMC, 
+							line, i))
 					except Warning:
 						pass
 				D.add_e_line(matrix[j,0],lines[line.strip('n_')])
-
-		#Setting the weighting given to the gas templates 
-		temp_name, temp_weight = np.loadtxt("%s/temp_weights/%d.dat" % (
-			vin_dir_gasMC, i), unpack=True, dtype='str')
-		temp_weight = temp_weight.astype(float)
-		D.bin[i].set_templates(temp_name, temp_weight)
 
 		D.bin[i].bestfit = np.loadtxt("%s/bestfit/%d.dat" %(vin_dir_gasMC,i), 
 			unpack=True)
@@ -116,6 +114,12 @@ def pickler(galaxy, discard=0, norm="lwv", opt="kin", override=False):
 		elif 'pop' in opt:
 			D.bin[i].mpweight = np.loadtxt("%s/mpweights/%d.dat" %(vin_dir_gasMC,i), 
 				unpack=True)
+
+		#Setting the weighting given to the gas templates 
+		temp_name, temp_weight = np.loadtxt("%s/temp_weights/%d.dat" % (
+			vin_dir_gasMC, i), unpack=True, dtype='str')
+		D.bin[i].set_templates(temp_name, temp_weight.astype(float))
+
 	D.xBar, D.yBar = np.loadtxt(tessellation_File2, unpack=True, skiprows = 1,
 		ndmin=2)
 # ------------=========== Read kinematics results ==============----------
@@ -199,11 +203,13 @@ def pickler(galaxy, discard=0, norm="lwv", opt="kin", override=False):
 
 		for kine in dynamics.keys():
 			if np.isnan(dynamics[kine]).all():
-				D.components[c].unset(kine)
+				D.components_no_mask[c].unset(kine)
 			else:
-				D.components[c].setkin(kine, dynamics[kine])
-				D.components[c].setkin_uncert(kine, dynamics_uncert[kine])
+				D.components_no_mask[c].setkin(kine, dynamics[kine])
+				D.components_no_mask[c].setkin_uncert(kine, dynamics_uncert[kine])
 
+	if norm != '':
+		D.norm_method = norm
 	D.find_restFrame()
 # ------------================ Pickling =================----------
 	print "    Pickling D"

@@ -6,15 +6,16 @@ import matplotlib.pyplot as plt
 from plot_velfield_nointerp import plot_velfield_nointerp 
 import numpy as np 
 import os
-from plot_results_muse import set_lims
+from plot_results_muse import set_lims, add_
 from checkcomp import checkcomp
 cc = checkcomp()
 from errors2_muse import get_dataCubeDirectory
 from astropy.io import fits
 from prefig import Prefig
+Prefig()
 
 
-def plot_absorption(galaxy, opt='pop', D=None, uncert=True):
+def plot_absorption(galaxy, opt='pop', D=None, uncert=True, overplot={}):
 	# Find lines:
 	lines = [#'G4300', 'Fe4383', 'Ca4455', 'Fe4531', 
 		'H_beta', 'Fe5015', 
@@ -33,7 +34,7 @@ def plot_absorption(galaxy, opt='pop', D=None, uncert=True):
 	# Load pickle file from pickler.py
 	out_dir = '%s/Data/muse/analysis' % (cc.base_dir)
 	output = "%s/%s/%s" % (out_dir, galaxy, opt)
-	out_plots = "%s/plots" % (output)
+	out_plots = "%s/plots/absorption" % (output)
 	if not os.path.exists(out_plots): os.makedirs(out_plots)
 	 
 	if D is None:
@@ -46,13 +47,25 @@ def plot_absorption(galaxy, opt='pop', D=None, uncert=True):
 	header = f[1].header
 	f.close()
 
-	# Set up figure and subplots
-	Prefig(size=(16*2,12*np.ceil(len(lines)/2.0)), transparent=False)
-	f, ax_array = plt.subplots(int(np.ceil(len(lines)/2.0)), 2, sharex='col', 
-		sharey='row', frameon=False)
-	if uncert:
-		f_uncert, ax_array_uncert = plt.subplots(int(np.ceil(len(lines)/2.0)), 2, 
-			sharex='col', sharey='row', frameon=False)
+	data_file =  "%s/galaxies.txt" % (out_dir)
+	# different data types need to be read separetly
+	file_headings = np.loadtxt(data_file, dtype=str)[0]
+	col = np.where(file_headings=='SN_%s' % (opt))[0][0]
+
+	x_cent_gals, y_cent_gals, SN_target_gals = np.loadtxt(data_file, unpack=True, 
+		skiprows=1, usecols=(1,2,col), dtype='int,int,float')
+	galaxy_gals = np.loadtxt(data_file, skiprows=1, usecols=(0,),dtype=str)
+	i_gal = np.where(galaxy_gals==galaxy)[0][0]
+	SN_target=SN_target_gals[i_gal]-10
+	center = (x_cent_gals[i_gal], y_cent_gals[i_gal])
+
+	data_file =  "%s/Data/vimos/analysis/galaxies.txt" % (cc.base_dir)
+	z_gals = np.loadtxt(data_file, unpack=True, skiprows=1, 
+		usecols=(1))
+	galaxy_gals = np.loadtxt(data_file, skiprows=1, usecols=(0,),dtype=str)
+	i_gal = np.where(galaxy_gals==galaxy)[0][0]
+	z = z_gals[i_gal]
+
 
 	for i, line in enumerate(lines):
 		print "    " + line
@@ -68,58 +81,29 @@ def plot_absorption(galaxy, opt='pop', D=None, uncert=True):
 		# 	abmin = limits[line][0]
 		# 	abmax = limits[line][1]
 
-		ax_array[int(np.floor(i/2)),i%2] = plot_velfield_nointerp(D.x, D.y, 
+		saveTo = '%s/%s.png' % (out_plots, line)
+		ax = plot_velfield_nointerp(D.x, D.y, 
 			D.bin_num, D.xBar, D.yBar, ab_line, header, 
 			vmin=abmin, vmax=abmax, nodots=True, colorbar=True, 
 			label='Index strength ('+r'$\AA$'+')', title=titles[line], 
-			ax=ax_array[int(np.floor(i/2)),i%2], cmap='gnuplot2', 
+			cmap='gnuplot2', redshift=z, center=center, 
 			flux_unbinned=D.unbinned_flux, signal_noise=D.SNRatio, 
-			signal_noise_target=30)
+			signal_noise_target=SN_target, save=saveTo)
+		ax.saveTo = saveTo
+		if overplot:
+			for o, color in overplot.iteritems():
+				add_(o, color, ax, galaxy, close=True)
 
 		if uncert:
 			abmin, abmax = set_lims(ab_uncert)
 
-			ax_array_uncert[int(np.floor(i/2)),i%2] = plot_velfield_nointerp(D.x, 
-				D.y, D.bin_num, D.xBar, D.yBar, ab_uncert, header, 
-				vmin=abmin, vmax=abmax, nodots=True, colorbar=True, 
-				label='Index strength ('+r'$\AA$'+')', title=titles[line], 
-				ax=ax_array_uncert[int(np.floor(i/2)),i%2], cmap='gnuplot2', 
+			plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, 
+				ab_uncert, header, vmin=abmin, vmax=abmax, nodots=True, 
+				colorbar=True, label='Index strength ('+r'$\AA$'+')', 
+				title=titles[line], cmap='gnuplot2', 
 				flux_unbinned=D.unbinned_flux, signal_noise=D.SNRatio, 
-				signal_noise_target=30)
-
-
-	# f.set_size_inches(8.5,int(np.ceil(len(lines)/2.0))*1.8)
-
-	print 'Saving plot'
-
-	saveTo = "%s/absorption.pdf" % (out_plots)
-	# f.tight_layout()
-	ax_array[0,1].set_xlabel('')
-	ax_array[0,0].set_xlabel('')
-	ax_array[0,1].set_ylabel('')
-	ax_array[1,1].set_ylabel('')
-	f.suptitle(galaxy.upper())
-	f.savefig(saveTo)#, bbox_inches="tight")
-
-
-	if uncert:
-		# f_uncert.set_size_inches(8.5,int(np.ceil(len(lines)/2.0))*1.8)
-
-		saveTo = "%s/absorption_uncert.pdf" % (out_plots)
-		# f_uncert.tight_layout()
-		ax_array_uncert[0,1].set_xlabel('')
-		ax_array_uncert[0,0].set_xlabel('')
-		ax_array_uncert[0,1].set_ylabel('')
-		ax_array_uncert[1,1].set_ylabel('')
-		f_uncert.suptitle(galaxy.upper() + ' Uncertainties')
-		f_uncert.savefig(saveTo)#, bbox_inches="tight")
-
-	saveTo = '%s/SNR.png' % (out_plots)
-	plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, D.SNRatio, header, 
-		nodots=True, colorbar=True, label='S/N', show_bin_numbers=True,
-		title='Signal to Noise Ratio', flux_unbinned=D.unbinned_flux, save=saveTo, 
-		close=True)
-
+				signal_noise_target=SN_target, close=True,
+				save='%s/%s_uncert.png' % (out_plots, line))
 	return D
 
 
