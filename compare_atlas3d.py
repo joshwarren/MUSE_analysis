@@ -9,11 +9,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from markers_atlas3d import marker_atlas3d
 from prefig import Prefig
-Prefig(transparent=False)
 from astropy.io import fits
 from astropy import units as u
 from astropy.coordinates import SkyCoord
 from astropy.coordinates import match_coordinates_sky
+import copy
 
 def angle_to_pc(galaxy, angle):
 	c = 299792 #km/s
@@ -147,6 +147,16 @@ class galaxy_list(list):
 	def __getattr__(self, attr):
 		return np.array([getattr(g, attr) for g in self])
 
+	# def copy(self):
+	# 	c = galaxy_list()
+	# 	for g in self:
+	# 		c.create_galaxy(g.name)
+
+	# 		for p in dir(g):
+	# 			if '__' not in p and p !='name':
+	# 				setattr(c, p, getattr(self, p))
+
+
 	@property
 	def names(self):
 		return [g.name for g in self]
@@ -158,6 +168,7 @@ def compare_atlas3d(too_many_FR=True):
 
 ## ----------============== Ellipticity vs lambda_Re ==============----------
 	print 'FR/SR'
+	Prefig(transparent=False, size=(20,12))
 	
 	fig, ax = plt.subplots()
 
@@ -201,46 +212,70 @@ def compare_atlas3d(too_many_FR=True):
 			g.VLSS_27 = np.nan
 			g.VNESS_27 = np.nan
 			g.selected_27 = False
-	ax.scatter(atlas_gals.ellipticity[atlas_gals.selected_27], 
-		atlas_gals.lambda_Re[atlas_gals.selected_27], marker='o', edgecolor='r',
-		facecolors='none', s=150, lw=1, label='Atlas3D subsample from 2.7GHz')
+	# ax.scatter(atlas_gals.ellipticity[atlas_gals.selected_27], 
+	# 	atlas_gals.lambda_Re[atlas_gals.selected_27], marker='o', edgecolor='r',
+	# 	facecolors='none', s=150, lw=1, label='Atlas3D subsample from 2.7GHz')
 
-	# S0s
-	ax.scatter(atlas_gals.ellipticity[atlas_gals.a*~atlas_gals.E], 
-		atlas_gals.lambda_Re[atlas_gals.a*~atlas_gals.E], 
-		marker=marker_atlas3d(0), c='lightgrey', alpha=0.7, lw=0,
-		label=r'Atlas3D S0: $T>-3.5$')
-	ax.scatter(atlas_gals.ellipticity[atlas_gals.b*~atlas_gals.E], 
-		atlas_gals.lambda_Re[atlas_gals.b*~atlas_gals.E], 
-		marker=marker_atlas3d(1), c='lightgrey', alpha=0.7, lw=0)
-	ax.scatter(atlas_gals.ellipticity[atlas_gals.c*~atlas_gals.E], 
-		atlas_gals.lambda_Re[atlas_gals.c*~atlas_gals.E], 
-		marker=marker_atlas3d(2), c='lightgrey', alpha=0.7, lw=0)
-	ax.scatter(atlas_gals.ellipticity[atlas_gals.d*~atlas_gals.E], 
-		atlas_gals.lambda_Re[atlas_gals.d*~atlas_gals.E], 
-		marker=marker_atlas3d(3), c='lightgrey', alpha=0.7, lw=0)
-	ax.plot(atlas_gals.ellipticity[atlas_gals.e*~atlas_gals.E], 
-		atlas_gals.lambda_Re[atlas_gals.e*~atlas_gals.E], 
-		marker=marker_atlas3d(4), c='lightgrey', alpha=0.7, lw=0, 
-		markerfacecolor='none')
 
-	# Ellipticals
-	ax.scatter(atlas_gals.ellipticity[atlas_gals.a*atlas_gals.E], 
-		atlas_gals.lambda_Re[atlas_gals.a*atlas_gals.E], 
-		marker=marker_atlas3d(0), c='k', alpha=0.7, lw=0, 
-		label=r'Atlas3D E: $T \leq -3.5$')
-	ax.scatter(atlas_gals.ellipticity[atlas_gals.b*atlas_gals.E], 
-		atlas_gals.lambda_Re[atlas_gals.b*atlas_gals.E], 
-		marker=marker_atlas3d(1), c='k', alpha=0.7, lw=0)
-	ax.scatter(atlas_gals.ellipticity[atlas_gals.c*atlas_gals.E], 
-		atlas_gals.lambda_Re[atlas_gals.c*atlas_gals.E], 
-		marker=marker_atlas3d(2), c='k', alpha=0.7, lw=0)
-	ax.scatter(atlas_gals.ellipticity[atlas_gals.d*atlas_gals.E], 
-		atlas_gals.lambda_Re[atlas_gals.d*atlas_gals.E], 
-		marker=marker_atlas3d(3), c='k', alpha=0.7, lw=0)
-	ax.plot(atlas_gals.ellipticity[atlas_gals.e*atlas_gals.E], 
-		atlas_gals.lambda_Re[atlas_gals.e*atlas_gals.E], 
-		marker=marker_atlas3d(4), c='k', alpha=0.7, lw=0, markerfacecolor='none')
+
+	massive_file = '%s/Data/massive/V_table1.dat' % (cc.base_dir)
+	galaxies_massive =  np.loadtxt(massive_file, unpack=True, usecols=(0), 
+		dtype=str, skiprows=2)
+	RA_massive, dec_massive, distance_massive, M_k_massive, \
+		ellipticity_massive, lambda_Re_massive = np.loadtxt(massive_file, 
+		unpack=True, usecols=(1,2,3,4,6,9), skiprows=2)
+
+	# MASSIVE survey
+	massive_gals = galaxy_list()
+	massive_gals.color = 'grey'
+	massive_gals.label = 'MASSIVE'
+	for i, n in enumerate(galaxies_massive):
+		if n not in atlas_gals.names:
+			massive_gals.create_galaxy(n, 
+				M_k = M_k_massive[i], 
+				distance = distance_massive[i],
+				coords = SkyCoord(str(RA_massive[i])+' '+str(dec_massive[i]), unit='deg'),
+				ellipticity = ellipticity_massive[i],
+				lambda_Re = lambda_Re_massive[i],
+				kin_group = 'a')
+	print len(atlas_gals) + len(massive_gals)
+
+	# # S0s
+	# ax.scatter(atlas_gals.ellipticity[atlas_gals.a*~atlas_gals.E], 
+	# 	atlas_gals.lambda_Re[atlas_gals.a*~atlas_gals.E], 
+	# 	marker=marker_atlas3d(0), c='lightgrey', alpha=0.7, lw=0,
+	# 	label=r'Atlas3D S0: $T>-3.5$')
+	# ax.scatter(atlas_gals.ellipticity[atlas_gals.b*~atlas_gals.E], 
+	# 	atlas_gals.lambda_Re[atlas_gals.b*~atlas_gals.E], 
+	# 	marker=marker_atlas3d(1), c='lightgrey', alpha=0.7, lw=0)
+	# ax.scatter(atlas_gals.ellipticity[atlas_gals.c*~atlas_gals.E], 
+	# 	atlas_gals.lambda_Re[atlas_gals.c*~atlas_gals.E], 
+	# 	marker=marker_atlas3d(2), c='lightgrey', alpha=0.7, lw=0)
+	# ax.scatter(atlas_gals.ellipticity[atlas_gals.d*~atlas_gals.E], 
+	# 	atlas_gals.lambda_Re[atlas_gals.d*~atlas_gals.E], 
+	# 	marker=marker_atlas3d(3), c='lightgrey', alpha=0.7, lw=0)
+	# ax.plot(atlas_gals.ellipticity[atlas_gals.e*~atlas_gals.E], 
+	# 	atlas_gals.lambda_Re[atlas_gals.e*~atlas_gals.E], 
+	# 	marker=marker_atlas3d(4), c='lightgrey', alpha=0.7, lw=0, 
+	# 	markerfacecolor='none')
+
+	# # Ellipticals
+	# ax.scatter(atlas_gals.ellipticity[atlas_gals.a*atlas_gals.E], 
+	# 	atlas_gals.lambda_Re[atlas_gals.a*atlas_gals.E], 
+	# 	marker=marker_atlas3d(0), c='k', alpha=0.7, lw=0, 
+	# 	label=r'Atlas3D E: $T \leq -3.5$')
+	# ax.scatter(atlas_gals.ellipticity[atlas_gals.b*atlas_gals.E], 
+	# 	atlas_gals.lambda_Re[atlas_gals.b*atlas_gals.E], 
+	# 	marker=marker_atlas3d(1), c='k', alpha=0.7, lw=0)
+	# ax.scatter(atlas_gals.ellipticity[atlas_gals.c*atlas_gals.E], 
+	# 	atlas_gals.lambda_Re[atlas_gals.c*atlas_gals.E], 
+	# 	marker=marker_atlas3d(2), c='k', alpha=0.7, lw=0)
+	# ax.scatter(atlas_gals.ellipticity[atlas_gals.d*atlas_gals.E], 
+	# 	atlas_gals.lambda_Re[atlas_gals.d*atlas_gals.E], 
+	# 	marker=marker_atlas3d(3), c='k', alpha=0.7, lw=0)
+	# ax.plot(atlas_gals.ellipticity[atlas_gals.e*atlas_gals.E], 
+	# 	atlas_gals.lambda_Re[atlas_gals.e*atlas_gals.E], 
+	# 	marker=marker_atlas3d(4), c='k', alpha=0.7, lw=0, markerfacecolor='none')
 	
 
 	ell = np.arange(0.01,0.99,0.01)
@@ -309,12 +344,22 @@ def compare_atlas3d(too_many_FR=True):
 	vimos_gals.color = 'r'
 	vimos_gals.label = 'VIMOS'
 	for i in range(len(galaxies_vimos)):
-		vimos_gals.create_galaxy(galaxies_vimos[i], lambda_Re=lambda_Re_vimos[i],
+		vimos_gals.create_galaxy(galaxies_vimos[i], 
+			lambda_Re=lambda_Re_vimos[i],
 			ellipticity=ellipticity_vimos[i])
 		i2 = np.where(gals_vimos2 == galaxies_vimos[i])[0][0]
 		vimos_gals[i].kin_group = group_vimos[i2]
 
-	for gals in [vimos_gals, muse_gals]:
+	# list of Southern Sample, preferentially using MUSE where it exists
+	sample_gals = galaxy_list()
+	for g in vimos_gals:
+		if g.name not in muse_gals.names:
+			sample_gals.add_galaxy(g)
+	for g in muse_gals:
+		sample_gals.add_galaxy(g)
+
+
+	for gals in [massive_gals, vimos_gals, muse_gals, atlas_gals]:
 		ax.scatter(gals.ellipticity[gals.a], gals.lambda_Re[gals.a], 
 			marker=marker_atlas3d(0), c=gals.color, lw=0, label=gals.label)
 		ax.scatter(gals.ellipticity[gals.b], gals.lambda_Re[gals.b], 
@@ -337,7 +382,7 @@ def compare_atlas3d(too_many_FR=True):
 				ax.plot([muse_gals.ellipticity[i_muse], 
 					vimos_gals.ellipticity[i_vimos]], 
 					[muse_gals.lambda_Re[i_muse],vimos_gals.lambda_Re[i_vimos]], 
-					'k--', zorder=1, label='same galaxy in MUSE and VIMOS')
+					'k--', zorder=1, label='same galaxy in MUSE \n  and VIMOS')
 				label = False
 			else:
 				ax.plot([muse_gals.ellipticity[i_muse], 
@@ -345,13 +390,13 @@ def compare_atlas3d(too_many_FR=True):
 					[muse_gals.lambda_Re[i_muse],vimos_gals.lambda_Re[i_vimos]], 
 					'k--', zorder=1)
 
-	ax.set_title('Atlas3D Fast/Slow Rotator Classification scheme')
-	ax.set_xlabel(r'$\epsilon$')
+	# ax.set_title('Atlas3D Fast/Slow Rotator Classification scheme')
+	ax.set_xlabel(r'Ellipticity, $\epsilon$')
 	ax.set_ylabel(r'$\lambda_R (R_e)$')
 	
 	# Plot Slow Rotator bounds
 	ax.plot([0,0.4,0.4], [0.08, 0.18, 0], 'k', label='FR/SR boundary')
-	leg = plt.legend(facecolor='w')
+	leg = plt.legend(facecolor='w', bbox_to_anchor=(1, 0), loc='lower left')
 	ax.add_artist(leg)
 
 	# Proxy for kinematics legend
@@ -366,10 +411,14 @@ def compare_atlas3d(too_many_FR=True):
 	h5, = ax.plot(np.nan, marker=marker_atlas3d(4), c='b', lw=0,
 		label='Regular Rotator',  markerfacecolor='none')
 
-	plt.legend(handles=[h1,h2,h3,h4,h5], facecolor='w', loc=5)
+	box = ax.get_position()
+	ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])	
+	ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+	plt.legend(handles=[h1,h2,h3,h4,h5], facecolor='w', bbox_to_anchor=(1, 0.5), 
+		loc='center left')#, loc=5)
 
 	if too_many_FR:
-		# Show fraction of Slow Rotators in background of plot per elliptiity bin with 
+		# Show fraction of Slow Rotators in background of plot per ellipticity bin with 
 		# width 0.1
 		SRfraction_atlas = []
 		SRfraction_vimos = []
@@ -456,7 +505,7 @@ def compare_atlas3d(too_many_FR=True):
 			g.M_k = np.nan
 			g.radio = np.nan
 
-	for gals in [vimos_gals, muse_gals, atlas_gals]:
+	for gals in [massive_gals, vimos_gals, muse_gals, atlas_gals]:
 		ax[2].scatter(gals.M_k[gals.FR], gals.lambda_Re[gals.FR], c=gals.color, 
 			marker='x', label='%s Fast Rotators' % (gals.label))
 		ax[2].scatter(gals.M_k[~gals.FR], gals.lambda_Re[~gals.FR], c=gals.color, 
@@ -481,38 +530,38 @@ def compare_atlas3d(too_many_FR=True):
 					[muse_gals.lambda_Re[i_muse],vimos_gals.lambda_Re[i_vimos]], 
 					'k--', zorder=1)
 
-	plt.legend(facecolor='w')
+	# plt.legend(facecolor='w')
 
-	_,_,h1= ax[1].twinx().hist(atlas_gals.M_k[atlas_gals.FR], histtype='step', color='k', 
-		normed=True, label='Atlas3d Fast Rotators')
-	plt.yticks([])
-	_,_,h2 = ax[1].twinx().hist(atlas_gals.M_k[~atlas_gals.FR], histtype='step', color='k', 
-		normed=True, linestyle='--', label='Atlas3d Slow Rotators')
-	plt.yticks([])
-	h = [h1[0],h2[0]]
-	for gals in [vimos_gals, muse_gals]:
-		label = True
-		for l in gals.M_k[gals.FR]:
-			if label:
-				h.append(ax[1].axvline(l, color=gals.color, 
-					label='%s Fast Rotators' % (gals.label)))
-				label = False
-			else:
-				ax[1].axvline(l, color=gals.color)
-		label = True
-		for l in gals.M_k[~gals.FR]:
-			if label:
-				h.append(ax[1].axvline(l, color=gals.color, ls='--',
-					label='%s Slow Rotators' % (gals.label)))
-				label = False
-			else:
-				ax[1].axvline(l, color=gals.color, ls='--')
-	plt.legend(handles=h, facecolor='w', loc='center left')
+	# _,_,h1= ax[1].twinx().hist(atlas_gals.M_k[atlas_gals.FR], histtype='step', color='k', 
+	# 	normed=True, label='Atlas3d Fast Rotators')
+	# plt.yticks([])
+	# _,_,h2 = ax[1].twinx().hist(atlas_gals.M_k[~atlas_gals.FR], histtype='step', color='k', 
+	# 	normed=True, linestyle='--', label='Atlas3d Slow Rotators')
+	# plt.yticks([])
+	# h = [h1[0],h2[0]]
+	# for gals in [vimos_gals, muse_gals]:
+	# 	label = True
+	# 	for l in gals.M_k[gals.FR]:
+	# 		if label:
+	# 			h.append(ax[1].axvline(l, color=gals.color, 
+	# 				label='%s Fast Rotators' % (gals.label)))
+	# 			label = False
+	# 		else:
+	# 			ax[1].axvline(l, color=gals.color)
+	# 	label = True
+	# 	for l in gals.M_k[~gals.FR]:
+	# 		if label:
+	# 			h.append(ax[1].axvline(l, color=gals.color, ls='--',
+	# 				label='%s Slow Rotators' % (gals.label)))
+	# 			label = False
+	# 		else:
+	# 			ax[1].axvline(l, color=gals.color, ls='--')
+	# plt.legend(handles=h, facecolor='w', loc='center left')
 
 
 	ax[2].set_xlabel(r'$M_k \mathrm{(mag)}$')
 	ax[2].set_ylabel(r'$\lambda_R (R_e)$')
-	ax[1].set_ylabel('Normalised histogram')
+	# ax[1].set_ylabel('Normalised histogram')
 	ax[0].set_ylabel('Fraction of SR')
 	ax[2].invert_xaxis()
 
@@ -520,6 +569,10 @@ def compare_atlas3d(too_many_FR=True):
 	SRfraction_atlas = []
 	SRfraction_vimos = []
 	SRfraction_muse = []
+	SRfraction_sample = []
+	n_in_bin_atlas = []
+	n_in_bin_sample = []
+	n_in_bin_massive = []
 	expectedSRs = 0
 	expectedSRs_err = 0
 
@@ -529,17 +582,32 @@ def compare_atlas3d(too_many_FR=True):
 	# steps = [-27,-25,-24,-23,-22]#,-21]
 
 	order = np.argsort(atlas_gals.M_k)
-	steps = [-27.]+list(atlas_gals.M_k[order][~atlas_gals.FR[order]][::-5][::-1]+0.1)
+	# steps = [-27.]+list(atlas_gals.M_k[order][~atlas_gals.FR[order]][::-5][::-1]+0.1)
+	steps = np.arange(-27,-21,0.5).tolist()
+	# steps =[-27, -26, -25.5, -24.5, -24, -23.5, -23., -22.5, -22., -21.5]
 	step = np.diff(steps+[-21.])
 
 	for i, M in enumerate(steps):
 		# ax[2].axvline(M) # Show bins in main plot
-		M_k_bin_atlas = (atlas_gals.M_k >= M ) * (atlas_gals.M_k < M + step[i])
-		SRfraction_atlas.append(np.sum(~atlas_gals.FR * M_k_bin_atlas)/
-			float(np.sum(M_k_bin_atlas)))
-		M_k_uncert_bin_atlas = np.sqrt(SRfraction_atlas[i] * (1 - SRfraction_atlas[i])/
-			np.sum(M_k_bin_atlas))
+		# M_k_bin_atlas = (atlas_gals.M_k >= M ) * (atlas_gals.M_k < M + step[i])
+		# SRfraction_atlas.append(np.sum(~atlas_gals.FR * M_k_bin_atlas)/
+		# 	float(np.sum(M_k_bin_atlas)))
+		# M_k_uncert_bin_atlas = np.sqrt(SRfraction_atlas[i] * (1 - SRfraction_atlas[i])/
+		# 	np.sum(M_k_bin_atlas))
 
+		# include MASSIVE
+		M_k_bin_atlas = (atlas_gals.M_k >= M ) * (atlas_gals.M_k < M + step[i])
+		M_k_bin_massive = (massive_gals.M_k >= M ) * (massive_gals.M_k < M + step[i])
+		SRfraction_atlas.append((np.sum(~atlas_gals.FR * M_k_bin_atlas) + 
+			np.sum(~massive_gals.FR * M_k_bin_massive))/
+			float(np.sum(M_k_bin_atlas) + np.sum(M_k_bin_massive)))
+		if np.sum(M_k_bin_atlas)+np.sum(M_k_bin_massive) != 0:
+			M_k_uncert_bin_atlas = np.sqrt(SRfraction_atlas[i] * (1 - SRfraction_atlas[i])/
+				(np.sum(M_k_bin_atlas)+np.sum(M_k_bin_massive)))
+		else:
+			M_k_uncert_bin_atlas = 0
+		n_in_bin_atlas.append(np.sum(M_k_bin_atlas)+np.sum(M_k_bin_massive))
+		n_in_bin_massive.append(np.sum(M_k_bin_massive))
 
 		M_k_bin_vimos = (vimos_gals.M_k >= M ) * (vimos_gals.M_k < M + step[i])
 		SRfraction_vimos.append(np.sum(~vimos_gals.FR * M_k_bin_vimos)/
@@ -548,35 +616,186 @@ def compare_atlas3d(too_many_FR=True):
 		M_k_bin_muse = (muse_gals.M_k >= M ) * (muse_gals.M_k < M + step[i])
 		SRfraction_muse.append(np.sum(~muse_gals.FR * M_k_bin_muse)/
 			float(np.sum(M_k_bin_muse)))
-		expectedSRs = np.nansum((np.sum(M_k_bin_vimos) * SRfraction_atlas[i], 
+
+		M_k_bin_sample = (sample_gals.M_k >= M ) * (sample_gals.M_k < M + step[i])
+		SRfraction_sample.append(np.sum(~sample_gals.FR * M_k_bin_sample)/
+			float(np.sum(M_k_bin_sample)))
+		n_in_bin_sample.append(np.sum(M_k_bin_sample))
+
+		# expectedSRs = np.nansum((np.sum(M_k_bin_vimos) * SRfraction_atlas[i], 
+		# 	expectedSRs))
+		# expectedSRs_err = np.sqrt(expectedSRs_err**2 + (
+		# 	M_k_uncert_bin_atlas * np.sum(M_k_bin_vimos))**2)
+
+		expectedSRs = np.nansum((np.sum(M_k_bin_sample) * SRfraction_atlas[i], 
 			expectedSRs))
 		expectedSRs_err = np.sqrt(expectedSRs_err**2 + (
-			M_k_uncert_bin_atlas * np.sum(M_k_bin_vimos))**2)
+			M_k_uncert_bin_atlas * np.sum(M_k_bin_sample))**2)
 
 	SRfraction_atlas.insert(0,SRfraction_atlas[0])
 	SRfraction_vimos.insert(0,SRfraction_vimos[0])
 	SRfraction_muse.insert(0,SRfraction_muse[0])
+	SRfraction_sample.insert(0,SRfraction_sample[0])
 
 	SRfraction_atlas = np.array(SRfraction_atlas)
 	SRfraction_vimos = np.array(SRfraction_vimos)
 	SRfraction_muse = np.array(SRfraction_muse)
+	SRfraction_sample = np.array(SRfraction_sample)
 
 	SRfraction_atlas[np.isnan(SRfraction_atlas)] = 0
 	SRfraction_vimos[np.isnan(SRfraction_vimos)] = 0
 	SRfraction_muse[np.isnan(SRfraction_muse)] = 0
+	SRfraction_sample[np.isnan(SRfraction_sample)] = 0
 
 	steps.append(-21)
 	ax[0].plot(steps, SRfraction_atlas, color='k', ls='steps--')
-	ax[0].plot(steps, SRfraction_vimos, color='r', ls='steps--')
-	ax[0].plot(steps, SRfraction_muse, color='b', ls='steps--')
+	ax[0].plot(steps, SRfraction_sample, color='r', ls='steps--')
+	for i, s in enumerate(steps):
+		if s != min(steps) and SRfraction_sample[i] != 0:
+			ax[0].text(np.mean([steps[i],steps[i-1]]), SRfraction_sample[i]-0.02, 
+				'%i/%i'%(n_in_bin_sample[i-1] * SRfraction_sample[i], 
+				n_in_bin_sample[i-1]), color='r', va='top', ha='center')
+	for i, s in enumerate(steps):
+		if s != min(steps) and SRfraction_atlas[i] != 0:
+			ax[0].text(np.mean([steps[i],steps[i-1]]), SRfraction_atlas[i], 
+				'%i/%i'%(n_in_bin_atlas[i-1] * SRfraction_atlas[i], 
+				n_in_bin_atlas[i-1]), color='k', va='bottom', ha='center')
 	ax[0].set_ylim([-0.05,1.05])
 	if too_many_FR:
 		ax[0].text(-21,0.75, 
-			"Expected # of SRs in our sample \n   based on Atlas3D: (%.2f+/-%.2f)/10" % (
-				expectedSRs, expectedSRs_err))
+			"Expected # of SRs in our sample \n   based on Atlas3D: (%.2f+/-%.2f)/%i" % (
+				expectedSRs, expectedSRs_err, len(sample_gals)))
+
+
+	n_in_bin_atlas.insert(0,n_in_bin_atlas[0])
+	n_in_bin_sample.insert(0, n_in_bin_sample[0])
+	n_in_bin_massive.insert(0, n_in_bin_massive[0])
+	ax[1].plot(steps, np.array(n_in_bin_atlas)/float(
+		max(np.array(n_in_bin_atlas)[np.array(steps)<-25])), color='k', 
+		ls='steps--')
+	# ax[1].plot(steps, np.array(n_in_bin_massive)/float(max(n_in_bin_massive)), 
+	# 	color='k', ls='steps--')
+	ax[1].plot(steps, np.array(n_in_bin_sample)/float(max(n_in_bin_sample)), 
+		color='r', ls='steps--')
+	ax[1].set_ylabel('Number of galaxies in \n bin (abitary units)')
+	ax[1].set_yticklabels([])
+
+
 
 	fig.suptitle('K-band magnitude distribution for F/S rotators')
 	fig.savefig('%s/Data/muse/analysis/lambda_R_M_k.png' % (cc.base_dir))
+	plt.close()
+	Prefig(transparent=False)
+
+## ----------=========== K-band magnitude vs lambda_R 2 ==========----------
+	print 'K-band magnitude vs lambda_Re'
+	Prefig(size=(16,12), transparent=False)
+	fig, ax = plt.subplots(2,1, sharex=True)
+
+	# Show fraction of Slow Rotators in background of plot per M_k bin with width 0.5
+	SRfraction_atlas = []
+	SRfraction_vimos = []
+	SRfraction_muse = []
+	SRfraction_sample = []
+	n_in_bin_atlas = []
+	n_in_bin_sample = []
+	n_in_bin_massive = []
+	expectedSRs = 0
+	expectedSRs_err = 0
+
+	order = np.argsort(atlas_gals.M_k)
+	steps = np.arange(-27,-21,0.5).tolist()
+	step = np.diff(steps+[-21.])
+
+	for i, M in enumerate(steps):
+		# include MASSIVE
+		M_k_bin_atlas = (atlas_gals.M_k >= M ) * (atlas_gals.M_k < M + step[i])
+		M_k_bin_massive = (massive_gals.M_k >= M ) * (massive_gals.M_k < M + step[i])
+		SRfraction_atlas.append((np.sum(~atlas_gals.FR * M_k_bin_atlas) + 
+			np.sum(~massive_gals.FR * M_k_bin_massive))/
+			float(np.sum(M_k_bin_atlas) + np.sum(M_k_bin_massive)))
+		if np.sum(M_k_bin_atlas)+np.sum(M_k_bin_massive) != 0:
+			M_k_uncert_bin_atlas = np.sqrt(SRfraction_atlas[i] * (1 - SRfraction_atlas[i])/
+				(np.sum(M_k_bin_atlas)+np.sum(M_k_bin_massive)))
+		else:
+			M_k_uncert_bin_atlas = 0
+		n_in_bin_atlas.append(np.sum(M_k_bin_atlas)+np.sum(M_k_bin_massive))
+		n_in_bin_massive.append(np.sum(M_k_bin_massive))
+
+		M_k_bin_vimos = (vimos_gals.M_k >= M ) * (vimos_gals.M_k < M + step[i])
+		SRfraction_vimos.append(np.sum(~vimos_gals.FR * M_k_bin_vimos)/
+			float(np.sum(M_k_bin_vimos)))
+
+		M_k_bin_muse = (muse_gals.M_k >= M ) * (muse_gals.M_k < M + step[i])
+		SRfraction_muse.append(np.sum(~muse_gals.FR * M_k_bin_muse)/
+			float(np.sum(M_k_bin_muse)))
+
+		M_k_bin_sample = (sample_gals.M_k >= M ) * (sample_gals.M_k < M + step[i])
+		SRfraction_sample.append(np.sum(~sample_gals.FR * M_k_bin_sample)/
+			float(np.sum(M_k_bin_sample)))
+		n_in_bin_sample.append(np.sum(M_k_bin_sample))
+
+
+		expectedSRs = np.nansum((np.sum(M_k_bin_sample) * SRfraction_atlas[i], 
+			expectedSRs))
+		expectedSRs_err = np.sqrt(expectedSRs_err**2 + (
+			M_k_uncert_bin_atlas * np.sum(M_k_bin_sample))**2)
+
+	SRfraction_atlas.insert(0,SRfraction_atlas[0])
+	SRfraction_vimos.insert(0,SRfraction_vimos[0])
+	SRfraction_muse.insert(0,SRfraction_muse[0])
+	SRfraction_sample.insert(0,SRfraction_sample[0])
+
+	SRfraction_atlas = np.array(SRfraction_atlas)
+	SRfraction_vimos = np.array(SRfraction_vimos)
+	SRfraction_muse = np.array(SRfraction_muse)
+	SRfraction_sample = np.array(SRfraction_sample)
+
+	SRfraction_atlas[np.isnan(SRfraction_atlas)] = 0
+	SRfraction_vimos[np.isnan(SRfraction_vimos)] = 0
+	SRfraction_muse[np.isnan(SRfraction_muse)] = 0
+	SRfraction_sample[np.isnan(SRfraction_sample)] = 0
+
+	steps.append(-21)
+	ax[1].plot(steps, SRfraction_atlas, color='k', ls='steps--')
+	ax[1].plot(steps, SRfraction_sample, color='r', ls='steps--')
+	for i, s in enumerate(steps):
+		if s != min(steps) and SRfraction_sample[i] != 0:
+			ax[1].text(np.mean([steps[i],steps[i-1]]), SRfraction_sample[i]-0.02, 
+				'%i/%i'%(n_in_bin_sample[i-1] * SRfraction_sample[i], 
+				n_in_bin_sample[i-1]), color='r', va='top', ha='center')
+	for i, s in enumerate(steps):
+		if s != min(steps) and SRfraction_atlas[i] != 0:
+			ax[1].text(np.mean([steps[i],steps[i-1]]), SRfraction_atlas[i], 
+				'%i/%i'%(n_in_bin_atlas[i-1] * SRfraction_atlas[i], 
+				n_in_bin_atlas[i-1]), color='k', va='bottom', ha='center')
+	ax[1].set_ylim([-0.05,1.05])
+	if too_many_FR:
+		ax[1].text(-21,0.75, 
+			"Expected # of SRs in our sample \n   based on Atlas3D: (%.2f+/-%.2f)/%i" % (
+				expectedSRs, expectedSRs_err, len(sample_gals)))
+
+	n_in_bin_atlas.insert(0,n_in_bin_atlas[0])
+	n_in_bin_sample.insert(0, n_in_bin_sample[0])
+	n_in_bin_massive.insert(0, n_in_bin_massive[0])
+	n_in_bin_atlas = np.array(n_in_bin_atlas)
+	n_in_bin_sample = np.array(n_in_bin_sample)
+	n_in_bin_massive = np.array(n_in_bin_massive)
+	steps = np.array(steps)
+
+	
+	ax[0].plot(steps, n_in_bin_atlas/float(max(n_in_bin_atlas[steps<-25])), 
+		color='k', ls='steps--')
+	ax[0].plot(steps, n_in_bin_sample/float(max(n_in_bin_sample)), 
+		color='r', ls='steps--')
+	ax[0].set_ylabel('Number of galaxies in \n bin (abitary units)')
+	ax[0].set_yticklabels([])
+	ax[1].set_ylabel('Fraction of SR')
+
+	ax[1].invert_xaxis()
+	ax[1].set_xlabel(r'$M_k \mathrm{(mag)}$')
+
+	fig.savefig('%s/Data/muse/analysis/M_k_binned.png' % (cc.base_dir))
 	plt.close()
 	Prefig(transparent=False)
 ## ----------============== ellipticity vs M_k ===============----------
