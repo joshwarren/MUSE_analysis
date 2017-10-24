@@ -468,7 +468,21 @@ def get_dataCubeDirectory(galaxy, radio_band=None):
 		dataCubeDirectory.original = '%s/%s/ADP.2016-06-21T08:50:02.757.fits' % (
 			dir, galaxy)
 		# dataCubeDirectory.xray = '%s/Data/Chandra/N1399_full.fits' % (cc.base_dir)
-
+		if radio_band is None or radio_band == 'C' or radio_band == 'CI':
+			dataCubeDirectory.radio = mystring2('%s/Data/VLA/ngc1399/NGC1399.CBAND.ANB.I.1.25.fits' % (
+				cc.base_dir))
+			dataCubeDirectory.radio.band = 'C band (4.86 GHz)'
+			col = np.where(file_headings=='MUSE-VLA_C')[0][0]
+		elif radio_band == 'CQ':
+			dataCubeDirectory.radio = mystring2('%s/Data/VLA/ngc1399/NGC1399.CBAND.ANB.Q.1.25.fits' % (
+				cc.base_dir))
+			dataCubeDirectory.radio.band = 'C band (4.86 GHz)'
+			col = np.where(file_headings=='MUSE-VLA_C')[0][0]
+		elif radio_band == 'CU':
+			dataCubeDirectory.radio = mystring2('%s/Data/VLA/ngc1399/NGC1399.CBAND.ANB.U.1.25.fits' % (
+				cc.base_dir))
+			dataCubeDirectory.radio.band = 'C band (4.86 GHz)'
+			col = np.where(file_headings=='MUSE-VLA_C')[0][0]
 	# Extraction of CO offsets
 	CO_RA[CO_RA=='-'] = 'nan'
 	CO_dec[CO_dec=='-'] = 'nan'

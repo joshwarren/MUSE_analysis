@@ -83,11 +83,11 @@ for galaxy in galaxies:
 		# 	overplot = {'radio':'r', 'CO':'c'})
 		# plt.close()
 		D = plot_stellar_pop(galaxy, opt='pop'+MC_dir, method='mostlikely',
-			overplot = {'radio':'r', 'CO':'c'}, D=D)
-		plt.close()
-		BPT(galaxy, D=D, opt='pop'+MC_dir)
-		plt.close()
-		D = fit_disk(galaxy, D=D, opt='pop'+MC_dir, instrument='muse')
+			overplot = {'radio':'r', 'CO':'c'}, D=D, gradient='only')
+		# plt.close()
+		# D = BPT(galaxy, D=D, opt='pop'+MC_dir)
+		# plt.close()
+		# D = fit_disk(galaxy, D=D, opt='pop'+MC_dir, instrument='muse')
 	except Exception as e:
 		gal_err.append(galaxy)
 		err.append(e)
