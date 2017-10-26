@@ -238,7 +238,6 @@ def compare_atlas3d(too_many_FR=True):
 				ellipticity = ellipticity_massive[i],
 				lambda_Re = lambda_Re_massive[i],
 				kin_group = 'a')
-	print len(atlas_gals) + len(massive_gals)
 
 	# # S0s
 	# ax.scatter(atlas_gals.ellipticity[atlas_gals.a*~atlas_gals.E], 
@@ -849,107 +848,107 @@ def compare_atlas3d(too_many_FR=True):
 	plt.legend(facecolor='w')
 	fig.savefig('%s/Data/muse/analysis/ellipticity_M_k.png' % (cc.base_dir))
 
-## ----------============== Radio power vs M_k ===============----------
-	print 'M_k vs Radio power'
+# ## ----------============== Radio power vs M_k ===============----------
+# 	print 'M_k vs Radio power'
 
-	atlas3d_file = '%s/Data/atlas3d/XXXI_tableA1.dat' % (cc.base_dir)
-	galaxies_atlas2, radio_atlas = np.loadtxt(atlas3d_file, unpack=True, usecols=(0,10), 
-		skiprows=2, dtype=str)
-	atlas_gals.add_radio(galaxies_atlas2, radio_atlas)
+# 	atlas3d_file = '%s/Data/atlas3d/XXXI_tableA1.dat' % (cc.base_dir)
+# 	galaxies_atlas2, radio_atlas = np.loadtxt(atlas3d_file, unpack=True, usecols=(0,10), 
+# 		skiprows=2, dtype=str)
+# 	atlas_gals.add_radio(galaxies_atlas2, radio_atlas)
 
-	fig, ax = plt.subplots()
+# 	fig, ax = plt.subplots()
 
-	for gals in [vimos_gals, atlas_gals]:
-		ax.scatter(gals.M_k[gals.FR], gals.radio[gals.FR], color=gals.color, marker='x',
-			label='%s Fast Rotators' % (gals.label))
-		ax.scatter(gals.M_k[~gals.FR], gals.radio[~gals.FR], color=gals.color, marker='^',
-			label = '%s Slow Rotators' % (gals.label))
-	ax.scatter(atlas_gals.M_k[atlas_gals.selected_27], 
-		atlas_gals.radio[atlas_gals.selected_27], marker='o', edgecolor='r',
-		facecolors='none', s=150, lw=1, label='Atlas3D subsample from 2.7GHz')
+# 	for gals in [vimos_gals, atlas_gals]:
+# 		ax.scatter(gals.M_k[gals.FR], gals.radio[gals.FR], color=gals.color, marker='x',
+# 			label='%s Fast Rotators' % (gals.label))
+# 		ax.scatter(gals.M_k[~gals.FR], gals.radio[~gals.FR], color=gals.color, marker='^',
+# 			label = '%s Slow Rotators' % (gals.label))
+# 	ax.scatter(atlas_gals.M_k[atlas_gals.selected_27], 
+# 		atlas_gals.radio[atlas_gals.selected_27], marker='o', edgecolor='r',
+# 		facecolors='none', s=150, lw=1, label='Atlas3D subsample from 2.7GHz')
 
-	ax.invert_xaxis()
-	plt.legend(facecolor='w')
+# 	ax.invert_xaxis()
+# 	plt.legend(facecolor='w')
 
-	ax.set_title('K-band magnitude vs Radio Power')
-	ax.set_xlabel(r'$M_k \mathrm{(mag)}$')
-	ax.set_ylabel(r'$\log P_{1.4\mathrm{GHz}}$')
+# 	ax.set_title('K-band magnitude vs Radio Power')
+# 	ax.set_xlabel(r'$M_k \mathrm{(mag)}$')
+# 	ax.set_ylabel(r'$\log P_{1.4\mathrm{GHz}}$')
 
-	fig.savefig('%s/Data/muse/analysis/radio_power_M_k.png' % (cc.base_dir))
-	plt.close('all')
+# 	fig.savefig('%s/Data/muse/analysis/radio_power_M_k.png' % (cc.base_dir))
+# 	plt.close('all')
 
-## ----------=========== Radio power (FIRST) vs M_k ===============----------
-	print 'Radio Power (with FIRST) vs M_k'
-	fig, ax = plt.subplots()
+# ## ----------=========== Radio power (FIRST) vs M_k ===============----------
+# 	print 'Radio Power (with FIRST) vs M_k'
+# 	fig, ax = plt.subplots()
 
-	for gals in [vimos_gals]:#, atlas_gals]:
-		ax.scatter(gals.M_k[gals.FR], gals.radio[gals.FR], color=gals.color, marker='x',
-			label='%s Fast Rotators' % (gals.label))
-		ax.scatter(gals.M_k[~gals.FR], gals.radio[~gals.FR], color=gals.color, marker='^',
-			label = '%s Slow Rotators' % (gals.label))
-	# ax.scatter(atlas_gals.M_k[atlas_gals.selected_27], 
-	# 	atlas_gals.radio[atlas_gals.selected_27], marker='o', edgecolor='r',
-	# 	facecolors='none', s=150, lw=1, label='Atlas3D subsample from 2.7GHz')
+# 	for gals in [vimos_gals]:#, atlas_gals]:
+# 		ax.scatter(gals.M_k[gals.FR], gals.radio[gals.FR], color=gals.color, marker='x',
+# 			label='%s Fast Rotators' % (gals.label))
+# 		ax.scatter(gals.M_k[~gals.FR], gals.radio[~gals.FR], color=gals.color, marker='^',
+# 			label = '%s Slow Rotators' % (gals.label))
+# 	# ax.scatter(atlas_gals.M_k[atlas_gals.selected_27], 
+# 	# 	atlas_gals.radio[atlas_gals.selected_27], marker='o', edgecolor='r',
+# 	# 	facecolors='none', s=150, lw=1, label='Atlas3D subsample from 2.7GHz')
 	
 
-	# Add the FIRST radio power to Atlas galaxies
-	first_file = '%s/Data/atlas3d/atlas_in_first.txt' % (cc.base_dir)
-	RA_h, RA_m, RA_s, dec_d, dec_m, dec_s, radio_first = np.loadtxt(first_file,
-		unpack=True, usecols=(5,6,7,8,9,10,13), skiprows=4, 
-		dtype=str)#'int,int,float,int,int,float,float')
-	radio_first = radio_first.astype(float)
+# 	# Add the FIRST radio power to Atlas galaxies
+# 	first_file = '%s/Data/atlas3d/atlas_in_first.txt' % (cc.base_dir)
+# 	RA_h, RA_m, RA_s, dec_d, dec_m, dec_s, radio_first = np.loadtxt(first_file,
+# 		unpack=True, usecols=(5,6,7,8,9,10,13), skiprows=4, 
+# 		dtype=str)#'int,int,float,int,int,float,float')
+# 	radio_first = radio_first.astype(float)
 
-	coords_first = []
-	for i in range(len(RA_h)):
-		coords_first.append(RA_h[i]+' '+RA_m[i]+' '+RA_s[i]+' '+dec_d[i]+' '+
-			dec_m[i]+' '+dec_s[i])
-	atlas_gals.add_first(coords_first, radio_first)
+# 	coords_first = []
+# 	for i in range(len(RA_h)):
+# 		coords_first.append(RA_h[i]+' '+RA_m[i]+' '+RA_s[i]+' '+dec_d[i]+' '+
+# 			dec_m[i]+' '+dec_s[i])
+# 	atlas_gals.add_first(coords_first, radio_first)
 
-	ax.scatter(atlas_gals.M_k[atlas_gals.FR], atlas_gals.first_radio[atlas_gals.FR],
-		color='orange', marker='x', label='FIRST Fast Rotators')
-	ax.scatter(atlas_gals.M_k[~atlas_gals.FR], atlas_gals.first_radio[~atlas_gals.FR], 
-		color='orange', marker='^', label='FIRST Slow Roatators')
-	# ax.scatter(atlas_gals.M_k[atlas_gals.selected_27], 
-	# 	atlas_gals.first_radio[atlas_gals.selected_27], marker='o', edgecolor='r',
-	# 	facecolors='none', s=150, lw=1)
+# 	ax.scatter(atlas_gals.M_k[atlas_gals.FR], atlas_gals.first_radio[atlas_gals.FR],
+# 		color='orange', marker='x', label='FIRST Fast Rotators')
+# 	ax.scatter(atlas_gals.M_k[~atlas_gals.FR], atlas_gals.first_radio[~atlas_gals.FR], 
+# 		color='orange', marker='^', label='FIRST Slow Roatators')
+# 	# ax.scatter(atlas_gals.M_k[atlas_gals.selected_27], 
+# 	# 	atlas_gals.first_radio[atlas_gals.selected_27], marker='o', edgecolor='r',
+# 	# 	facecolors='none', s=150, lw=1)
 
-	# for i, g in enumerate(atlas_gals):
-	# 	ax.plot([g.M_k, g.M_k], [g.first_radio, g.radio], c='k', ls='--')
+# 	# for i, g in enumerate(atlas_gals):
+# 	# 	ax.plot([g.M_k, g.M_k], [g.first_radio, g.radio], c='k', ls='--')
 
-	# Add NVSS
-	f = fits.open('%s/Data/atlas3d/FIRST_NVSS.fits' % (cc.base_dir))
-	d = f[1].data
-	f.close()
-	radio_nvss = d.NVSS_FLUX
-	m = radio_nvss!=-99
-	radio_nvss = radio_nvss[m]
-	nvss_ra = d.RA[m]
-	nvss_dec = d.DEC[m]
-	atlas_gals.add_nvss(nvss_ra, nvss_dec, radio_nvss)
+# 	# Add NVSS
+# 	f = fits.open('%s/Data/atlas3d/FIRST_NVSS.fits' % (cc.base_dir))
+# 	d = f[1].data
+# 	f.close()
+# 	radio_nvss = d.NVSS_FLUX
+# 	m = radio_nvss!=-99
+# 	radio_nvss = radio_nvss[m]
+# 	nvss_ra = d.RA[m]
+# 	nvss_dec = d.DEC[m]
+# 	atlas_gals.add_nvss(nvss_ra, nvss_dec, radio_nvss)
 
-	ax.scatter(atlas_gals.M_k[atlas_gals.FR], atlas_gals.nvss_radio[atlas_gals.FR],
-		color='g', marker='x', label='NVSS Fast Rotators')
-	ax.scatter(atlas_gals.M_k[~atlas_gals.FR], atlas_gals.nvss_radio[~atlas_gals.FR], 
-		color='g', marker='^', label='NVSS Slow Roatators')
-	ax.scatter(atlas_gals.M_k[atlas_gals.selected_27], 
-		atlas_gals.nvss_radio[atlas_gals.selected_27], marker='o', edgecolor='r',
-		facecolors='none', s=150, lw=1, label='Atlas3D subsample from 2.7GHz')
+# 	ax.scatter(atlas_gals.M_k[atlas_gals.FR], atlas_gals.nvss_radio[atlas_gals.FR],
+# 		color='g', marker='x', label='NVSS Fast Rotators')
+# 	ax.scatter(atlas_gals.M_k[~atlas_gals.FR], atlas_gals.nvss_radio[~atlas_gals.FR], 
+# 		color='g', marker='^', label='NVSS Slow Roatators')
+# 	ax.scatter(atlas_gals.M_k[atlas_gals.selected_27], 
+# 		atlas_gals.nvss_radio[atlas_gals.selected_27], marker='o', edgecolor='r',
+# 		facecolors='none', s=150, lw=1, label='Atlas3D subsample from 2.7GHz')
 
-	for i, g in enumerate(atlas_gals):
-		ax.plot([g.M_k, g.M_k], [g.nvss_radio, g.first_radio], c='k', ls='--')
-
-
+# 	for i, g in enumerate(atlas_gals):
+# 		ax.plot([g.M_k, g.M_k], [g.nvss_radio, g.first_radio], c='k', ls='--')
 
 
-	ax.invert_xaxis()
-	plt.legend(facecolor='w')
 
-	ax.set_title('K-band magnitude vs FIRST Radio Power')
-	ax.set_xlabel(r'$M_k \mathrm{(mag)}$')
-	ax.set_ylabel(r'$\log P_{1.4\mathrm{GHz}}$')
 
-	fig.savefig('%s/Data/muse/analysis/first_radio_power_M_k.png' % (cc.base_dir))
-	plt.close()
+# 	ax.invert_xaxis()
+# 	plt.legend(facecolor='w')
+
+# 	ax.set_title('K-band magnitude vs FIRST Radio Power')
+# 	ax.set_xlabel(r'$M_k \mathrm{(mag)}$')
+# 	ax.set_ylabel(r'$\log P_{1.4\mathrm{GHz}}$')
+
+# 	fig.savefig('%s/Data/muse/analysis/first_radio_power_M_k.png' % (cc.base_dir))
+# 	plt.close()
 ## ----------================ Core age vs KDC size ================----------
 	print 'KDC size/age'
 	muse_core_file = "%s/Data/muse/analysis/galaxies_core.txt" % (cc.base_dir)
@@ -1051,6 +1050,7 @@ def compare_atlas3d(too_many_FR=True):
 	
 	# Join MUSE and VIMOS
 	label = True
+	inBoth = []
 	for i_muse, g in enumerate(muse_gals):
 		if g.name in vimos_gals.names:
 			i_vimos = np.where(vimos_gals.name==g.name)[0][0]
@@ -1063,18 +1063,99 @@ def compare_atlas3d(too_many_FR=True):
 				ax.plot([muse_gals.KDC_size[i_muse], vimos_gals.KDC_size[i_vimos]], 
 					[muse_gals.age[i_muse],vimos_gals.age[i_vimos]], 
 					'k--', zorder=1)
+			# label
+			if np.isfinite(muse_gals.KDC_size[i_muse]) and \
+				np.isfinite(vimos_gals.KDC_size[i_vimos]):
 
+				ax.text(np.mean([muse_gals.KDC_size[i_muse], 
+					vimos_gals.KDC_size[i_vimos]]) + 100, 
+					np.mean([muse_gals.age[i_muse],vimos_gals.age[i_vimos]]),
+					g.name.upper(), va='center')
+				inBoth.append(g.name)
+
+	# label galaxies
+	for gals in [vimos_gals, muse_gals]:
+		for g in gals:
+			if np.isfinite(g.KDC_size) and g.name not in inBoth:
+				ax.text(g.KDC_size-40, g.age-0.4, g.name.upper(), va='top',
+					ha='right')
 
 
 	ax.legend(facecolor='w')
 	ax.set_yscale('log')#, nonposy='clip', subsy=[1,2,3,4,5,6,7,8,9])
 	ax.set_xlabel('KDC size (pc)')
 	ax.set_ylabel('Age of central 1 arcsec (Gyrs)')
-	ax.set_title('Age and size of KDCs')
+	# ax.set_title('Age and size of KDCs')
 
 
 	fig.savefig('%s/Data/muse/analysis/KDC_size_age.png' % (cc.base_dir))	
 	plt.close()
+## ----------============ Mg_b vs vel dispersion =============----------
+	print 'Mg vs sigma'
+	for gals in [vimos_gals, muse_gals]:
+		Mg_sigma_file = '%s/Data/%s/analysis/galaxies_Mg_sigma.txt' %(
+			cc.base_dir, gals.label)
+		galaxies = np.loadtxt(Mg_sigma_file, unpack=True, usecols=(0,), 
+			dtype=str, skiprows=1)
+		Mg, e_Mg, sig, e_sig = np.loadtxt(Mg_sigma_file, unpack=True, 
+			usecols=(1,2,3,4), skiprows=1)
+		for g in gals:
+			i = np.where(galaxies == g.name)[0][0]
+			g.Mg = Mg[i]
+			g.e_Mg = e_Mg[i]
+			g.sigma = sig[i]
+			g.e_sigma = e_sig[i]
+
+	fig, ax = plt.subplots()
+	for gals in [vimos_gals, muse_gals]:
+		ax.errorbar(np.log10(gals.sigma), gals.Mg, fmt='.', 
+			xerr=gals.e_sigma/gals.sigma/np.log(10), 
+			yerr=gals.e_Mg, color=gals.color, label=gals.label)	
+
+	label = True
+	for i_muse, g in enumerate(muse_gals):
+		if g.name in vimos_gals.names:
+			i_vimos = np.where(vimos_gals.name==g.name)[0][0]
+			if label: # add just one label to legend
+				ax.plot(np.log10([muse_gals.sigma[i_muse], 
+					vimos_gals.sigma[i_vimos]]), 
+					[muse_gals.Mg[i_muse],vimos_gals.Mg[i_vimos]], 
+					'k--', zorder=1, label='same galaxy in MUSE and VIMOS')
+				label = False
+			else:
+				ax.plot(np.log10([muse_gals.sigma[i_muse], 
+					vimos_gals.sigma[i_vimos]]), 
+					[muse_gals.Mg[i_muse],vimos_gals.Mg[i_vimos]], 
+					'k--', zorder=1)
+
+	Mg, e_Mg, sigma, e_sigma = muse_gals.Mg, muse_gals.e_Mg, \
+		muse_gals.sigma, muse_gals.e_sigma
+	for g in vimos_gals:
+		if g.name not in muse_gals.names:
+			Mg = np.append(Mg, g.Mg)
+			e_Mg = np.append(e_Mg, g.e_Mg)
+			sigma = np.append(sigma, g.sigma)
+			e_sigma = np.append(e_sigma, g.e_sigma)
+
+
+	mask = ~np.isnan(Mg)
+
+	params, cov = np.polyfit(np.log10(sigma)[mask], Mg[mask], 1, 
+		w=np.sqrt(1/(e_sigma/sigma/np.log(10))**2 + 1/e_Mg**2)[mask], 
+		cov=True)
+	print 'grad: %.3f $\pm$ %.3f' % (params[0], np.sqrt(np.diag(cov))[0])
+
+	lims = np.array(ax.get_xlim())
+	ax.plot(lims, np.poly1d(params)(lims), 'k')
+	ax.plot(lims, 2.7*lims - 1.65, ':', label='Ziegler1997')
+	ax.set_xlim(lims)
+
+	ax.legend(facecolor='w')
+
+	ax.set_xlabel(r'$\log \sigma \mathrm{[km s^{-1}]}$')
+	ax.set_ylabel(r'Mg$_b \AA$')
+
+	fig.savefig('%s/Data/muse/analysis/Mg_sigma.png' % (cc.base_dir))
 ## ----------=========== Core OIII vs radio power ============----------
 	print '[OIII] vs radio power'
 	fig, ax = plt.subplots()
