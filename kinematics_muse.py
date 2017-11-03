@@ -74,8 +74,8 @@ def kinematics(galaxy, opt='kin', discard=0, plots=False, D=None):
 
 # ------------================ Lambda_R ==================----------
 
-	beta = np.tan(D.yBar/D.xBar) # Angle between point and center of galaxy and RA 
-									# axis.
+	beta = np.tan(D.yBar/D.xBar) # Angle between point and center of 
+									# galaxy and RA axis.
 	pa = 90 - f.theta # Position angle
 	res = 0.2 # arcsec. Spatial resolution of MUSE
 
