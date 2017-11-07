@@ -93,7 +93,7 @@ def kinematics(galaxy, opt='kin', discard=0, plots=False, D=None):
 
 	R_m[A_ellipse > A_s] = np.sqrt(A_s[A_ellipse>A_s]/np.pi)
 	# R_max occurs when 0.85*A_ellipse = A_s
-	# R_m[0.85*A_ellipse > A_s] = np.nan
+	R_m[0.85*A_ellipse > A_s] = np.nan
 
 	vel = D.components['stellar'].plot['vel']
 	vel_lim = set_lims(vel, symmetric=True)
@@ -106,11 +106,9 @@ def kinematics(galaxy, opt='kin', discard=0, plots=False, D=None):
 	vel[mask], sigma[mask] = np.nan, np.nan
 
 	# NB: numerator and denominator are in R_m order
-	numerator = np.nancumsum(D.flux[R_m_sort] * 
-		np.sqrt(D.xBar**2 + D.yBar**2)[R_m_sort] * np.abs(vel[R_m_sort]))
+	numerator = np.nancumsum((D.flux * R_m * np.abs(vel))[R_m_sort])
 
-	denominator = np.nancumsum(D.flux[R_m_sort] * 
-		np.sqrt(D.xBar**2 + D.yBar**2)[R_m_sort] * np.sqrt(vel**2 + sigma**2)[R_m_sort])
+	denominator = np.nancumsum((D.flux * R_m * np.sqrt(vel**2 + sigma**2))[R_m_sort])
 
 	lambda_R = numerator[R_m_sort.argsort()]/denominator[R_m_sort.argsort()]
 	lambda_R[np.isnan(R_m)] = np.nan
@@ -121,6 +119,13 @@ def kinematics(galaxy, opt='kin', discard=0, plots=False, D=None):
 
 	print 'lambda_Re: ', lambda_Re
 	lambda_Re_gals[i_gal2] = lambda_Re
+
+	file = '%s/Data/muse/analysis/%s/%s/lambda_R.txt' % (cc.base_dir, 
+			galaxy, opt)
+
+	with open(file, 'w') as f2:
+		for i in range(len(R_m)):
+			f2.write('%.4f   %.4f \n' %(R_m[R_m_sort][i], lambda_R[R_m_sort][i]))
 
 	fig, ax = plt.subplots()
 	ax.set_title(r"Radial $\lambda_R$ profile")

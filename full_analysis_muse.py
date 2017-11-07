@@ -42,7 +42,7 @@ if __name__=="__main__":
 		]
 	for g in galaxies:
 		try: 
-			full_analysis(galaxy=g, opt='kin_highSN')
+			full_analysis(galaxy=g, opt='kin')
 		except Exception as e:
 			print '%s failed' % (g)
 			print e

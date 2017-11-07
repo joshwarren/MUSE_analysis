@@ -160,7 +160,7 @@ def add_R_e(ax, galaxy, discard=0, pa=0):
 
 #-----------------------------------------------------------------------------
 def add_(overplot, color, ax, galaxy, scale=None, close=False, radio_band=None, 
-	debug=False, FoV=None):
+	debug=False, FoV=None, nolegend=False):
 	image_dir=getattr(get_dataCubeDirectory(galaxy, radio_band=radio_band), overplot)
 	if scale is None:
 		if image_dir.default_scale is not None:
@@ -205,16 +205,17 @@ def add_(overplot, color, ax, galaxy, scale=None, close=False, radio_band=None,
 		# Plot
 		cs = ax.contour(x, y, image, colors=color, linestyles='solid', linewidth=1)
 		# cs = ax.contour(image, colors=color, linestyles='solid', linewidth=1)
-		if overplot == 'radio':
-			if scale != 'lin':
-				cs.collections[0].set_label(scale+' '+image_dir.band)
+		if not nolegend:
+			if overplot == 'radio':
+				if scale != 'lin':
+					cs.collections[0].set_label(scale+' '+image_dir.band)
+				else:
+					cs.collections[0].set_label(image_dir.band)
 			else:
-				cs.collections[0].set_label(image_dir.band)
-		else:
-			if scale != 'lin':
-				cs.collections[0].set_label(scale+' '+overplot)
-			else:
-				cs.collections[0].set_label(overplot)
+				if scale != 'lin':
+					cs.collections[0].set_label(scale+' '+overplot)
+				else:
+					cs.collections[0].set_label(overplot)
 
 		if not debug:
 			ax.set_xlim(xlim)
@@ -226,8 +227,8 @@ def add_(overplot, color, ax, galaxy, scale=None, close=False, radio_band=None,
 			ydiff = ylim[1] - ylim[0]
 			ycent = np.mean(ylim)
 			ax.set_ylim(np.array([-1,1])*ydiff*FoV/2. + ycent)
-
-		leg = ax.legend(facecolor='w')
+		if not nolegend:
+			leg = ax.legend(facecolor='w')
 
 		# Save
 		if hasattr(ax, 'saveTo'):
@@ -239,7 +240,7 @@ def add_(overplot, color, ax, galaxy, scale=None, close=False, radio_band=None,
 
 		if close:
 			plt.close()
-		else:
+		elif not nolegend:
 			leg.remove()
 #-----------------------------------------------------------------------------
 

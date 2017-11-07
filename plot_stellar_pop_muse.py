@@ -4,16 +4,23 @@
 ## warrenj 20170331 Routine to plot the stellar populations found by pop.py
 ## on Glamdring. 
 
-
+from checkcomp import checkcomp
+cc = checkcomp()
+if cc.remote:
+	import matplotlib # 20160202 JP to stop lack-of X-windows error
+	matplotlib.use('Agg') # 20160202 JP to stop lack-of X-windows error
+	import matplotlib.pyplot as plt # used for plotting
+else:
+	import matplotlib.pyplot as plt # used for plotting
 import cPickle as pickle
-import matplotlib.pyplot as plt 
 from plot_velfield_nointerp import plot_velfield_nointerp 
 import numpy as np 
 import os
 from plot_results_muse import set_lims, add_
-from checkcomp import checkcomp
-cc = checkcomp()
-from errors2_muse import get_dataCubeDirectory
+from errors2_muse import get_dataCubeDirectory, set_params, run_ppxf
+from pop import get_absorption, population
+from classify import get_R_e
+from errors2 import apply_range
 from astropy.io import fits
 from prefig import Prefig
 Prefig(size=(16*2,12*3), transparent=False)
@@ -59,7 +66,7 @@ def plot_stellar_pop(galaxy, method='median', opt='pop', D=None, overplot={},
 
 	f = fits.open(get_dataCubeDirectory(galaxy))
 	header = f[1].header
-	f.close()
+	if not gradient: f.close()
 
 	if gradient != 'only':
 		age = np.zeros(D.number_of_bins)
@@ -274,9 +281,9 @@ def plot_stellar_pop(galaxy, method='median', opt='pop', D=None, overplot={},
 	if gradient:
 		out_plots = "%s/plots/population" % (output)
 
-		index = np.zeros((40,40,2))
-		for i in range(40):
-			for j in range(40):
+		index = np.zeros((150,150,2))
+		for i in range(index.shape[0]):
+			for j in range(index.shape[1]):
 				index[i,j,:] = np.array([i,j]) - center
 
 		step_size = 2
@@ -296,8 +303,8 @@ def plot_stellar_pop(galaxy, method='median', opt='pop', D=None, overplot={},
 			mask = (np.sqrt(index[:,:,0]**2 + index[:,:,1]**2) < a) * (
 				np.sqrt(index[:,:,0]**2 + index[:,:,1]**2) > a - step_size)
 
-			spec = np.nansum(f[0].data[:,mask], axis=1)
-			noise = np.sqrt(np.nansum(f[1].data[:,mask]**2, axis=1))
+			spec = np.nansum(f[1].data[:,mask], axis=1)
+			noise = np.sqrt(np.nansum(f[2].data[:,mask]**2, axis=1))
 
 			lam = np.arange(len(spec))*header['CD3_3'] + header['CRVAL3']
 			spec, lam, cut = apply_range(spec, lam=lam, 
@@ -317,7 +324,7 @@ def plot_stellar_pop(galaxy, method='median', opt='pop', D=None, overplot={},
 				rad[i].append(getattr(pop, i2))
 				rad_err[i].append(getattr(pop, 'unc_'+i))
 
-		annuli *= header['CDELT1']
+		annuli *= header['CD1_1']*60**2
 
 
 		gradient_file = '%s/galaxies_pop_gradients.txt' % (out_dir)
@@ -395,5 +402,5 @@ def plot_stellar_pop(galaxy, method='median', opt='pop', D=None, overplot={},
 # Use of plot_stellar_pop.py
 
 if __name__ == '__main__':
-	plot_stellar_pop('ic1459')
+	plot_stellar_pop('ic1459', gradient='only')
 

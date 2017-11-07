@@ -98,6 +98,7 @@ class set_params(object):
 				'[OI]6300d', '[NII]6583d']
 		elif value == 'none' or value == 'None' or value is None:
 			self._lines = []
+			self.gas = 0
 		else:
 			self._lines = list(value)
 # -----------------------------------------------------------------------------
@@ -609,7 +610,7 @@ class run_ppxf(ppxf):
 		self.rebin()
 		self.load_stellar_templates()
 
-		if not self.params.temp_mismatch:
+		if not self.params.temp_mismatch or self.params.gas==0:
 			self.load_emission_templates()
 			self.run()
 		else:
