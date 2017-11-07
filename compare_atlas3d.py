@@ -168,7 +168,7 @@ def compare_atlas3d(too_many_FR=True):
 
 ## ----------============== Ellipticity vs lambda_Re ==============----------
 	print 'FR/SR'
-	Prefig(transparent=False, size=(20,12))
+	Prefig(transparent=False, size=(15,9))
 	
 	fig, ax = plt.subplots()
 
@@ -238,44 +238,6 @@ def compare_atlas3d(too_many_FR=True):
 				ellipticity = ellipticity_massive[i],
 				lambda_Re = lambda_Re_massive[i],
 				kin_group = 'a')
-
-	# # S0s
-	# ax.scatter(atlas_gals.ellipticity[atlas_gals.a*~atlas_gals.E], 
-	# 	atlas_gals.lambda_Re[atlas_gals.a*~atlas_gals.E], 
-	# 	marker=marker_atlas3d(0), c='lightgrey', alpha=0.7, lw=0,
-	# 	label=r'Atlas3D S0: $T>-3.5$')
-	# ax.scatter(atlas_gals.ellipticity[atlas_gals.b*~atlas_gals.E], 
-	# 	atlas_gals.lambda_Re[atlas_gals.b*~atlas_gals.E], 
-	# 	marker=marker_atlas3d(1), c='lightgrey', alpha=0.7, lw=0)
-	# ax.scatter(atlas_gals.ellipticity[atlas_gals.c*~atlas_gals.E], 
-	# 	atlas_gals.lambda_Re[atlas_gals.c*~atlas_gals.E], 
-	# 	marker=marker_atlas3d(2), c='lightgrey', alpha=0.7, lw=0)
-	# ax.scatter(atlas_gals.ellipticity[atlas_gals.d*~atlas_gals.E], 
-	# 	atlas_gals.lambda_Re[atlas_gals.d*~atlas_gals.E], 
-	# 	marker=marker_atlas3d(3), c='lightgrey', alpha=0.7, lw=0)
-	# ax.plot(atlas_gals.ellipticity[atlas_gals.e*~atlas_gals.E], 
-	# 	atlas_gals.lambda_Re[atlas_gals.e*~atlas_gals.E], 
-	# 	marker=marker_atlas3d(4), c='lightgrey', alpha=0.7, lw=0, 
-	# 	markerfacecolor='none')
-
-	# # Ellipticals
-	# ax.scatter(atlas_gals.ellipticity[atlas_gals.a*atlas_gals.E], 
-	# 	atlas_gals.lambda_Re[atlas_gals.a*atlas_gals.E], 
-	# 	marker=marker_atlas3d(0), c='k', alpha=0.7, lw=0, 
-	# 	label=r'Atlas3D E: $T \leq -3.5$')
-	# ax.scatter(atlas_gals.ellipticity[atlas_gals.b*atlas_gals.E], 
-	# 	atlas_gals.lambda_Re[atlas_gals.b*atlas_gals.E], 
-	# 	marker=marker_atlas3d(1), c='k', alpha=0.7, lw=0)
-	# ax.scatter(atlas_gals.ellipticity[atlas_gals.c*atlas_gals.E], 
-	# 	atlas_gals.lambda_Re[atlas_gals.c*atlas_gals.E], 
-	# 	marker=marker_atlas3d(2), c='k', alpha=0.7, lw=0)
-	# ax.scatter(atlas_gals.ellipticity[atlas_gals.d*atlas_gals.E], 
-	# 	atlas_gals.lambda_Re[atlas_gals.d*atlas_gals.E], 
-	# 	marker=marker_atlas3d(3), c='k', alpha=0.7, lw=0)
-	# ax.plot(atlas_gals.ellipticity[atlas_gals.e*atlas_gals.E], 
-	# 	atlas_gals.lambda_Re[atlas_gals.e*atlas_gals.E], 
-	# 	marker=marker_atlas3d(4), c='k', alpha=0.7, lw=0, markerfacecolor='none')
-	
 
 	ell = np.arange(0.01,0.99,0.01)
 
@@ -381,7 +343,7 @@ def compare_atlas3d(too_many_FR=True):
 				ax.plot([muse_gals.ellipticity[i_muse], 
 					vimos_gals.ellipticity[i_vimos]], 
 					[muse_gals.lambda_Re[i_muse],vimos_gals.lambda_Re[i_vimos]], 
-					'k--', zorder=1, label='same galaxy in MUSE \n  and VIMOS')
+					'k--', zorder=1, label='same galaxy in\n   MUSE and\n   VIMOS')
 				label = False
 			else:
 				ax.plot([muse_gals.ellipticity[i_muse], 
@@ -406,14 +368,14 @@ def compare_atlas3d(too_many_FR=True):
 	h3, = ax.plot(np.nan, marker=marker_atlas3d(2), c='b', lw=0, 
 		label='KDC/CDC')
 	h4, = ax.plot(np.nan, marker=marker_atlas3d(3), c='b', lw=0,
-		label='Counter Rotating Disks')
+		label='Counter Rotating\n   Discs')
 	h5, = ax.plot(np.nan, marker=marker_atlas3d(4), c='b', lw=0,
 		label='Regular Rotator',  markerfacecolor='none')
 
 	box = ax.get_position()
 	ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])	
 	ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
-	plt.legend(handles=[h1,h2,h3,h4,h5], facecolor='w', bbox_to_anchor=(1, 0.5), 
+	plt.legend(handles=[h1,h2,h3,h4,h5], facecolor='w', bbox_to_anchor=(1, 0.7), 
 		loc='center left')#, loc=5)
 
 	if too_many_FR:
@@ -688,7 +650,7 @@ def compare_atlas3d(too_many_FR=True):
 
 ## ----------=========== K-band magnitude vs lambda_R 2 ==========----------
 	print 'K-band magnitude vs lambda_Re'
-	Prefig(size=(16,12), transparent=False)
+	Prefig(size=(12,9), transparent=False)
 	fig, ax = plt.subplots(2,1, sharex=True)
 
 	# Show fraction of Slow Rotators in background of plot per M_k bin with width 0.5
@@ -1094,7 +1056,7 @@ def compare_atlas3d(too_many_FR=True):
 	print 'Mg vs sigma'
 	for gals in [vimos_gals, muse_gals]:
 		Mg_sigma_file = '%s/Data/%s/analysis/galaxies_Mg_sigma.txt' %(
-			cc.base_dir, gals.label)
+			cc.base_dir, gals.label.lower())
 		galaxies = np.loadtxt(Mg_sigma_file, unpack=True, usecols=(0,), 
 			dtype=str, skiprows=1)
 		Mg, e_Mg, sig, e_sig = np.loadtxt(Mg_sigma_file, unpack=True, 
