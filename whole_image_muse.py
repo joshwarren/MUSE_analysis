@@ -21,6 +21,9 @@ H0 = 70 # km/s/Mpc
 
 def whole_image(galaxy, verbose=False):
 	print galaxy
+	max_reps = 100
+
+
 	if cc.device == 'glamdring':
 		data_file = "%s/analysis/galaxies.txt" % (cc.base_dir)
 	else:
@@ -61,7 +64,8 @@ def whole_image(galaxy, verbose=False):
 		noise = np.sqrt(np.einsum('ijk,jk->i', noise**2, mask))
 
 		if radius == max_radius:
-			params = set_params(opt='pop', reps=100, temp_mismatch=True, 
+			reps = max_reps
+			params = set_params(opt='pop', reps=reps, temp_mismatch=True, 
 				produce_plot=False)
 		
 
@@ -108,10 +112,10 @@ def whole_image(galaxy, verbose=False):
 		Ha_spec = pp.matrix[:, pp.templatesToUse=='Halpha'].flatten() * \
 			pp.weights[pp.templatesToUse=='Halpha']
 		Ha_flux = np.trapz(Ha_spec, x=pp.lam)
-		if rep == 100:
+		if reps == max_reps:
 			Hb_spec_uncert = pp.MCgas_uncert_spec[
 				pp.templatesToUse[pp.component!=0]=='Hbeta', :].flatten()
-			Ha_flux_uncert = trapz_uncert(Hb_spec_uncert, x=pp.lam)
+			Hb_flux_uncert = trapz_uncert(Hb_spec_uncert, x=pp.lam)
 
 			Ha_spec_uncert = pp.MCgas_uncert_spec[
 				pp.templatesToUse[pp.component!=0]=='Halpha', :].flatten()
@@ -125,53 +129,81 @@ def whole_image(galaxy, verbose=False):
 				(pp.lam < 6563./(1 + (pp.sol[1][0] - 300)/c)) *
 				(pp.lam > 6563./(1 + (pp.sol[1][0] + 300)/c))]) > 2.5:
 
-				if reps==100:
-					Mass = get_Mass(Ha_flux, D)
-					e_Mass = get_Mass(Ha_flux_uncert, D)
+				if reps==max_reps:
+					Mass = get_Mass(Ha_flux, D, instrument='muse')
+					e_Mass = get_Mass(Ha_flux_uncert, D, instrument='muse')
 					
-					mass[i_gal] = str(round(np.log10(Mass),2))
+					mass[i_gal] = str(round(np.log10(Mass),4))
 					e_mass[i_gal] =  str(round(np.abs(e_Mass/Mass/
-						np.log(10)), 2))
-					bulmer[i_gal] = str(round(Ha_flux/Hb_flux, 2))
-					e_bulmer[i_gal] = str(round(bulmer[i_gal]*np.sqrt(
-						(Ha_flux_uncert/Ha_flux)**2 + 
-						(Hb_flux_uncert/Hb_flux)**2), 2))
+						np.log(10)), 4))
 					if verbose:
 						print '%.2f +/- %.2f log10(Solar Masses)' % (
 							mass[i_gal], e_mass[i_gal])
+						fig, ax = plt.subplots(2)
+						pp.ax = ax[0]
+						from ppxf import create_plot
+						fig, ax = create_plot(pp).produce 
+						ax.set_xlim([4800, 4900])
+						ax.legend()
+
+						pp.ax = ax[1]
+						from ppxf import create_plot
+						fig, ax = create_plot(pp).produce 
+						ax.set_xlim([6500, 6600])
+
+						fig.savefig('%s.png'%(galaxy))
 					radius = -1
 				else: # Repeat but calculate uncert
-					reps = 100
-			else:
-				if radius == max_radius:
-					Mass = get_Mass(Ha_flux, D)
-					e_Mass = get_Mass(Ha_flux_uncert, D)
+					reps = max_reps
 
-					mass[i_gal] = '<'+str(round(np.log10(Mass),2))
-					e_mass[i_gal] =  str(round(np.abs(e_Mass/Mass/
-						np.log(10)), 2))
-					bulmer[i_gal] = str(round(Ha_flux/Hb_flux, 2))
-					e_bulmer[i_gal] = str(round(bulmer[i_gal]*np.sqrt(
+				if max(Hb_spec)/np.median(pp.noise[
+					(pp.lam < 4861./(1 + (pp.sol[1][0] - 300)/c)) *
+					(pp.lam > 4861./(1 + (pp.sol[1][0] + 300)/c))]) > 2.5:
+					b = Ha_flux/Hb_flux
+					e_bulmer[i_gal] = str(round(b * np.sqrt(
 						(Ha_flux_uncert/Ha_flux)**2 + 
 						(Hb_flux_uncert/Hb_flux)**2), 2))
+					bulmer[i_gal] = str(round(b, 2))
+				else:
+					b = Ha_flux/Hb_flux
+					e_bulmer[i_gal] = str(round(b * np.sqrt(
+						(Ha_flux_uncert/Ha_flux)**2 + 
+						(Hb_flux_uncert/Hb_flux)**2), 2))
+					bulmer[i_gal] = '<'+str(round(b, 2))
+			else:
+				if radius == max_radius:
+					Mass = get_Mass(Ha_flux, D, instrument='muse')
+					e_Mass = get_Mass(Ha_flux_uncert, D, instrument='muse')
+
+					mass[i_gal] = '<'+str(round(np.log10(Mass),4))
+					e_mass[i_gal] =  str(round(np.abs(e_Mass/Mass/
+						np.log(10)), 4))
+					b = Ha_flux/Hb_flux
+					e_bulmer[i_gal] = str(round(b * np.sqrt(
+						(Ha_flux_uncert/Ha_flux)**2 + 
+						(Hb_flux_uncert/Hb_flux)**2), 2))
+					bulmer[i_gal] = '<'+str(round(b, 2))
 					if verbose:
 						print '<%.2f +/- %.2f log10(Solar Masses)' % (
 						mass[i_gal], e_mass[i_gal])
 
 				radius -= 1
 				reps = 0
+
+
 		else:
 			if radius == max_radius:
-				Mass = get_Mass(Ha_flux, D)
-				e_Mass = get_Mass(Ha_flux_uncert, D)
+				Mass = get_Mass(Ha_flux, D, instrument='muse')
+				e_Mass = get_Mass(Ha_flux_uncert, D, instrument='muse')
 
-				mass[i_gal] = '<'+str(round(np.log10(Mass),2))
+				mass[i_gal] = '<'+str(round(np.log10(Mass),4))
 				e_mass[i_gal] =  str(round(np.abs(e_Mass/Mass/
-					np.log(10)), 2))
-				bulmer[i_gal] = str(round(Ha_flux/Hb_flux, 2))
-				e_bulmer[i_gal] = str(round(bulmer[i_gal]*np.sqrt(
+					np.log(10)), 4))
+				b = Ha_flux/Hb_flux
+				e_bulmer[i_gal] = str(round(b * np.sqrt(
 					(Ha_flux_uncert/Ha_flux)**2 + 
 					(Hb_flux_uncert/Hb_flux)**2), 2))
+				bulmer[i_gal] = '<'+str(round(b, 2))
 				if verbose:
 					print '<%.2f +/- %.2f log10(Solar Masses)' % (
 					mass[i_gal], e_mass[i_gal])
