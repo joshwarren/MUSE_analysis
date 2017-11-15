@@ -16,7 +16,7 @@ from sauron_colormap import sauron
 
 
 
-def BPT(galaxy, D=None, opt='kin'):
+def BPT(galaxy, D=None, opt='kin', norm="lwv"):
 	print '   BPT'
 	Prefig(size=(16*3,12), transparent=False)
 
@@ -36,7 +36,11 @@ def BPT(galaxy, D=None, opt='kin'):
 		D = pickle.load(pickleFile)
 		pickleFile.close()
 
-	D.__threshold__ = 3
+	if D.norm_method != norm:
+		D.norm_method = norm
+		D.find_restFrame()
+
+	# D.__threshold__ = 3
 # ------------=============== BPT diagram =================----------
 	if all([l in D.e_components for l in ['[NII]6583d', '[SII]6716', 
 		'[OI]6300d', 'Heta', 'Halpha', '[OIII]5007d']]):
@@ -243,7 +247,6 @@ def BPT(galaxy, D=None, opt='kin'):
 		plt.close()
 # ------------=============== MEx diagram =================----------
 	if all([l in D.e_components for l in ['[OIII]5007d', 'Hbeta']]):
-		print '1:', D.e_components
 		Prefig()
 		# from Atlas3D XXXI (Section 6.2.1)
 		fig, ax = plt.subplots()
@@ -294,7 +297,6 @@ def BPT(galaxy, D=None, opt='kin'):
 # ------------============== SAURON diagram ===============----------
 	if all([l in D.e_components for l in ['[NI]d', 'Hbeta', 
 		'[OIII]5007d']]):
-		print '2:', D.e_components
 
 		# from SAURON XVI.
 		fig, ax = plt.subplots()

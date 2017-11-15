@@ -77,7 +77,7 @@ for galaxy in galaxies:
 
 		D = None
 		# D = pickler(galaxy, discard=discard, norm=norm, opt='pop'+MC_dir)
-		find_limits(galaxy, opt='pop'+MC_dir, norm=norm, D=D, instrument='muse')
+		# find_limits(galaxy, opt='pop'+MC_dir, norm=norm, D=D, instrument='muse')
 		# D = plot_results(galaxy, discard=discard, overplot = {'radio':'r', 'CO':'c'}, 
 		# 	residual="median", norm=norm, D=D, show_bin_num=True, mapping=m, 
 		# 	opt='pop'+MC_dir)
@@ -88,7 +88,7 @@ for galaxy in galaxies:
 		# D = plot_stellar_pop(galaxy, opt='pop'+MC_dir, method='mostlikely',
 		# 	overplot = {'radio':'r', 'CO':'c'}, D=D, gradient='only')
 		# plt.close()
-		# D = BPT(galaxy, D=D, opt='pop'+MC_dir)
+		D = BPT(galaxy, D=D, opt='pop'+MC_dir, norm=norm)
 		# plt.close()
 		# D = fit_disk(galaxy, D=D, opt='pop'+MC_dir, instrument='muse')
 	except Exception as e:
