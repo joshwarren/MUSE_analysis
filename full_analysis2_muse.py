@@ -13,7 +13,7 @@ from pickler_muse import pickler
 from sav_for_kinemetry import sav_for_kinemetry
 from plot_results_muse import plot_results, mapping
 from find_centre import find_centre
-from kinematics_muse import kinematics
+from kinematics import kinematics
 from rotation_curve_muse import rotation_curve
 from plot_absorption_muse import plot_absorption
 import matplotlib.pyplot as plt # used for plotting
@@ -58,17 +58,17 @@ for galaxy in galaxies:
 	try:
 		# D = pickler(galaxy, discard=discard, norm=norm, 
 		# 	opt='kin'+MC_dir)
-		D = find_centre(galaxy, discard=discard, opt='kin'+MC_dir,
-			D=D, instrument='muse')
-		D = sav_for_kinemetry(galaxy, opt='kin'+MC_dir, D=D, 
-			instrument='muse')
-		# D = plot_results(galaxy, discard=discard, overplot = {'radio':'r', 'CO':'c'}, 
-		# 	residual="median", norm=norm, D=D, show_bin_num=True, mapping=m, 
+		# D = find_centre(galaxy, discard=discard, opt='kin'+MC_dir,
+		# 	D=D, instrument='muse')
+		# D = sav_for_kinemetry(galaxy, opt='kin'+MC_dir, D=D, 
+		# 	instrument='muse')
+		# D = plot_results(galaxy, discard=discard, 
+		# 	overplot = {'radio':'r', 'CO':'c'}, residual="median",
+		# 	norm=norm, D=D, show_bin_num=True, mapping=m, 
 		# 	opt='kin'+MC_dir)
 		# plt.close("all")
-		# find_limits(galaxy, opt='kin'+MC_dir, norm=norm, D=D, instrument='muse')
-		# D = kinematics(galaxy, discard=discard, D=D, opt='kin') # Only run 
-		# # 														# for opt='kin'
+		# find_limits(galaxy, opt='kin'+MC_dir, norm=norm, D=D, 
+		# 	instrument='muse')
 		# D = rotation_curve(galaxy, D=D, opt='kin'+MC_dir) 
 		# BPT(galaxy, D=D, opt='kin'+MC_dir)
 		# plt.close("all")
@@ -80,20 +80,27 @@ for galaxy in galaxies:
 		# classify(galaxy)
 		# use_kinemetry(galaxy)
 
+		D = kinematics(galaxy, discard=discard, D=D, opt='kin',
+			instrument='muse')
+
 		D = None
-		# D = pickler(galaxy, discard=discard, norm=norm, opt='pop'+MC_dir)
-		# find_limits(galaxy, opt='pop'+MC_dir, norm=norm, D=D, instrument='muse')
-		# D = plot_results(galaxy, discard=discard, overplot = {'radio':'r', 'CO':'c'}, 
-		# 	residual="median", norm=norm, D=D, show_bin_num=True, mapping=m, 
+		# D = pickler(galaxy, discard=discard, norm=norm, 
+		# 	opt='pop'+MC_dir)
+		# find_limits(galaxy, opt='pop'+MC_dir, norm=norm, D=D, 
+		# 	instrument='muse')
+		# D = plot_results(galaxy, discard=discard, 
+		# 	overplot = {'radio':'r', 'CO':'c'}, residual="median", 
+		# 	norm=norm, D=D, show_bin_num=True, mapping=m, 
 		# 	opt='pop'+MC_dir)
 		# plt.close()
-		# D = plot_absorption(galaxy, D=D, opt='pop'+MC_dir, uncert=True,
-		# 	overplot = {'radio':'r', 'CO':'c'})
+		# D = plot_absorption(galaxy, D=D, opt='pop'+MC_dir, 
+		# 	uncert=True, overplot = {'radio':'r', 'CO':'c'})
 		# plt.close()
-		# D = plot_stellar_pop(galaxy, opt='pop'+MC_dir, method='mostlikely',
-		# 	overplot = {'radio':'r', 'CO':'c'}, D=D, gradient='only')
+		# D = plot_stellar_pop(galaxy, opt='pop'+MC_dir, 
+		# 	method='mostlikely', overplot = {'radio':'r', 'CO':'c'}, 
+		# 	D=D, gradient='only')
 		# plt.close()
-		D = BPT(galaxy, D=D, opt='pop'+MC_dir, norm=norm)
+		# D = BPT(galaxy, D=D, opt='pop'+MC_dir, norm=norm)
 		# plt.close()
 		# D = fit_disk(galaxy, D=D, opt='pop'+MC_dir, instrument='muse')
 	except Exception as e:
@@ -111,5 +118,6 @@ for i in range(len(gal_err)):
 	print gal_err[i], ' FAILED'
 	print err[i]
 	exc_type, exc_value, exc_traceback = trace[i]
-	traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stdout)
+	traceback.print_exception(exc_type, exc_value, exc_traceback, 
+		file=sys.stdout)
 	print ''
