@@ -10,8 +10,9 @@ if 'home' not in cc.device:
 	import matplotlib # 20160202 JP to stop lack-of X-windows error
 	matplotlib.use('Agg') # 20160202 JP to stop lack-of X-windows error
 from pickler_muse import pickler
-from sav_for_kinemetry_muse import sav_for_kinemetry
+from sav_for_kinemetry import sav_for_kinemetry
 from plot_results_muse import plot_results, mapping
+from find_centre import find_centre
 from kinematics_muse import kinematics
 from rotation_curve_muse import rotation_curve
 from plot_absorption_muse import plot_absorption
@@ -55,8 +56,12 @@ for galaxy in galaxies:
 	D = None
 	print galaxy
 	try:
-		# D = pickler(galaxy, discard=discard, norm=norm, opt='kin'+MC_dir)
-		# D = sav_for_kinemetry(galaxy, opt='kin'+MC_dir, D=D)
+		# D = pickler(galaxy, discard=discard, norm=norm, 
+		# 	opt='kin'+MC_dir)
+		D = find_centre(galaxy, discard=discard, opt='kin'+MC_dir,
+			D=D, instrument='muse')
+		D = sav_for_kinemetry(galaxy, opt='kin'+MC_dir, D=D, 
+			instrument='muse')
 		# D = plot_results(galaxy, discard=discard, overplot = {'radio':'r', 'CO':'c'}, 
 		# 	residual="median", norm=norm, D=D, show_bin_num=True, mapping=m, 
 		# 	opt='kin'+MC_dir)
