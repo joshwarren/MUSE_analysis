@@ -246,7 +246,8 @@ def compare_atlas3d(too_many_FR=True):
 	alpha = 0.15
 	vSigma = np.sqrt((0.09 + 0.1 * ell) * ell/(1 - ell))
 	lambda_R = k*vSigma/np.sqrt(1 + k**2 * vSigma**2)
-	ax.plot(ell, lambda_R, 'm', label=r'$\delta = 0.7 \epsilon_\mathrm{intr}$')
+	ax.plot(ell, lambda_R, 'm', 
+		label=r'$\delta = 0.7 \epsilon_\mathrm{intr}$')
 
 	# Lines of constant intrinsic ellipticity, from Cappellari ARAA 2016 Review
 	i = np.arange(0, np.pi/2, 0.01)
@@ -261,7 +262,7 @@ def compare_atlas3d(too_many_FR=True):
 		delta = 1 - (1 + vSigma_ob**2)/((1 - alpha * vSigma_ob**2) * Omega)
 		vSigma_ob = vSigma_ob * np.sin(i)/np.sqrt(1 - delta * np.cos(i)**2)
 		lambda_R = k*vSigma_ob/np.sqrt(1 + k**2 * vSigma_ob**2)
-		ax.plot(ell_intr, lambda_R, 'k:', linewidth=1)
+		ax.plot(ell_intr, lambda_R, 'm:', linewidth=1)
 
 
 	# MUSE
@@ -343,7 +344,7 @@ def compare_atlas3d(too_many_FR=True):
 				ax.plot([muse_gals.ellipticity[i_muse], 
 					vimos_gals.ellipticity[i_vimos]], 
 					[muse_gals.lambda_Re[i_muse],vimos_gals.lambda_Re[i_vimos]], 
-					'k--', zorder=1, label='same galaxy in\n   MUSE and\n   VIMOS')
+					'k--', zorder=1, label='Same galaxy in\n   MUSE and\n   VIMOS')
 				label = False
 			else:
 				ax.plot([muse_gals.ellipticity[i_muse], 
@@ -352,8 +353,8 @@ def compare_atlas3d(too_many_FR=True):
 					'k--', zorder=1)
 
 	# ax.set_title('Atlas3D Fast/Slow Rotator Classification scheme')
-	ax.set_xlabel(r'Ellipticity, $\epsilon$')
-	ax.set_ylabel(r'$\lambda_R (R_e)$')
+	ax.set_xlabel(r'$\epsilon_\mathrm{e}$')
+	ax.set_ylabel(r'$\lambda_\mathrm{R_e}$')
 	
 	# Plot Slow Rotator bounds
 	ax.plot([0,0.4,0.4], [0.08, 0.18, 0], 'k', label='FR/SR boundary')
@@ -362,13 +363,13 @@ def compare_atlas3d(too_many_FR=True):
 
 	# Proxy for kinematics legend
 	h1, = ax.plot(np.nan, marker=marker_atlas3d(0), c='b', lw=0, 
-		label='No Rotation')
+		label='No rotation')
 	h2, = ax.plot(np.nan, marker=marker_atlas3d(1), c='b', lw=0,
-		label='Complex Rotation')
+		label='Complex rotation')
 	h3, = ax.plot(np.nan, marker=marker_atlas3d(2), c='b', lw=0, 
-		label='KDC/CDC')
+		label='KDC/CRC')
 	h4, = ax.plot(np.nan, marker=marker_atlas3d(3), c='b', lw=0,
-		label='Counter Rotating\n   Discs')
+		label='Counter-rotating\n   discs')
 	h5, = ax.plot(np.nan, marker=marker_atlas3d(4), c='b', lw=0,
 		label='Regular Rotator',  markerfacecolor='none')
 
@@ -745,16 +746,22 @@ def compare_atlas3d(too_many_FR=True):
 	steps = np.array(steps)
 
 	
-	ax[0].plot(steps, n_in_bin_atlas/float(max(n_in_bin_atlas[steps<-25])), 
-		color='k', ls='steps--')
-	ax[0].plot(steps, n_in_bin_sample/float(max(n_in_bin_sample)), 
-		color='r', ls='steps--')
-	ax[0].set_ylabel('Number of galaxies in \n bin (abitary units)')
-	ax[0].set_yticklabels([])
-	ax[1].set_ylabel('Fraction of SR')
+	ax[0].plot(steps, n_in_bin_atlas, color='k', ls='steps--')
+	ax2 = ax[0].twinx()
+	ax2.plot(steps, n_in_bin_sample, color='r', ls='steps--')
+	lim = ax[0].get_ylim()
+	y1 = max(n_in_bin_sample)*1.8
+	y0 = lim[0] * y1 / lim[1]
+	ax2.set_ylim((y0, y1))
+	ax2.tick_params(axis='y', colors='r')
+	ax[0].set_ylabel(r'A+M sample'+
+		'\nmass distribution')
+	ax2.set_ylabel('Southern sample\nmass distribution', color='r', 
+		labelpad=60, rotation=270)
+	ax[1].set_ylabel('Fraction of SR per bin')
 
 	ax[1].invert_xaxis()
-	ax[1].set_xlabel(r'$M_k \mathrm{(mag)}$')
+	ax[1].set_xlabel(r'$M_k \, \mathrm{(mag)}$')
 
 	fig.savefig('%s/Data/muse/analysis/M_k_binned.png' % (cc.base_dir))
 	plt.close()
