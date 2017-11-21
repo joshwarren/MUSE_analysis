@@ -1,6 +1,6 @@
 ;################################################################
 ; This is addapted from kinemetry_example.pro for my own use with
-; VIMOS observations.
+; MUSE observations.
 ;###############################################################
 
 PRO do_work, gal, opt, type
@@ -27,7 +27,7 @@ PRO do_work, gal, opt, type
 	x0 = float(x0[i_gal[0]])
 	y0 = float(y0[i_gal[0]])
 
-	badpix = where(velbin eq 9999)
+	goodpix = where(velbin ne 9999)
 
 
 	b = uniq(bin_num,sort(bin_num))
@@ -37,6 +37,11 @@ PRO do_work, gal, opt, type
 	; Center the origin on the center of the galaxy
 	xbin = xbin - x0
 	ybin = ybin - y0
+
+	xbin = xbin[goodpix]
+	ybin = ybin[goodpix]
+	velbin = velbin[goodpix]
+	er_velbin = er_velbin[goodpix]
 
 	; NB: gas must be the first 3 characters in type
 	if strcmp(type, 'gas', 3, /FOLD_CASE) then begin
@@ -85,7 +90,7 @@ PRO do_work, gal, opt, type
 		KINEMETRY, xbin, ybin, velbin, rad, pa, q, cf, $;x0=x0, y0=y0, $
 			ntrm=ntrm, scale=0.2, /FIXCEN, even=even, error=er_velbin, $
 			er_pa=er_pa, er_q=er_q, er_cf=er_cf, $;cover=0.05,$
-			plot='/Data/vimos/analysis/'+gal+'/'+opt+'/kinemetry/kinemetry_'+type+'.jpeg'
+			plot='/Data/muse/analysis/'+gal+'/'+opt+'/kinemetry/kinemetry_'+type+'.jpeg'
 
 		if stregex(type, '.*_vel', /boolean) then begin
 			k0 = cf[*,0]
@@ -158,9 +163,8 @@ END
 
 
 pro use_kinemetry_muse
-;	gal = 'eso443-g024'
 	gals=['ic1459', 'ic4296', 'ngc1316', 'ngc1399']
-	; gals=['ngc1399']
+	gals=['ngc1399']
 	for i=0,3 do begin
 		gal=gals[i]
 		do_work, gal, 'kin', 'stellar_flux'
