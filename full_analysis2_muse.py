@@ -35,7 +35,7 @@ galaxies = [
 # galaxies = ['ic1459']
 # galaxies = ['ic4296']
 # galaxies = ['ngc1316']
-# galaxies = ['ngc1399']
+galaxies = ['ngc1399']
 
 m=mapping()
 # m.SNR = False
@@ -82,6 +82,7 @@ for galaxy in galaxies:
 
 		D = kinematics(galaxy, discard=discard, D=D, opt='kin',
 			instrument='muse')
+		plt.close("all")
 
 		D = None
 		# D = pickler(galaxy, discard=discard, norm=norm, 

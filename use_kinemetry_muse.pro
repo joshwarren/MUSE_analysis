@@ -43,6 +43,11 @@ PRO do_work, gal, opt, type
 	velbin = velbin[goodpix]
 	er_velbin = er_velbin[goodpix]
 
+	; nor = median(velbin)
+	; velbin = velbin / nor
+	; er_velbin = er_velbin / nor
+
+
 	; NB: gas must be the first 3 characters in type
 	if strcmp(type, 'gas', 3, /FOLD_CASE) then begin
 		; Get average PA
@@ -90,7 +95,7 @@ PRO do_work, gal, opt, type
 		KINEMETRY, xbin, ybin, velbin, rad, pa, q, cf, $;x0=x0, y0=y0, $
 			ntrm=ntrm, scale=0.2, /FIXCEN, even=even, error=er_velbin, $
 			er_pa=er_pa, er_q=er_q, er_cf=er_cf, $;cover=0.05,$
-			plot='/Data/muse/analysis/'+gal+'/'+opt+'/kinemetry/kinemetry_'+type+'.jpeg'
+			plot_dir='/Data/muse/analysis/'+gal+'/'+opt+'/kinemetry/kinemetry_'+type+'.jpeg'
 
 		if stregex(type, '.*_vel', /boolean) then begin
 			k0 = cf[*,0]
@@ -118,53 +123,54 @@ PRO do_work, gal, opt, type
 		endif
 	endif
 
-	if keyword_set(plot) then begin
-		; plot coeffs.
-		thisDevice = !D.Name
-		Set_Plot, 'Z', /COPY
+	; plot=0
+	; if keyword_set(plot) then begin
+	; 	; plot coeffs.
+	; 	thisDevice = !D.Name
+	; 	Set_Plot, 'Z', /COPY
 
-		Device, Set_Resolution=[1000,1000], Z_Buffer=0
-		Erase
+	; 	Device, Set_Resolution=[1000,1000], Z_Buffer=0
+	; 	Erase
 		
-		; r = GET_SCREEN_SIZE()
-		; window, 1, xsize=r[0]*0.3, ysize=r[1]*0.8
-		!p.charsize=3
-		!y.style=1
-		if type eq 'stellar_vel' then !p.multi=[0,1,4] else !p.multi=[0,1,3]
-		!Y.MARGIN=[0,0] ; show plots with shared X axis
-		!Y.OMARGIN=[5,3] ; allow for space for the axis labels
-		ploterror, rad, pa, er_pa, PSYM=-5, TITLE=gal, xtickformat = '(A1)', YTITLE='!7C!X!N [degrees]', YRANGE=[min(pa),max(pa)]
-		ploterror, rad, q, er_q, PSYM=-5, YRANGE=[0,1.1], xtickformat = '(A1)', YTITLE='q'
-		ploterror, rad, k1, erk1, PSYM=-5, xtickformat = '(A1)', YTITLE='k1 [km/s]',YRANGE=[0,245]
-		if type eq 'stellar_vel' then begin
-			ploterror, rad, k51, erk51, PSYM=-5, XTITLE='R [arcsec]', YTITLE='k5/k1', YRANGE=[0,0.13]
-		endif
-		!P.MULTI=0
-		!Y.MARGIN=[4,2] ; back to default values
-		!Y.OMARGIN=[0,0]
-		!p.charsize=1
-		; WAIT, 3000000000
+	; 	; r = GET_SCREEN_SIZE()
+	; 	; window, 1, xsize=r[0]*0.3, ysize=r[1]*0.8
+	; 	!p.charsize=3
+	; 	!y.style=1
+	; 	if type eq 'stellar_vel' then !p.multi=[0,1,4] else !p.multi=[0,1,3]
+	; 	!Y.MARGIN=[0,0] ; show plots with shared X axis
+	; 	!Y.OMARGIN=[5,3] ; allow for space for the axis labels
+	; 	ploterror, rad, pa, er_pa, PSYM=-5, TITLE=gal, xtickformat = '(A1)', YTITLE='!7C!X!N [degrees]', YRANGE=[min(pa),max(pa)]
+	; 	ploterror, rad, q, er_q, PSYM=-5, YRANGE=[0,1.1], xtickformat = '(A1)', YTITLE='q'
+	; 	ploterror, rad, k1, erk1, PSYM=-5, xtickformat = '(A1)', YTITLE='k1 [km/s]',YRANGE=[0,245]
+	; 	if type eq 'stellar_vel' then begin
+	; 		ploterror, rad, k51, erk51, PSYM=-5, XTITLE='R [arcsec]', YTITLE='k5/k1', YRANGE=[0,0.13]
+	; 	endif
+	; 	!P.MULTI=0
+	; 	!Y.MARGIN=[4,2] ; back to default values
+	; 	!Y.OMARGIN=[0,0]
+	; 	!p.charsize=1
+	; 	; WAIT, 3000000000
 
 
-		snapshot = TVRD()
-		TVLCT, r, g, b, /Get
-		Device, Z_Buffer=1
-		Set_Plot, thisDevice
+	; 	snapshot = TVRD()
+	; 	TVLCT, r, g, b, /Get
+	; 	Device, Z_Buffer=1
+	; 	Set_Plot, thisDevice
 
-		image24 = BytArr(3, 1000, 1000)
-		image24[0,*,*] = r[snapshot]
-		image24[1,*,*] = g[snapshot]
-		image24[2,*,*] = b[snapshot]
+	; 	image24 = BytArr(3, 1000, 1000)
+	; 	image24[0,*,*] = r[snapshot]
+	; 	image24[1,*,*] = g[snapshot]
+	; 	image24[2,*,*] = b[snapshot]
 
-		Write_JPEG, '/Data/muse/analysis/'+gal+'/'+opt+'/kinemetry/kinemetry_'+type+'.jpeg', image24, True=1, Quality=75
-	endif
+	; 	Write_JPEG, '/Data/muse/analysis/'+gal+'/'+opt+'/kinemetry/kinemetry_'+type+'.jpeg', image24, True=1, Quality=75
+	; endif
 
 END
 
 
 pro use_kinemetry_muse
 	gals=['ic1459', 'ic4296', 'ngc1316', 'ngc1399']
-	gals=['ngc1399']
+	; gals=['ngc1316']
 	for i=0,3 do begin
 		gal=gals[i]
 		do_work, gal, 'kin', 'stellar_flux'

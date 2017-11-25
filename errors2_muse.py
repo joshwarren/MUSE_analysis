@@ -45,7 +45,8 @@ class set_params(object):
 		temp_mismatch 	= 	True,
 		start 			= 	None,
 		library 		=	'Miles',
-		use_all_temp 	= 	False
+		use_all_temp 	= 	False,
+		res 			= 	None
 		):
 		self.quiet = quiet # True
 		self.gas = gas # 0   No gas emission lines
@@ -67,6 +68,7 @@ class set_params(object):
 		self.opt = opt
 		self.library = library
 		self.use_all_temp = use_all_temp
+		self.res = res
 
 
 	@property
@@ -606,7 +608,15 @@ class run_ppxf(ppxf):
 
 		self.lamRange = self.lamRange/(1 + self.z)
 		self.FWHM_gal = self.params.FWHM_gal/(1 + self.z) # Adjust resolution in Angstrom
-
+		if self.params.res is not None:
+			res = self.params.res/(1 + self.z)
+			FWHM_dif = res - self.FWHM_gal
+			sigma = FWHM_dif/2.355/self.CDELT # Change in px
+			self.bin_lin = ndimage.gaussian_filter1d(self.bin_lin, sigma)
+			self.bin_lin_noise = np.sqrt(ndimage.gaussian_filter1d(
+				self.bin_lin_noise**2, sigma))
+			self.FWHM_gal = res
+			
 		self.rebin()
 		self.load_stellar_templates()
 

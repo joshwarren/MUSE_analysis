@@ -27,7 +27,9 @@ c = 299792.458 # speed of light in km/s
 
 def Lick_to_LIS(line, value, res=8.4):
 	if line =='H_beta' or line=='Hb' or line=='hb':
-		line='Hbeta'
+		line = 'Hbeta'
+	elif line=='Mgb' or line=='mgb' or line=='mg_b':
+		line = 'Mg_b'
 
 
 	file = '%s/Data/lit_absorption/Miles/lick_to_lis.txt' % (cc.base_dir)
@@ -154,15 +156,16 @@ def compare_absortion(galaxy, R_sig=False, corr_lines='all'):
 
 
 		if R_sig:
-            if isinstance(R_sig, bool):
-                absorp, uncert = get_absorption(lines, pp=pp, instrument='muse', sigma=R_sigma(a))
-                sigma = np.append(sigma, R_sigma(a))
-            else:
-                absorp, uncert = get_absorption(lines, pp=pp, instrument='muse', sigma=R_sigma(a)+R_sig*(pp.sol[0][1]-R_sigma(a)))
-                sigma = np.append(sigma, R_sigma(a)+R_sig*(pp.sol[0][1]-R_sigma(a)))
-        else:
-            absorp, uncert = get_absorption(lines, pp=pp, instrument='muse')#, sigma=R_sigma(a))
-            sigma = np.append(sigma, pp.sol[0][1])		for l in lines:
+			if isinstance(R_sig, bool):
+				absorp, uncert = get_absorption(lines, pp=pp, instrument='muse', sigma=R_sigma(a))
+				sigma = np.append(sigma, R_sigma(a))
+			else:
+				absorp, uncert = get_absorption(lines, pp=pp, instrument='muse', sigma=R_sigma(a)+R_sig*(pp.sol[0][1]-R_sigma(a)))
+				sigma = np.append(sigma, R_sigma(a)+R_sig*(pp.sol[0][1]-R_sigma(a)))
+		else:
+			absorp, uncert = get_absorption(lines, pp=pp, instrument='muse')#, sigma=R_sigma(a))
+			sigma = np.append(sigma, pp.sol[0][1])
+		for l in lines:
 			if a == min(apertures):
 				my_values[l] = np.array([])
 				my_errors[l] = np.array([])
