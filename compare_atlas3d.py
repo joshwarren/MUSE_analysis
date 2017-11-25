@@ -14,6 +14,8 @@ from astropy import units as u
 from astropy.coordinates import SkyCoord
 from astropy.coordinates import match_coordinates_sky
 import copy
+from lts_linefit import lts_linefit as lts
+from compare_absorption2_muse import Lick_to_LIS
 
 def angle_to_pc(galaxy, angle):
 	c = 299792 #km/s
@@ -168,7 +170,7 @@ def compare_atlas3d(too_many_FR=True):
 
 ## ----------============== Ellipticity vs lambda_Re ==============----------
 	print 'FR/SR'
-	Prefig(transparent=False, size=(15,9))
+	Prefig(transparent=False, size=(14,9))
 	
 	fig, ax = plt.subplots()
 
@@ -734,8 +736,13 @@ def compare_atlas3d(too_many_FR=True):
 	ax[1].set_ylim([-0.05,1.05])
 	if too_many_FR:
 		ax[1].text(-21,0.75, 
-			"Expected # of SRs in our sample \n   based on Atlas3D: (%.2f+/-%.2f)/%i" % (
-				expectedSRs, expectedSRs_err, len(sample_gals)))
+			"Expected # of SRs in our sample \n   based on Atlas3D: "+\
+			"(%.2f+/-%.2f)/%i" % (expectedSRs, expectedSRs_err, 
+				len(sample_gals)))
+
+	print "   Frac of SRs expected in our sample based: "+\
+		"(%.2f+/-%.2f)" % (expectedSRs/len(sample_gals), 
+		expectedSRs_err/len(sample_gals))
 
 	n_in_bin_atlas.insert(0,n_in_bin_atlas[0])
 	n_in_bin_sample.insert(0, n_in_bin_sample[0])
@@ -1061,6 +1068,7 @@ def compare_atlas3d(too_many_FR=True):
 	plt.close()
 ## ----------============ Mg_b vs vel dispersion =============----------
 	print 'Mg vs sigma'
+
 	for gals in [vimos_gals, muse_gals]:
 		Mg_sigma_file = '%s/Data/%s/analysis/galaxies_Mg_sigma.txt' %(
 			cc.base_dir, gals.label.lower())
@@ -1074,6 +1082,7 @@ def compare_atlas3d(too_many_FR=True):
 			g.e_Mg = e_Mg[i]
 			g.sigma = sig[i]
 			g.e_sigma = e_sig[i]
+
 
 	fig, ax = plt.subplots()
 	for gals in [vimos_gals, muse_gals]:
@@ -1099,6 +1108,7 @@ def compare_atlas3d(too_many_FR=True):
 
 	Mg, e_Mg, sigma, e_sigma = muse_gals.Mg, muse_gals.e_Mg, \
 		muse_gals.sigma, muse_gals.e_sigma
+	rm_ngc1316 = muse_gals.name != 'ngc1316'
 	for g in vimos_gals:
 		if g.name not in muse_gals.names:
 			Mg = np.append(Mg, g.Mg)
@@ -1106,17 +1116,41 @@ def compare_atlas3d(too_many_FR=True):
 			sigma = np.append(sigma, g.sigma)
 			e_sigma = np.append(e_sigma, g.e_sigma)
 
+			rm_ngc1316 = np.append(rm_ngc1316, True)
+
 
 	mask = ~np.isnan(Mg)
 
-	params, cov = np.polyfit(np.log10(sigma)[mask], Mg[mask], 1, 
-		w=np.sqrt(1/(e_sigma/sigma/np.log(10))**2 + 1/e_Mg**2)[mask], 
-		cov=True)
-	print 'grad: %.3f $\pm$ %.3f' % (params[0], np.sqrt(np.diag(cov))[0])
+	p = lts(np.log10(sigma)[mask], Mg[mask], 
+		(e_sigma/sigma/np.log(10))[mask], e_Mg[mask], frac=7./9,
+		pivot=np.nanmean(np.log10(sigma)[mask]))
 
+	print '   Grad: %.3f +/- %.3f' % (p.ab[1], p.ab_err[1])
+	print '   Intrinsic scatter:', p.sig_int, '+/-', p.sig_int_err
+	
 	lims = np.array(ax.get_xlim())
-	ax.plot(lims, np.poly1d(params)(lims), 'k')
-	ax.plot(lims, 2.7*lims - 1.65, ':', label='Ziegler1997')
+
+	ax.plot(lims, np.poly1d(p.ab[::-1])(lims) 
+		- p.ab[1]*np.nanmean(np.log10(sigma)[mask]), 'k')
+
+	# mask *= rm_ngc1316
+	# p = lts(np.log10(sigma)[mask], Mg[mask], 
+	# 	(e_sigma/sigma/np.log(10))[mask], e_Mg[mask],
+	# 	pivot=np.nanmean(np.log10(sigma)[mask]))
+
+	# print ''
+	# print '   Without NGC 1316:'
+	# print '   Grad: %.3f +/- %.3f' % (p.ab[1], p.ab_err[1])
+	# print '   Intrinsic scatter:', p.sig_int, '+/-', p.sig_int_err
+
+	# ax.plot(lims, np.poly1d(p.ab[::-1])(lims) 
+	# 	- p.ab[1]*np.nanmean(np.log10(sigma)[mask]), 'g--')
+
+
+	x = np.linspace(lims[0], lims[1], 100)
+
+	ax.plot(x, Lick_to_LIS('Mgb', 2.7*x - 1.65, res=8.4), ':', 
+		c='steelblue', label='Ziegler1997')
 	ax.set_xlim(lims)
 
 	ax.legend(facecolor='w')
