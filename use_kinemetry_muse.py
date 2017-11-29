@@ -154,10 +154,10 @@ def use_kinemetry(gal, opt='pop'):
 	x,y,bin_num = np.loadtxt(tessellation_File, usecols=(0,1,2), 
 		unpack=True, skiprows=1, dtype=int)
 
-	f = '%s/%s/%s/kinemetry/kinemetry_gas_vel_2Dmodel.txt' % (out_dir, gal, 
-		opt)
 	# f = '%s/%s/%s/kinemetry/kinemetry_stellar_vel_2Dmodel.txt' % (out_dir, gal, 
-	# 	'kin')
+	# 	opt)
+	f = '%s/%s/%s/kinemetry/kinemetry_gas_vel_2Dmodel.txt' % (out_dir, gal, 
+		'pop')
 	xbin, ybin, velkin, velcirc  = np.loadtxt(f, unpack=True, skiprows=1)
 
 	f = '%s/%s/%s/kinemetry/gas_vel.dat' % (out_dir, gal, opt)
@@ -183,6 +183,18 @@ def use_kinemetry(gal, opt='pop'):
 
 	velkin[velkin==max(velkin)] = np.nan
 	velcirc[velcirc==max(velcirc)] = np.nan
+
+
+	f = '%s/%s/%s/kinemetry/stellar_vel.dat' % (out_dir, gal, opt)
+	velkin = np.loadtxt(f, usecols=(0,), unpack=True)
+	velkin[velkin==9999] = np.nan
+
+
+	# norm = np.nanmean(vel/velkin)
+	# norm = 3
+	# velkin *= norm
+	# velcirc *= norm
+
 
 	# f = '%s/%s/%s/kinemetry/gas_flux.dat' % (out_dir, gal, opt)
 	# flux = np.loadtxt(f)

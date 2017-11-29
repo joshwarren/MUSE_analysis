@@ -13,12 +13,14 @@ from errors2_muse import get_dataCubeDirectory
 import os
 from prefig import Prefig
 from sauron_colormap import sauron
+from BPT import add_grids
+from tools import myerrorbar
 
 
 
-def BPT(galaxy, D=None, opt='kin', norm="lwv"):
+def BPT(galaxy, D=None, opt='pop', norm="lwv"):
 	print '   BPT'
-	Prefig(size=(16*3,12), transparent=False)
+	Prefig(size=np.array((3, 1))*7, transparent=False)
 
 	analysis_dir = "%s/Data/muse/analysis" % (cc.base_dir)
 	galaxiesFile = "%s/galaxies.txt" % (analysis_dir)
@@ -43,11 +45,12 @@ def BPT(galaxy, D=None, opt='kin', norm="lwv"):
 	# D.__threshold__ = 3
 # ------------=============== BPT diagram =================----------
 	if all([l in D.e_components for l in ['[NII]6583d', '[SII]6716', 
-		'[OI]6300d', 'Heta', 'Halpha', '[OIII]5007d']]):
+		'[OI]6300d', 'Hbeta', 'Halpha', '[OIII]5007d']]):
 	
 		fig, ax = plt.subplots(1,3, sharey=True)
 		Prefig(size=(16,12))
 		fig2, ax2 = plt.subplots()
+		r = np.sqrt((D.xbin - center[0])**2 + (D.ybin - center[1])**2)
 		for i, l in enumerate(['[NII]6583d', '[SII]6716', '[OI]6300d']):
 
 			y = np.log10(D.e_line['[OIII]5007d'].flux/D.e_line['Hbeta'].flux)
@@ -82,7 +85,7 @@ def BPT(galaxy, D=None, opt='kin', norm="lwv"):
 				y_line2 = 1.89 * x_line2 + 0.76
 				ax[i].plot(x_line2, y_line2, 'k')
 
-				lab = '[SII]'
+				lab = r'[SII]$\lambda$$\lambda$6717,6731'
 
 				ax[i].set_xlim([-1.2, 0.7])
 
@@ -97,7 +100,12 @@ def BPT(galaxy, D=None, opt='kin', norm="lwv"):
 				ax[i].plot(x_line1[m], y_line1[m],'k')
 				ax2.plot(x_line1[m], y_line1[m],'k')
 
-				lab = '[NII]'
+				y_line2 = 0.61/(x_line1 - 0.05) + 1.3
+				m2 = y_line2 < 1
+				ax[i].plot(x_line2[m2], y_line2[m2],'k--')
+				ax2.plot(x_line2[m2], y_line2[m2],'k--')				
+
+				lab = r'[NII]$\lambda$6584'
 
 				ax[i].set_xlim([-2, 1])
 				ax2.set_xlim([-2, 1])
@@ -122,6 +130,8 @@ def BPT(galaxy, D=None, opt='kin', norm="lwv"):
 				ax2.set_ylabel(r'log([OIII]/$H_\beta$)')
 				ax2.set_xlabel(r'log(%s/$H_\alpha$)' % (lab))
 
+				add_grids(ax[i], '[NII]','[OIII]', x_Ha=True)
+
 			elif l == '[OI]6300d':
 				Seyfert2 = ((y > 0.73/(x + 0.59) + 1.33) + (x > -0.59)) * (y > 1.18 * x + 1.30) * ~large_err
 				LINER = ((y > 0.73/(x + 0.59) + 1.33) + (x > -0.59)) * (y < 1.18 * x + 1.30) * ~large_err
@@ -138,9 +148,13 @@ def BPT(galaxy, D=None, opt='kin', norm="lwv"):
 				y_line2 = 1.18 * x_line2 + 1.30
 				ax[i].plot(x_line2, y_line2, 'k')
 
-				lab = '[OI]'
+				ax[i].axvline(-0.59, '--')
+
+				lab = r'[OI]$\lambda$6300'
 
 				ax[i].set_xlim([-2.2, 0])
+
+				add_grids(ax[i], '[OI]', '[OIII]', x_Ha=True)
 
 			ax[i].set_ylim([-1.2, 1.5])
 
@@ -148,20 +162,21 @@ def BPT(galaxy, D=None, opt='kin', norm="lwv"):
 			LINER_combined *= LINER
 			SF_combined *= SF
 
-			
-			ax[i].errorbar(x[LINER], y[LINER], yerr=y_err[LINER], xerr=x_err[LINER], c='g', 
-				fmt='.')
-			ax[i].errorbar(x[Seyfert2], y[Seyfert2], yerr=y_err[Seyfert2], 
-				xerr=x_err[Seyfert2], c='r', fmt='.')
-			ax[i].errorbar(x[SF], y[SF], yerr=y_err[SF], xerr=x_err[SF], c='b', fmt='.')
+			myerrorbar(ax[i], x, y, xerr=x_err, yerr=e_err, marker='.', color=r)
+			# ax[i].errorbar(x[LINER], y[LINER], yerr=y_err[LINER], xerr=x_err[LINER], c='g', 
+			# 	fmt='.')
+			# ax[i].errorbar(x[Seyfert2], y[Seyfert2], yerr=y_err[Seyfert2], 
+			# 	xerr=x_err[Seyfert2], c='r', fmt='.')
+			# ax[i].errorbar(x[SF], y[SF], yerr=y_err[SF], xerr=x_err[SF], c='b', fmt='.')
 
-			ax[0].set_ylabel(r'log([OIII]/$H_\beta$)')
+			ax[0].set_ylabel(r'log [OIII]$\lambda$5007/H$\,\beta$')
 			ax[i].set_xlabel(r'log(%s/$H_\alpha$)' %( lab))
 
 		saveTo = '%s/plots/BPT.png' % (output)
 		if not os.path.exists(os.path.dirname(saveTo)):
-			os.makedirs(os.path.dirname(saveTo))  
-		fig.savefig(saveTo)
+			os.makedirs(os.path.dirname(saveTo))
+		fig.subplots_adjust(wspace=0)#,hspace=0.01)
+		fig.savefig(saveTo, dpi=80)
 		fig2.savefig('%s/plots/BPT2.png' % (output))
 		plt.close()
 		Prefig(size=(16,12), transparent=False)
@@ -250,16 +265,16 @@ def BPT(galaxy, D=None, opt='kin', norm="lwv"):
 		Prefig()
 		# from Atlas3D XXXI (Section 6.2.1)
 		fig, ax = plt.subplots()
-		y = np.log10(D.e_line['[OIII]5007d'].flux/D.e_line['Hbeta'].flux)
-		y_err = np.sqrt((D.e_line['[OIII]5007d'].flux.uncert/
+		y = np.log10(D.e_line['[OIII]5007d'].flux/1.35/D.e_line['Hbeta'].flux)
+		y_err = y * np.sqrt((D.e_line['[OIII]5007d'].flux.uncert/
 			D.e_line['[OIII]5007d'].flux)**2 + (D.e_line['Hbeta'].flux.uncert/
 			D.e_line['Hbeta'].flux)**2)/np.log(10)
 
 		large_err = y_err**2 > 1
 		m = ~large_err * (D.e_line['[OIII]5007d'].equiv_width < 0.8)
 		ax.errorbar(D.components['stellar'].plot['sigma'][m], y[m], c='b',
-			xerr = D.components['stellar'].plot['sigma'].uncert[m], yerr=y_err[m], fmt='.',
-			label='EW([OIII]) < 0.8')
+			xerr = D.components['stellar'].plot['sigma'].uncert[m], 
+			yerr=y_err[m], fmt='.', label='EW([OIII]) < 0.8')
 
 		m = ~large_err * (D.e_line['[OIII]5007d'].equiv_width >= 0.8)
 		ax.errorbar(D.components['stellar'].plot['sigma'][m], y[m], c='r',
@@ -290,7 +305,7 @@ def BPT(galaxy, D=None, opt='kin', norm="lwv"):
 		ax.text(75, -0.23, 'Transition')
 
 		ax.set_xlabel(r'$\sigma_\ast$')
-		ax.set_ylabel(r'log [OIII]d/H$_\beta$')
+		ax.set_ylabel(r'log [OIII]$\lambda$5007/H$\,\beta$')
 		ax.set_title('Mass-excitation (MEx) diagnotics for %s' % (galaxy.upper()))
 
 		fig.savefig('%s/plots/MEx.png' % (output))

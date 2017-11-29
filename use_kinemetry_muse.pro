@@ -221,8 +221,8 @@ END
 
 
 pro use_kinemetry_muse
-	; do_work, 'ngc1316', 'pop', 'gas_vel'
-	do_work, 'ngc1316', 'pop', 'stellar_vel'
+	do_work, 'ngc1316', 'pop', 'gas_vel'
+	; do_work, 'ngc1316', 'pop', 'stellar_vel'
 	; gals=['ic1459', 'ic4296', 'ngc1316', 'ngc1399']
 	; ; gals=['ngc1316']
 	; for i=0,3 do begin
