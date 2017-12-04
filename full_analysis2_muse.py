@@ -35,7 +35,7 @@ galaxies = [
 # galaxies = ['ic1459']
 # galaxies = ['ic4296']
 # galaxies = ['ngc1316']
-galaxies = ['ngc1399']
+# galaxies = ['ngc1399']
 
 m=mapping()
 # m.SNR = False
@@ -80,13 +80,13 @@ for galaxy in galaxies:
 		# classify(galaxy)
 		# use_kinemetry(galaxy)
 
-		D = kinematics(galaxy, discard=discard, D=D, opt='kin',
-			instrument='muse')
-		plt.close("all")
+		# D = kinematics(galaxy, discard=discard, D=D, opt='kin',
+		# 	instrument='muse')
+		# plt.close("all")
 
 		D = None
-		# D = pickler(galaxy, discard=discard, norm=norm, 
-		# 	opt='pop'+MC_dir)
+		D = pickler(galaxy, discard=discard, norm=norm, 
+			opt='pop'+MC_dir)
 		# find_limits(galaxy, opt='pop'+MC_dir, norm=norm, D=D, 
 		# 	instrument='muse')
 		# D = plot_results(galaxy, discard=discard, 

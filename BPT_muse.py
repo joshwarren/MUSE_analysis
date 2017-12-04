@@ -15,6 +15,7 @@ from prefig import Prefig
 from sauron_colormap import sauron
 from BPT import add_grids
 from tools import myerrorbar
+from BPT import global_MEx, lnd, lbd
 
 
 
@@ -24,8 +25,8 @@ def BPT(galaxy, D=None, opt='pop', norm="lwv"):
 
 	analysis_dir = "%s/Data/muse/analysis" % (cc.base_dir)
 	galaxiesFile = "%s/galaxies.txt" % (analysis_dir)
-	x_cent_gals, y_cent_gals = np.loadtxt(galaxiesFile, unpack=True, skiprows=1, 
-		usecols=(1,2), dtype=int)
+	x_cent_gals, y_cent_gals = np.loadtxt(galaxiesFile, unpack=True, 
+		skiprows=1, usecols=(1,2), dtype=int)
 	galaxy_gals = np.loadtxt(galaxiesFile, skiprows=1, usecols=(0,),dtype=str)
 	i_gal = np.where(galaxy_gals==galaxy)[0][0]
 	center = (x_cent_gals[i_gal], y_cent_gals[i_gal])
@@ -50,28 +51,32 @@ def BPT(galaxy, D=None, opt='pop', norm="lwv"):
 		fig, ax = plt.subplots(1,3, sharey=True)
 		Prefig(size=(16,12))
 		fig2, ax2 = plt.subplots()
-		r = np.sqrt((D.xbin - center[0])**2 + (D.ybin - center[1])**2)
+		r = np.sqrt((D.xBar - center[0])**2 + (D.yBar - center[1])**2)
 		for i, l in enumerate(['[NII]6583d', '[SII]6716', '[OI]6300d']):
 
-			y = np.log10(D.e_line['[OIII]5007d'].flux/D.e_line['Hbeta'].flux)
+			y = np.log10(D.e_line['[OIII]5007d'].flux/1.35
+				/ D.e_line['Hbeta'].flux)
 			x = np.log10(D.e_line[l].flux/D.e_line['Halpha'].flux)
 
 			y_err = np.sqrt((D.e_line['[OIII]5007d'].flux.uncert/
 				D.e_line['[OIII]5007d'].flux)**2 +
-				(D.e_line['Hbeta'].flux.uncert/D.e_line['Hbeta'].flux)**2)/np.log(10)
+				(D.e_line['Hbeta'].flux.uncert/D.e_line['Hbeta'].flux)**2)\
+				/ np.log(10)
 			x_err = np.sqrt((D.e_line[l].flux.uncert/D.e_line[l].flux)**2 +
-				(D.e_line['Halpha'].flux.uncert/D.e_line['Halpha'].flux)**2)/np.log(10)
+				(D.e_line['Halpha'].flux.uncert/D.e_line['Halpha'].flux)**2)\
+				/ np.log(10)
 
 			large_err = (x_err > 0.5) + (y_err > 0.5)
-
 
 			Seyfert2_combined = np.ones(len(x)).astype(bool)
 			LINER_combined = np.ones(len(x)).astype(bool)
 			SF_combined = np.ones(len(x)).astype(bool)
 			x_line1 = np.arange(-2.2, 1, 0.001)
 			if l == '[SII]6716':
-				Seyfert2 = ((0.72/(x - 0.32) + 1.30 < y) + (x > 0.32)) * (1.89 * x + 0.76 < y) * ~large_err
-				LINER = ((0.72/(x - 0.32) + 1.30 < y) + (x > 0.32)) * (1.89 * x + 0.76 > y) * ~large_err
+				Seyfert2 = ((0.72/(x - 0.32) + 1.30 < y) + (x > 0.32)) \
+					* (1.89 * x + 0.76 < y) * ~large_err
+				LINER = ((0.72/(x - 0.32) + 1.30 < y) + (x > 0.32)) \
+					* (1.89 * x + 0.76 > y) * ~large_err
 				SF = (y < 0.72/(x - 0.32) + 1.30) * (x < 0.32) * ~large_err
 
 				y_line1 = 0.72/(x_line1 - 0.32) + 1.30
@@ -91,8 +96,12 @@ def BPT(galaxy, D=None, opt='pop', norm="lwv"):
 
 
 			elif l == '[NII]6583d':
-				Seyfert2 = ((0.61/(x - 0.47) + 1.19 < y) + (x > 0.47)) * ~large_err
-				LINER = ((0.61/(x - 0.47) + 1.19 < y) + (x > 0.47)) * ~large_err
+				x /= 1.34
+
+				Seyfert2 = ((0.61/(x - 0.47) + 1.19 < y) + (x > 0.47)) \
+					* ~large_err
+				LINER = ((0.61/(x - 0.47) + 1.19 < y) + (x > 0.47)) \
+					* ~large_err
 				SF = (0.61/(x - 0.47) + 1.19 > y) * (x < 0.47) * ~large_err
 
 				y_line1 = 0.61/(x_line1 - 0.47) + 1.19
@@ -101,9 +110,13 @@ def BPT(galaxy, D=None, opt='pop', norm="lwv"):
 				ax2.plot(x_line1[m], y_line1[m],'k')
 
 				y_line2 = 0.61/(x_line1 - 0.05) + 1.3
+				m1 = y_line2 < y_line1
+				a = np.min(x_line1[m1])
+				x_line2 = np.arange(a, 0.60, 0.001)
+				y_line2 = 0.61/(x_line2 - 0.05) + 1.3
 				m2 = y_line2 < 1
 				ax[i].plot(x_line2[m2], y_line2[m2],'k--')
-				ax2.plot(x_line2[m2], y_line2[m2],'k--')				
+				ax2.plot(x_line2[m2], y_line2[m2],'k--')
 
 				lab = r'[NII]$\lambda$6584'
 
@@ -115,15 +128,14 @@ def BPT(galaxy, D=None, opt='pop', norm="lwv"):
 				for j in range(len(distance)):
 					distance[j] = np.sqrt(np.min((x_line1[m] - x[j])**2 + 
 						(y_line1[m] - y[j])**2))
-				limit = 1 # if distance is greater than limit then consider it completely 
-						#	in it's region.
+				limit = 1 # if distance is greater than limit then consider 
+						#	it completely in it's region.
 				distance[distance > limit] = limit
 				distance[SF] *= -limit
 
 				try:
-					# color = sauron((distance - min(distance))/(max(distance) - min(distance)))
-					# ax2.errorbar(x, y, yerr=y_err, xerr=x_err, c=color, fmt='.')
-					ax2.scatter(x, y, c=distance, cmap=sauron, vmin=-limit, vmax=limit)
+					ax2.scatter(x, y, c=distance, cmap=sauron, vmin=-limit, 
+						vmax=limit)
 				except:
 					print 'This did not work cotton. Galaxy: %s'%(galaxy)
 
@@ -133,8 +145,12 @@ def BPT(galaxy, D=None, opt='pop', norm="lwv"):
 				add_grids(ax[i], '[NII]','[OIII]', x_Ha=True)
 
 			elif l == '[OI]6300d':
-				Seyfert2 = ((y > 0.73/(x + 0.59) + 1.33) + (x > -0.59)) * (y > 1.18 * x + 1.30) * ~large_err
-				LINER = ((y > 0.73/(x + 0.59) + 1.33) + (x > -0.59)) * (y < 1.18 * x + 1.30) * ~large_err
+				x /= 1.33
+
+				Seyfert2 = ((y > 0.73/(x + 0.59) + 1.33) + (x > -0.59)) \
+					* (y > 1.18 * x + 1.30) * ~large_err
+				LINER = ((y > 0.73/(x + 0.59) + 1.33) + (x > -0.59)) \
+				* (y < 1.18 * x + 1.30) * ~large_err
 				SF = (y < 0.73/(x + 0.59) + 1.33) * (x < -0.59) * ~large_err
 
 				y_line1 = 0.73/(x_line1 + 0.59) + 1.33
@@ -148,7 +164,7 @@ def BPT(galaxy, D=None, opt='pop', norm="lwv"):
 				y_line2 = 1.18 * x_line2 + 1.30
 				ax[i].plot(x_line2, y_line2, 'k')
 
-				ax[i].axvline(-0.59, '--')
+				ax[i].axvline(-0.59, ls='--', c='k')
 
 				lab = r'[OI]$\lambda$6300'
 
@@ -162,12 +178,14 @@ def BPT(galaxy, D=None, opt='pop', norm="lwv"):
 			LINER_combined *= LINER
 			SF_combined *= SF
 
-			myerrorbar(ax[i], x, y, xerr=x_err, yerr=e_err, marker='.', color=r)
-			# ax[i].errorbar(x[LINER], y[LINER], yerr=y_err[LINER], xerr=x_err[LINER], c='g', 
-			# 	fmt='.')
+			myerrorbar(ax[i], x, y, xerr=x_err, yerr=y_err, marker='.', 
+				color=r)
+			# ax[i].errorbar(x[LINER], y[LINER], yerr=y_err[LINER], 
+			# 	xerr=x_err[LINER], c='g', fmt='.')
 			# ax[i].errorbar(x[Seyfert2], y[Seyfert2], yerr=y_err[Seyfert2], 
 			# 	xerr=x_err[Seyfert2], c='r', fmt='.')
-			# ax[i].errorbar(x[SF], y[SF], yerr=y_err[SF], xerr=x_err[SF], c='b', fmt='.')
+			# ax[i].errorbar(x[SF], y[SF], yerr=y_err[SF], xerr=x_err[SF], 
+			# 	c='b', fmt='.')
 
 			ax[0].set_ylabel(r'log [OIII]$\lambda$5007/H$\,\beta$')
 			ax[i].set_xlabel(r'log(%s/$H_\alpha$)' %( lab))
@@ -176,8 +194,8 @@ def BPT(galaxy, D=None, opt='pop', norm="lwv"):
 		if not os.path.exists(os.path.dirname(saveTo)):
 			os.makedirs(os.path.dirname(saveTo))
 		fig.subplots_adjust(wspace=0)#,hspace=0.01)
-		fig.savefig(saveTo, dpi=80)
-		fig2.savefig('%s/plots/BPT2.png' % (output))
+		fig.savefig(saveTo, dpi=100)
+		fig2.savefig('%s/plots/BPT2.png' % (output), dpi=100)
 		plt.close()
 		Prefig(size=(16,12), transparent=False)
 # ------------================= BPT map ===================----------
@@ -190,9 +208,10 @@ def BPT(galaxy, D=None, opt='pop', norm="lwv"):
 		header = f[1].header
 		f.close()
 		saveTo = '%s/plots/AGN_map.png' % (output)
-		ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, m, header, 
-			vmin=-1.3, vmax=1.3, nodots=True, title='Map of AGN', save=saveTo, res=0.2, 
-			flux_unbinned=D.unbinned_flux, center=center)
+		ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, m, 
+			header, vmin=-1.3, vmax=1.3, nodots=True, title='Map of AGN', 
+			save=saveTo, res=0.2, flux_unbinned=D.unbinned_flux, 
+			center=center)
 		add_('radio', 'r', ax, galaxy)
 		plt.close()
 
@@ -203,8 +222,9 @@ def BPT(galaxy, D=None, opt='pop', norm="lwv"):
 		header = f[1].header
 		f.close()
 		saveTo = '%s/plots/AGN_map2.png' % (output)
-		ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, distance, header, 
-			vmin=-1.3, vmax=1.3, nodots=True, title='Map of AGN', save=saveTo, res=0.2, 
+		ax = plot_velfield_nointerp(D.x, D.y, D.bin_num, D.xBar, D.yBar, 
+			distance, header, vmin=-1.3, vmax=1.3, nodots=True, 
+			title='Map of AGN', save=saveTo, res=0.2, 
 			flux_unbinned=D.unbinned_flux, center=center)
 		ax.saveTo = saveTo
 		add_('radio', 'r', ax, galaxy)
@@ -236,11 +256,13 @@ def BPT(galaxy, D=None, opt='pop', norm="lwv"):
 
 		ax[1].scatter(x[p1], y[p1],c=c[p1], vmin=np.min(c), vmax=np.max(c))
 		ax[1].scatter(x[p1*passive],y[p1*passive],marker='x',c='r')
-		ax[1].text(-1.9,-0.8,r'0 $<$ H$_\alpha$/H$_\alpha^{\mathrm{peak}}$ $\leq$ 0.2')
+		ax[1].text(-1.9,-0.8,
+			r'0 $<$ H$_\alpha$/H$_\alpha^{\mathrm{peak}}$ $\leq$ 0.2')
 
 		ax[2].scatter(x[p2], y[p2],c=c[p2], vmin=np.min(c), vmax=np.max(c))
 		ax[2].scatter(x[p2*passive],y[p2*passive],marker='x',c='r')
-		ax[2].text(-1.9,-0.8, r'0.2 $<$ H$_\alpha$/H$_\alpha^{\mathrm{peak}}$ $\leq$ 1')
+		ax[2].text(-1.9,-0.8, 
+			r'0.2 $<$ H$_\alpha$/H$_\alpha^{\mathrm{peak}}$ $\leq$ 1')
 		
 
 		# Dianotics lines from R Cid Fernandes et.al. 2011 MNRAS 413 1687
@@ -278,8 +300,8 @@ def BPT(galaxy, D=None, opt='pop', norm="lwv"):
 
 		m = ~large_err * (D.e_line['[OIII]5007d'].equiv_width >= 0.8)
 		ax.errorbar(D.components['stellar'].plot['sigma'][m], y[m], c='r',
-			xerr = D.components['stellar'].plot['sigma'].uncert[m], yerr=y_err[m], fmt='.',
-			label=r'EW([OIII]) $\ge 0.8$')
+			xerr = D.components['stellar'].plot['sigma'].uncert[m], 
+			yerr=y_err[m], fmt='.', label=r'EW([OIII]) $\ge 0.8$')
 
 		ax.legend(facecolor='w')
 
@@ -287,14 +309,17 @@ def BPT(galaxy, D=None, opt='pop', norm="lwv"):
 		y_line = 1.6*10**-3 * x_line + 0.33
 		ax.plot(x_line, y_line, c='k')
 
-		ax.set_xlim([0, min(max(D.components['stellar'].plot['sigma'][m]), 500)])
+		ax.set_xlim([0, min(max(D.components['stellar'].plot['sigma'][m]), 
+			500)])
 		ax.set_ylim([-1.2, 1.5])
 
 		ax.axvline(70, c='k')
 		ax.axhline(np.log10(0.5), 
-			xmin=70./min(max(D.components['stellar'].plot['sigma'][m]), 500), c='k')
+			xmin=70./min(max(D.components['stellar'].plot['sigma'][m]), 500), 
+			c='k')
 		ax.axhline(np.log10(1), 
-			xmin=70./min(max(D.components['stellar'].plot['sigma'][m]), 500), c='k')
+			xmin=70./min(max(D.components['stellar'].plot['sigma'][m]), 500), 
+			c='k')
 
 
 		ylim = ax.get_ylim()
@@ -306,7 +331,8 @@ def BPT(galaxy, D=None, opt='pop', norm="lwv"):
 
 		ax.set_xlabel(r'$\sigma_\ast$')
 		ax.set_ylabel(r'log [OIII]$\lambda$5007/H$\,\beta$')
-		ax.set_title('Mass-excitation (MEx) diagnotics for %s' % (galaxy.upper()))
+		ax.set_title('Mass-excitation (MEx) diagnotics for %s' % (
+			galaxy.upper()))
 
 		fig.savefig('%s/plots/MEx.png' % (output))
 # ------------============== SAURON diagram ===============----------
@@ -325,16 +351,63 @@ def BPT(galaxy, D=None, opt='pop', norm="lwv"):
 
 		ax.errorbar(x, y, xerr = x_err, yerr = y_err, fmt='.')
 
+		# Add BPT line - transformed to NI
+		xlim = np.array([-2.5, 0.5])
+		x_line = np.linspace(xlim[0], xlim[1], 100)
+		y_line = 0.61/(x_line - 0.47) + 1.19
+
+		m = y_line < 1
+		plt.plot(x_line[m]-lnd+lbd, y_line[m], 'k')
+
+		y_line2 = 0.61/(x_line1 - 0.05) + 1.3
+		m1 = y_line2 < y_line1
+		a = np.min(x_line1[m1])
+		x_line2 = np.arange(a, 0.60, 0.001)
+		y_line2 = 0.61/(x_line2 - 0.05) + 1.3
+		m2 = y_line2 < 1
+		ax.plot(x_line2[m2]-lnd+lbd, y_line2[m2],'k--')
+
 		ax.set_xlim([-2.5, 0.5])
 		ax.set_ylim([-1.5, 1.5])
-		ax.set_xlabel(r'log [NI]d/H$_\beta$')
-		ax.set_ylabel(r'log [OIII]d/H$_\beta$')
+		ax.set_xlabel(r'log [NI]$\lambda\lambda$5197,5200/H$\,\beta$')
+		ax.set_ylabel(r'log [OIII]$\lambda$5007/H$\,\beta$')
 		ax.set_title('SAURON diagnotics for %s' % (galaxy.upper()))
 
+		add_grids(ax, '[NI]', '[OIII]')
+
 		fig.savefig('%s/plots/SAURON_diagnoistic.png' % (output))
+		plt.close()
+# ------------=========== Hbeta flux profile ===============----------
+	if 'Hbeta' in D.components.keys():
+		Prefig()
+		fig, ax = plt.subplots()
+
+		Hb = D.e_line['Hbeta'].flux
+
+		myerrorbar(ax, r, Hb, yerr=Hb.uncert,
+			color=np.log10(D.e_line['[OIII]5007d'].flux/1.35\
+			/ D.e_line['Hbeta'].flux).clip(-1,1))
+
+		o = np.argsort(r)
+
+		# ax.plot(r[o][1:], Hb[np.argmin(np.abs(r-1))] * r[o][1:]**-2, 'k')
+		ax.plot(r[o], np.nanmedian(r[o][np.isfinite(Hb[o])])**2
+			* np.nanmedian(Hb[o][np.isfinite(Hb[o])]) * r[o]**-2, 'k')
+
+		ax.set_yscale('log')
+		ax.set_ylabel(r'H$_\beta$ Flux')
+		ax.set_xlabel('Radius (pixels)')
+
+		fig.savefig('%s/plots/Hbeta_profile.png' % (output))
+		plt.close(fig)
+
 	return D
 
 
+
+
 if __name__=='__main__':
-	for gal in ['ic1459','ic4296','ngc1316','ngc1399']:
+	# global_MEx(instrument='muse')
+	# for gal in ['ic1459','ic4296','ngc1316','ngc1399']:
+	for gal in ['ic4296','ngc1316','ngc1399']:
 		D = BPT(gal)
