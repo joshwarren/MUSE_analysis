@@ -13,7 +13,7 @@ from astropy.io import fits
 from astropy import units as u
 from astropy.coordinates import SkyCoord
 from astropy.coordinates import match_coordinates_sky
-import copy
+import copy, sys
 from lts_linefit import lts_linefit as lts
 from compare_absorption2_muse import Lick_to_LIS
 
@@ -161,11 +161,11 @@ class galaxy_list(list):
 
 	@property
 	def names(self):
-		return [g.name for g in self]
+		return np.array([g.name for g in self])
 
 
 
-def compare_atlas3d(too_many_FR=True):
+def compare_atlas3d(too_many_FR=True, thesis=False, paper=False):
 	print 'Compare to Atlas3d/SAURON'
 
 ## ----------============== Ellipticity vs lambda_Re ==============----------
@@ -324,17 +324,19 @@ def compare_atlas3d(too_many_FR=True):
 
 
 	for gals in [massive_gals, vimos_gals, muse_gals, atlas_gals]:
-		ax.scatter(gals.ellipticity[gals.a], gals.lambda_Re[gals.a], 
+		# Default size is 50
+		ax.scatter(gals.ellipticity[gals.a], gals.lambda_Re[gals.a], s=130, 
 			marker=marker_atlas3d(0), c=gals.color, lw=0, label=gals.label)
-		ax.scatter(gals.ellipticity[gals.b], gals.lambda_Re[gals.b], 
+		ax.scatter(gals.ellipticity[gals.b], gals.lambda_Re[gals.b], s=130, 
 			marker=marker_atlas3d(1), c=gals.color, lw=0)
-		ax.scatter(gals.ellipticity[gals.f], gals.lambda_Re[gals.f], 
+		ax.scatter(gals.ellipticity[gals.f], gals.lambda_Re[gals.f], s=130, 
 			marker=marker_atlas3d(1), c=gals.color, lw=0)
-		ax.scatter(gals.ellipticity[gals.c], gals.lambda_Re[gals.c], 
+		ax.scatter(gals.ellipticity[gals.c], gals.lambda_Re[gals.c], s=130, 
 			marker=marker_atlas3d(2), c=gals.color, lw=0)
-		ax.scatter(gals.ellipticity[gals.d], gals.lambda_Re[gals.d], 
+		ax.scatter(gals.ellipticity[gals.d], gals.lambda_Re[gals.d], s=130, 
 			marker=marker_atlas3d(3), c=gals.color, lw=0)
-		ax.plot(gals.ellipticity[gals.e], gals.lambda_Re[gals.e], 
+		# Default size is 
+		ax.plot(gals.ellipticity[gals.e], gals.lambda_Re[gals.e], ms=10,
 			marker=marker_atlas3d(4), c=gals.color, lw=0, markerfacecolor='none')
 
 	# Join MUSE and VIMOS
@@ -440,7 +442,11 @@ def compare_atlas3d(too_many_FR=True):
 	ax.set_ylim([0, 0.8])
 
 	# Save plot
-	fig.savefig('%s/Data/muse/analysis/lambda_R_ellipticity.png' % (cc.base_dir))
+	fig.savefig('%s/Data/muse/analysis/lambda_R_ellipticity.png' % (
+		cc.base_dir))
+	if thesis:
+		fig.savefig('%s/Documents/thesis/chapter4/lambda_R_ellipticity.png' % (
+			cc.home_dir), dpi=240)
 	plt.close()	
 ## ----------============ K-band magnitude vs lambda_R ===========----------
 	print 'K-band magnitude vs lambda_Re'
@@ -647,7 +653,8 @@ def compare_atlas3d(too_many_FR=True):
 
 
 	fig.suptitle('K-band magnitude distribution for F/S rotators')
-	fig.savefig('%s/Data/muse/analysis/lambda_R_M_k.png' % (cc.base_dir))
+	fig.savefig('%s/Data/muse/analysis/lambda_R_M_k.png' % (cc.base_dir),
+		dpi=240)
 	plt.close()
 	Prefig(transparent=False)
 
@@ -770,7 +777,8 @@ def compare_atlas3d(too_many_FR=True):
 	ax[1].invert_xaxis()
 	ax[1].set_xlabel(r'$M_k \, \mathrm{(mag)}$')
 
-	fig.savefig('%s/Data/muse/analysis/M_k_binned.png' % (cc.base_dir))
+	fig.savefig('%s/Data/muse/analysis/M_k_binned.png' % (cc.base_dir),
+		dpi=240)
 	plt.close()
 	Prefig(transparent=False)
 ## ----------============== ellipticity vs M_k ===============----------
@@ -822,7 +830,8 @@ def compare_atlas3d(too_many_FR=True):
 	ax.invert_xaxis()
 
 	plt.legend(facecolor='w')
-	fig.savefig('%s/Data/muse/analysis/ellipticity_M_k.png' % (cc.base_dir))
+	fig.savefig('%s/Data/muse/analysis/ellipticity_M_k.png' % (cc.base_dir),
+		dpi=240)
 
 # ## ----------============== Radio power vs M_k ===============----------
 # 	print 'M_k vs Radio power'
@@ -850,7 +859,8 @@ def compare_atlas3d(too_many_FR=True):
 # 	ax.set_xlabel(r'$M_k \mathrm{(mag)}$')
 # 	ax.set_ylabel(r'$\log P_{1.4\mathrm{GHz}}$')
 
-# 	fig.savefig('%s/Data/muse/analysis/radio_power_M_k.png' % (cc.base_dir))
+# 	fig.savefig('%s/Data/muse/analysis/radio_power_M_k.png' % (cc.base_dir),
+#		dpi=240)
 # 	plt.close('all')
 
 # ## ----------=========== Radio power (FIRST) vs M_k ===============----------
@@ -923,7 +933,8 @@ def compare_atlas3d(too_many_FR=True):
 # 	ax.set_xlabel(r'$M_k \mathrm{(mag)}$')
 # 	ax.set_ylabel(r'$\log P_{1.4\mathrm{GHz}}$')
 
-# 	fig.savefig('%s/Data/muse/analysis/first_radio_power_M_k.png' % (cc.base_dir))
+# 	fig.savefig('%s/Data/muse/analysis/first_radio_power_M_k.png' % (
+# 		cc.base_dir), dpi=240)
 # 	plt.close()
 ## ----------================ Core age vs KDC size ================----------
 	print 'KDC size/age'
@@ -931,38 +942,41 @@ def compare_atlas3d(too_many_FR=True):
 	vimos_core_file = "%s/Data/vimos/analysis/galaxies_core.txt" % (cc.base_dir)
 	sauron_file = '%s/Data/sauron/VIII_table8.dat' % (cc.base_dir)
 	
+	Prefig(size=(12,10))
 	fig, ax = plt.subplots()
 	# Sauron
-	size_sauron, size_unc_sauron, age_sauron, age_unc_sauron = np.loadtxt(sauron_file,
-		unpack=True, usecols=(4,5,6,7), skiprows=2) 
-	galaxies_sauron, fast_sauron = np.loadtxt(sauron_file, unpack=True, usecols=(0,8), 
-		skiprows=2, dtype=str)
+	size_sauron, size_unc_sauron, age_sauron, age_unc_sauron = np.loadtxt(
+		sauron_file, unpack=True, usecols=(4,5,6,7), skiprows=2) 
+	galaxies_sauron, fast_sauron = np.loadtxt(sauron_file, unpack=True, 
+		usecols=(0,8), skiprows=2, dtype=str)
 
 	sauron_gals = galaxy_list()
 	for i, n in enumerate(galaxies_sauron):
 		sauron_gals.create_galaxy('NGC'+n,
-			KDC_size = size_sauron[i],
-			KDC_size_uncert = size_unc_sauron[i],
+			KDC_size = size_sauron[i]/1000,
+			KDC_size_uncert = size_unc_sauron[i]/1000,
 			age = age_sauron[i],
 			age_uncert = age_unc_sauron[i])
 	sauron_gals.FR = fast_sauron=='F'
 
-	ax.errorbar(sauron_gals.KDC_size[sauron_gals.FR], sauron_gals.age[sauron_gals.FR], 
-		fmt='.', xerr=sauron_gals.KDC_size_uncert[sauron_gals.FR], 
+	ax.errorbar(sauron_gals.KDC_size[sauron_gals.FR], 
+		sauron_gals.age[sauron_gals.FR], fmt='.', 
+		xerr=sauron_gals.KDC_size_uncert[sauron_gals.FR], 
 		yerr=sauron_gals.age_uncert[sauron_gals.FR], color='k',
 		label='Fast rotating SAURON')
-	ax.errorbar(sauron_gals.KDC_size[~sauron_gals.FR], sauron_gals.age[~sauron_gals.FR], 
-		fmt='.', xerr=sauron_gals.KDC_size_uncert[~sauron_gals.FR], 
+	ax.errorbar(sauron_gals.KDC_size[~sauron_gals.FR], 
+		sauron_gals.age[~sauron_gals.FR], fmt='.', 
+		xerr=sauron_gals.KDC_size_uncert[~sauron_gals.FR], 
 		yerr=sauron_gals.age_uncert[~sauron_gals.FR],
 		color='lightgrey', label='Slow rotating SAURON')
 
 	# MUSE
-	age_muse, age_unc_muse, OIII_eqw_muse, OIII_eqw_unc_muse= np.loadtxt(muse_core_file, 
-		unpack=True, usecols=(1,2,7,8), skiprows=2)
+	age_muse, age_unc_muse, OIII_eqw_muse, OIII_eqw_unc_muse= np.loadtxt(
+		muse_core_file, unpack=True, usecols=(1,2,7,8), skiprows=2)
 	gals_muse1 = np.loadtxt(muse_core_file, unpack=True, usecols=(0,), 
 		skiprows=2, dtype=str)
-	gals_muse2, size_muse = np.loadtxt(muse_classify_file, unpack=True, usecols=(0,5), 
-		dtype=str, skiprows=1)
+	gals_muse2, size_muse = np.loadtxt(muse_classify_file, unpack=True, 
+		usecols=(0,5), dtype=str, skiprows=1)
 	for g in muse_gals:
 		if g.name in gals_muse1:
 			i = np.where(gals_muse1 == g.name)[0][0]
@@ -979,8 +993,8 @@ def compare_atlas3d(too_many_FR=True):
 		if g.name in gals_muse2:
 			i = np.where(gals_muse2 == g.name)[0][0]
 			if size_muse[i] !='-':
-				g.KDC_size = angle_to_pc(g.name, float(size_muse[i]))
-				g.KDC_size_uncert = angle_to_pc(g.name, 0.5)
+				g.KDC_size = angle_to_pc(g.name, float(size_muse[i]))/1000
+				g.KDC_size_uncert = angle_to_pc(g.name, 0.5)/1000
 			else: 
 				g.KDC_size = np.nan
 				g.KDC_size_uncert = np.nan
@@ -993,8 +1007,8 @@ def compare_atlas3d(too_many_FR=True):
 		vimos_core_file, unpack=True, usecols=(1,2,7,8), skiprows=2)
 	gals_vimos1 = np.loadtxt(vimos_core_file, unpack=True, usecols=(0,), 
 		skiprows=2, dtype=str)
-	gals_vimos2, size_vimos = np.loadtxt(vimos_classify_file, unpack=True, usecols=(0,5), 
-		dtype=str, skiprows=1)
+	gals_vimos2, size_vimos = np.loadtxt(vimos_classify_file, unpack=True, 
+		usecols=(0,5), dtype=str, skiprows=1)
 	for g in vimos_gals:
 		if g.name in gals_vimos1:
 			i = np.where(gals_vimos1 == g.name)[0][0]
@@ -1059,14 +1073,22 @@ def compare_atlas3d(too_many_FR=True):
 
 	ax.legend(facecolor='w')
 	ax.set_yscale('log')#, nonposy='clip', subsy=[1,2,3,4,5,6,7,8,9])
-	ax.set_xlabel('KDC size (pc)')
+	ax.set_xlabel('KDC size (kpc)')
 	ax.set_ylabel('Age of central 1 arcsec (Gyrs)')
 	# ax.set_title('Age and size of KDCs')
 
 
-	fig.savefig('%s/Data/muse/analysis/KDC_size_age.png' % (cc.base_dir))	
+	fig.savefig('%s/Data/muse/analysis/KDC_size_age.png' % (cc.base_dir),
+		dpi=240)
+	if thesis:
+		fig.savefig('%s/Documents/thesis/chapter4/KDC_size_age.png' % (cc.home_dir),
+		 	dpi=240)
+	if paper:
+		fig.savefig('%s/Documents/paper/KDC_size_age.png' % (cc.home_dir),
+			dpi=240)
 	plt.close()
 ## ----------============ Mg_b vs vel dispersion =============----------
+	Prefig(size=(12,12))
 	print 'Mg vs sigma'
 
 	for gals in [vimos_gals, muse_gals]:
@@ -1082,7 +1104,6 @@ def compare_atlas3d(too_many_FR=True):
 			g.e_Mg = e_Mg[i]
 			g.sigma = sig[i]
 			g.e_sigma = e_sig[i]
-
 
 	fig, ax = plt.subplots()
 	for gals in [vimos_gals, muse_gals]:
@@ -1155,10 +1176,126 @@ def compare_atlas3d(too_many_FR=True):
 
 	ax.legend(facecolor='w')
 
-	ax.set_xlabel(r'$\log \sigma \mathrm{[km s^{-1}]}$')
-	ax.set_ylabel(r'Mg$_b \AA$')
+	ax.set_xlabel(r'$\log \sigma \, \mathrm{[km s^{-1}]}$')
+	ax.set_ylabel(r'Mg$\,b (\AA)$')
 
-	fig.savefig('%s/Data/muse/analysis/Mg_sigma.png' % (cc.base_dir))
+	fig.savefig('%s/Data/muse/analysis/Mg_sigma.png' % (cc.base_dir), 
+		dpi=240)
+	if thesis:
+		fig.savefig('%s/Documents/thesis/chapter4/Mg_sigma.png' % (cc.home_dir), 
+			dpi=240, bbox_inches='tight')
+	if paper:
+		fig.savefig('%s/Documents/paper/Mg_sigma.png' % (cc.home_dir), 
+			dpi=240, bbox_inches='tight')
+	plt.close()
+## ----------================= Nuclear MEx ==================----------
+	print 'Nuclear MEx diagram'
+	Prefig(size=(13.3, 10))
+	fig, ax = plt.subplots()
+	for gals in [vimos_gals, muse_gals]:
+		file = "%s/Data/%s/analysis/global_MEx.txt" % (cc.base_dir, 
+			gals.label.lower())
+		sigma, e_sigma, excitation, e_excitation, OIII_ew = np.loadtxt(file,
+			skiprows=1, usecols=(1,2,3,4,5), unpack=True)
+		excitation[~np.isfinite(excitation)] = np.nan
+		galaxies = np.loadtxt(file, skiprows=1, usecols=(0,), dtype=str)
+		for g in gals:
+			i = np.where(galaxies == g.name)[0][0]
+			g.excitation3 = excitation[i]
+			g.e_excitation3 = e_excitation[i]
+			g.sigma3 = sigma[i]
+			g.e_sigma3 = e_sigma[i]
+			g.OIII_ew3 = OIII_ew[i]
+
+		m = gals.OIII_ew3 > 0.8
+
+		ax.errorbar(gals.sigma3[m], gals.excitation3[m], 
+			xerr=gals.e_sigma3[m], yerr=gals.e_excitation3[m], fmt='x', 
+			c=gals.color)
+		ax.errorbar(gals.sigma3[~m], gals.excitation3[~m], 
+			xerr=gals.e_sigma3[~m], yerr=gals.e_excitation3[~m], fmt='o', 
+			c=gals.color)
+
+	first = True
+	for i_muse, g in enumerate(galaxies_muse):
+		if g in vimos_gals.names:
+			i_vimos = np.where(galaxies_vimos==g)[0][0]
+			if first: # add just one label to legend
+				ax.plot([muse_gals.sigma3[i_muse], 
+					vimos_gals.sigma3[i_vimos]], 
+					[muse_gals.excitation3[i_muse],
+					vimos_gals.excitation3[i_vimos]], 'k--', 
+					zorder=1, label='same galaxy in MUSE and VIMOS')
+				first = False
+			else:
+				ax.plot(np.log10([muse_gals.sigma3[i_muse], 
+					vimos_gals.sigma3[i_vimos]]), 
+					[muse_gals.excitation3[i_muse],
+					vimos_gals.excitation3[i_vimos]], 'k--', zorder=1)
+
+
+	for g in vimos_gals:
+		if g.name not in muse_gals.names:
+			if np.isfinite(g.sigma3) and np.isfinite(g.excitation3):
+				if g.name != 'ngc3100':
+					ax.text(g.sigma3+2, g.excitation3+0.02, g.name.upper(), 
+						fontsize=15)
+				else:
+					ax.text(g.sigma3-2, g.excitation3+0.02, g.name.upper(), 
+						fontsize=15, ha='right')
+	for i_muse, g in enumerate(muse_gals):
+		if g.name not in vimos_gals.names:
+			if np.isfinite(g.sigma3) and np.isfinite(g.excitation3):
+				ax.text(g.sigma3-2, g.excitation3+0.02, g.name.upper(), 
+					fontsize=15, ha='right')
+		else:
+			i_vimos = np.where(vimos_gals.names==g.name)[0][0]
+			if (np.isfinite(muse_gals.sigma3[i_muse]) or 
+				np.isfinite(vimos_gals.sigma3[i_vimos])) and \
+				(np.isfinite(muse_gals.excitation3[i_muse]) or 
+				np.isfinite(vimos_gals.excitation3[i_vimos])):
+
+				x = np.nanmean([muse_gals.sigma3[i_muse], 
+					vimos_gals.sigma3[i_vimos]])
+				if np.isnan(muse_gals.excitation3[i_muse]):
+					x = vimos_gals.sigma3[i_vimos]
+				elif np.isnan(vimos_gals.excitation3[i_vimos]):
+					x = muse_gals.sigma3[i_muse]
+				ax.text(x+2, np.nanmean([muse_gals.excitation3[i_muse],
+					vimos_gals.excitation3[i_vimos]])+0.02,  g.name.upper(), 
+					fontsize=15)
+
+	ax.axvline(70, c='k')
+	ax.axhline(np.log10(0.5), xmin=70./400, c='k')
+	ax.axhline(np.log10(1), xmin=70./400, c='k')
+
+	x_line = np.arange(70,1000,1)
+	y_line = 1.6*10**-3 * x_line + 0.33
+	ax.plot(x_line, y_line, c='k')
+
+	ax.set_xlim([0, 400])
+	ax.set_ylim([-1.2, 1.5])
+
+	ylim = ax.get_ylim()
+	yrange = ylim[1] - ylim[0]
+	ax.text(50, ylim[0] +0.96 * yrange, 'SF')
+	ax.text(75, 0.55, 'Seyfert 2')
+	ax.text(75, 0.15, 'LINER')
+	ax.text(75, -0.23, 'Transition')
+	ax.text(75, -0.5, 'Passive')
+
+	ax.set_xlabel(r'$\sigma_\ast$')
+	ax.set_ylabel(
+		r'$\log \left(\frac{\mathrm{[OIII]}\lambda5007}{H\,\beta}\right)$')
+	fig.savefig('%s/Data/muse/analysis/nuclear_MEx.png'%(cc.base_dir),
+		dpi=240)
+	if thesis:
+		fig.savefig('%s/Documents/thesis/chapter5/nuclear_MEx.png'%(cc.home_dir),
+			dpi=240)
+	if paper:
+		fig.savefig('%s/Documents/paper/nuclear_MEx.png'%(cc.home_dir),
+			dpi=240)
+
 ## ----------=========== Core OIII vs radio power ============----------
 	print '[OIII] vs radio power'
 	fig, ax = plt.subplots()
@@ -1173,13 +1310,15 @@ def compare_atlas3d(too_many_FR=True):
 		if g in galaxies_vimos:
 			i_vimos = np.where(galaxies_vimos==g)[0][0]
 			if first: # add just one label to legend
-				ax.plot(np.log10([muse_gals.OIIIew[i_muse], vimos_gals.OIIIew[i_vimos]]), 
-					[muse_gals.radio[i_muse],vimos_gals.radio[i_vimos]], 'k--', 
-					zorder=1, label='same galaxy in MUSE and VIMOS')
+				ax.plot(np.log10([muse_gals.OIIIew[i_muse], 
+					vimos_gals.OIIIew[i_vimos]]), [muse_gals.radio[i_muse],
+					vimos_gals.radio[i_vimos]], 'k--', zorder=1, 
+					label='same galaxy in MUSE and VIMOS')
 				first = False
 			else:
-				ax.plot(np.log10([muse_gals.OIIIew[i_muse], vimos_gals.OIIIew[i_vimos]]), 
-					[muse_gals.radio[i_muse],vimos_gals.radio[i_vimos]], 'k--', zorder=1)
+				ax.plot(np.log10([muse_gals.OIIIew[i_muse], 
+					vimos_gals.OIIIew[i_vimos]]), [muse_gals.radio[i_muse],
+					vimos_gals.radio[i_vimos]], 'k--', zorder=1)
 
 	
 	atlas3d_file = '%s/Data/atlas3d/XXXI_tableA6.dat' % (cc.base_dir)
@@ -1193,7 +1332,8 @@ def compare_atlas3d(too_many_FR=True):
 			else: g.OIIIew = np.nan
 		else: g.OIIIew = np.nan
 
-	ax.scatter(atlas_gals.OIIIew, atlas_gals.nvss_radio, marker='x', c='k', label='Atlas3D')
+	ax.scatter(atlas_gals.OIIIew, atlas_gals.nvss_radio, marker='x', c='k', 
+		label='Atlas3D')
 	ax.scatter(atlas_gals.OIIIew[atlas_gals.selected_27], 
 		atlas_gals.nvss_radio[atlas_gals.selected_27], marker='o', edgecolor='r',
 		facecolors='none', s=150, lw=1, label='Atlas3D subsample from 2.7GHz')
@@ -1204,7 +1344,8 @@ def compare_atlas3d(too_many_FR=True):
 	ax.set_xlabel(r'log(EW [OIII]/$\mathrm{\AA}$)')
 	ax.set_ylabel(r'$\log(P_{1.4 \mathrm{G Hz}} / \mathrm{W \, Hz^{-1}})$')
 
-	fig.savefig('%s/Data/muse/analysis/OIIIew_radio.png' % (cc.base_dir))	
+	fig.savefig('%s/Data/muse/analysis/OIIIew_radio.png' % (cc.base_dir),
+		dpi=240)
 	plt.close()
 
 ## ----------========== Radio spectral index ===========----------
@@ -1213,7 +1354,8 @@ def compare_atlas3d(too_many_FR=True):
 	galaxy_properties2_file = '%s/Data/galaxies_properties2.txt' % (cc.base_dir)
 	q24, q24_err, spec_index, spec_index_err = np.loadtxt(galaxy_properties2_file,
 		unpack=True, usecols=(1,2,3,4), skiprows=1)
-	galaxies = np.loadtxt(galaxy_properties2_file, usecols=(0,), skiprows=1, dtype=str)
+	galaxies = np.loadtxt(galaxy_properties2_file, usecols=(0,), skiprows=1, 
+		dtype=str)
 
 	for g in vimos_gals:
 		if g.name in galaxies:
@@ -1236,13 +1378,15 @@ def compare_atlas3d(too_many_FR=True):
 	fig,ax =plt.subplots(2, sharex=True)
 	ax[0].scatter(vimos_gals.q24[vimos_gals.FR], vimos_gals.radio[vimos_gals.FR], 
 		marker='x', c='k')
-	ax[1].scatter(vimos_gals.q24[vimos_gals.FR], vimos_gals.spec_index[vimos_gals.FR], 
-		marker='x', c='k', label='Fast Rotators')
+	ax[1].scatter(vimos_gals.q24[vimos_gals.FR], 
+		vimos_gals.spec_index[vimos_gals.FR], marker='x', c='k', 
+		label='Fast Rotators')
 
 	ax[0].scatter(vimos_gals.q24[~vimos_gals.FR], vimos_gals.radio[~vimos_gals.FR], 
 		marker='^', c='k')
-	ax[1].scatter(vimos_gals.q24[~vimos_gals.FR], vimos_gals.spec_index[~vimos_gals.FR], 
-		marker='^', c='k', label = 'Slow Rotators')
+	ax[1].scatter(vimos_gals.q24[~vimos_gals.FR], 
+		vimos_gals.spec_index[~vimos_gals.FR], marker='^', c='k', 
+		label = 'Slow Rotators')
 
 	# Use MUSE too to include ngc1316
 	ax[0].scatter(muse_gals.q24[muse_gals.FR], muse_gals.radio[muse_gals.FR], 
@@ -1280,7 +1424,8 @@ def compare_atlas3d(too_many_FR=True):
 	ax[0].tick_params(top=True, bottom=True, direction='in')
 	ax[1].tick_params(top=True, direction='in')
 	fig.subplots_adjust(hspace=0)
-	fig.savefig('%s/Data/muse/analysis/radio_spectral_index.png' % (cc.base_dir))
+	fig.savefig('%s/Data/muse/analysis/radio_spectral_index.png' % (
+		cc.base_dir), dpi=240)
 
 	plt.close('all')
 	Prefig(subplots=(1,3), transparent=False)
@@ -1320,16 +1465,16 @@ def compare_atlas3d(too_many_FR=True):
 			i_vimos = np.where(galaxies_vimos==g)[0][0]
 			if first: # add just one label to legend
 				ax[0].plot([muse_gals.z[i_muse], vimos_gals.z[i_vimos]], 
-					[muse_gals.lambda_Re[i_muse],vimos_gals.lambda_Re[i_vimos]], 'k--', 
-					zorder=1, label='same galaxy in MUSE and VIMOS')
+					[muse_gals.lambda_Re[i_muse],vimos_gals.lambda_Re[i_vimos]], 
+					'k--', zorder=1, label='same galaxy in MUSE and VIMOS')
 				ax[2].plot([muse_gals.z[i_muse], vimos_gals.z[i_vimos]], 
 					[muse_gals.radio[i_muse],vimos_gals.radio[i_vimos]], 'k--', 
 					zorder=1, label='same galaxy in MUSE and VIMOS')
 				first = False
 			else:
 				ax[0].plot([muse_gals.z[i_muse], vimos_gals.z[i_vimos]], 
-					[muse_gals.lambda_Re[i_muse],vimos_gals.lambda_Re[i_vimos]], 'k--', 
-					zorder=1)
+					[muse_gals.lambda_Re[i_muse],vimos_gals.lambda_Re[i_vimos]], 
+					'k--', zorder=1)
 				ax[2].plot([muse_gals.z[i_muse], vimos_gals.z[i_vimos]], 
 					[muse_gals.radio[i_muse],vimos_gals.radio[i_vimos]], 'k--', 
 					zorder=1)
@@ -1345,7 +1490,15 @@ def compare_atlas3d(too_many_FR=True):
 	ax[0].tick_params(top=True, bottom=True, direction='in')
 	ax[1].tick_params(top=True, direction='in')
 	fig.subplots_adjust(hspace=0)
-	fig.savefig('%s/Data/muse/analysis/redshift_dependance.png' % (cc.base_dir))
+	fig.savefig('%s/Data/muse/analysis/redshift_dependance.png' % (
+		cc.base_dir), dpi=240)
 
 if __name__=='__main__':
-	compare_atlas3d(too_many_FR=False)
+	arg1=str(sys.argv[1])
+	if arg1 == 'thesis':
+		compare_atlas3d(too_many_FR=False, thesis=True)
+	elif arg1 == 'paper':
+		compare_atlas3d(too_many_FR=False, paper=True)
+	else:
+		compare_atlas3d(too_many_FR=False)
+

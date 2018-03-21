@@ -15,6 +15,7 @@ from prefig import Prefig
 from sauron_colormap import sauron
 from BPT import add_grids
 from tools import myerrorbar
+from BPT import global_MEx
 
 
 
@@ -50,7 +51,7 @@ def BPT(galaxy, D=None, opt='pop', norm="lwv"):
 		fig, ax = plt.subplots(1,3, sharey=True)
 		Prefig(size=(16,12))
 		fig2, ax2 = plt.subplots()
-		r = np.sqrt((D.xbin - center[0])**2 + (D.ybin - center[1])**2)
+		r = np.sqrt((D.xBar - center[0])**2 + (D.yBar - center[1])**2)
 		for i, l in enumerate(['[NII]6583d', '[SII]6716', '[OI]6300d']):
 
 			y = np.log10(D.e_line['[OIII]5007d'].flux/D.e_line['Hbeta'].flux)
@@ -102,8 +103,8 @@ def BPT(galaxy, D=None, opt='pop', norm="lwv"):
 
 				y_line2 = 0.61/(x_line1 - 0.05) + 1.3
 				m2 = y_line2 < 1
-				ax[i].plot(x_line2[m2], y_line2[m2],'k--')
-				ax2.plot(x_line2[m2], y_line2[m2],'k--')				
+				ax[i].plot(x_line1[m2], y_line2[m2],'k--')
+				ax2.plot(x_line1[m2], y_line2[m2],'k--')				
 
 				lab = r'[NII]$\lambda$6584'
 
@@ -148,7 +149,7 @@ def BPT(galaxy, D=None, opt='pop', norm="lwv"):
 				y_line2 = 1.18 * x_line2 + 1.30
 				ax[i].plot(x_line2, y_line2, 'k')
 
-				ax[i].axvline(-0.59, '--')
+				ax[i].axvline(-0.59, ls='--', c='k')
 
 				lab = r'[OI]$\lambda$6300'
 
@@ -162,7 +163,7 @@ def BPT(galaxy, D=None, opt='pop', norm="lwv"):
 			LINER_combined *= LINER
 			SF_combined *= SF
 
-			myerrorbar(ax[i], x, y, xerr=x_err, yerr=e_err, marker='.', color=r)
+			myerrorbar(ax[i], x, y, xerr=x_err, yerr=y_err, marker='.', color=r)
 			# ax[i].errorbar(x[LINER], y[LINER], yerr=y_err[LINER], xerr=x_err[LINER], c='g', 
 			# 	fmt='.')
 			# ax[i].errorbar(x[Seyfert2], y[Seyfert2], yerr=y_err[Seyfert2], 
@@ -336,5 +337,7 @@ def BPT(galaxy, D=None, opt='pop', norm="lwv"):
 
 
 if __name__=='__main__':
+	global_MEx(instrument='muse')
+
 	for gal in ['ic1459','ic4296','ngc1316','ngc1399']:
 		D = BPT(gal)

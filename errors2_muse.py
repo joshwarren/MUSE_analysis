@@ -418,7 +418,13 @@ def get_dataCubeDirectory(galaxy, radio_band=None):
 		dir = '%s/muse_cubes' % (cc.base_dir)
 		offsets_file = '%s/offsets.txt' % (cc.base_dir)
 
-	dataCubeDirectory = mystring('%s/%s/%s.clipped.fits' %  (dir, galaxy, galaxy))
+	if cc.device == 'uni':
+		dataCubeDirectory = mystring('%s/%s/%s.clipped.fits' %  (dir, galaxy, 
+			galaxy))
+	elif 'home' in cc.device:
+		dataCubeDirectory = mystring('%s/%s/%s.clipped_home.fits' %  (dir, galaxy, 
+			galaxy))
+
 	dataCubeDirectory.CO = mystring2("%s/Data/alma/%s-mom0.fits" % (cc.base_dir, 
 		galaxy))
 

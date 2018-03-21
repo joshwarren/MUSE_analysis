@@ -48,9 +48,13 @@ def whole_image(galaxy, verbose=False):
 		unpack=True, dtype=str, skiprows=1)
 	i_gal = np.where(galaxy_gals==galaxy)[0][0]
 
-	max_radius = 29
+	max_radius = 90
+	Mass_sav = 0
 	radius = float(max_radius)
-	f = fits.open(get_dataCubeDirectory(galaxy))
+	if 'ic' in galaxy:
+		f = fits.open(get_dataCubeDirectory(galaxy))
+	elif 'ngc' in galaxy:
+		f = fits.open(get_dataCubeDirectory(galaxy)[:-5]+'2.fits')
 	while radius > 2:
 		mask = in_aperture(centre[0], centre[1], radius, instrument='muse')
 
@@ -60,8 +64,8 @@ def whole_image(galaxy, verbose=False):
 		spec[np.isnan(spec)] = 0
 		noise[np.isnan(noise)] = 0
 
-		spec = np.einsum('ijk,jk->i', spec, mask)
-		noise = np.sqrt(np.einsum('ijk,jk->i', noise**2, mask))
+		spec = np.einsum('ijk,jk->i', spec, mask)#/np.sum(mask)
+		noise = np.sqrt(np.einsum('ijk,jk->i', noise**2, mask))#/np.sum(mask)
 
 		if radius == max_radius:
 			reps = max_reps
@@ -112,6 +116,14 @@ def whole_image(galaxy, verbose=False):
 		Ha_spec = pp.matrix[:, pp.templatesToUse=='Halpha'].flatten() * \
 			pp.weights[pp.templatesToUse=='Halpha']
 		Ha_flux = np.trapz(Ha_spec, x=pp.lam)
+
+		Ha_spec2 = pp.matrix[:, pp.templatesToUse=='Halpha'].flatten() \
+			/ np.max(pp.matrix[:, pp.templatesToUse=='Halpha']) \
+			* np.median(noise[(pp.lam < 6563./(1 + (pp.sol[1][0] - 300)/c))
+			* (pp.lam > 6563./(1 + (pp.sol[1][0] + 300)/c))])
+		Ha_flux2 = np.trapz(Ha_spec2, x=pp.lam)
+		Mass2 = get_Mass(Ha_flux2, D, instrument='muse')
+
 		if reps == max_reps:
 			Hb_spec_uncert = pp.MCgas_uncert_spec[
 				pp.templatesToUse[pp.component!=0]=='Hbeta', :].flatten()
@@ -120,6 +132,9 @@ def whole_image(galaxy, verbose=False):
 			Ha_spec_uncert = pp.MCgas_uncert_spec[
 				pp.templatesToUse[pp.component!=0]=='Halpha', :].flatten()
 			Ha_flux_uncert = trapz_uncert(Ha_spec_uncert, x=pp.lam)
+		Mass = get_Mass(Ha_flux, D, instrument='muse')
+		e_Mass = get_Mass(Ha_flux_uncert, D, instrument='muse')
+
 
 		if max(OIII_spec)/np.median(pp.noise[
 			(pp.lam < 5007./(1 + (pp.sol[1][0] - 300)/c)) *
@@ -130,28 +145,25 @@ def whole_image(galaxy, verbose=False):
 				(pp.lam > 6563./(1 + (pp.sol[1][0] + 300)/c))]) > 2.5:
 
 				if reps==max_reps:
-					Mass = get_Mass(Ha_flux, D, instrument='muse')
-					e_Mass = get_Mass(Ha_flux_uncert, D, instrument='muse')
-					
 					mass[i_gal] = str(round(np.log10(Mass),4))
 					e_mass[i_gal] =  str(round(np.abs(e_Mass/Mass/
 						np.log(10)), 4))
 					if verbose:
-						print '%.2f +/- %.2f log10(Solar Masses)' % (
+						print '%s +/- %s log10(Solar Masses)' % (
 							mass[i_gal], e_mass[i_gal])
-						fig, ax = plt.subplots(2)
-						pp.ax = ax[0]
-						from ppxf import create_plot
-						fig, ax = create_plot(pp).produce 
-						ax.set_xlim([4800, 4900])
-						ax.legend()
+						# fig, ax = plt.subplots(2)
+						# pp.ax = ax[0]
+						# from ppxf import create_plot
+						# fig, ax = create_plot(pp).produce 
+						# ax.set_xlim([4800, 4900])
+						# ax.legend()
 
-						pp.ax = ax[1]
-						from ppxf import create_plot
-						fig, ax = create_plot(pp).produce 
-						ax.set_xlim([6500, 6600])
+						# pp.ax = ax[1]
+						# from ppxf import create_plot
+						# fig, ax = create_plot(pp).produce 
+						# ax.set_xlim([6500, 6600])
 
-						fig.savefig('%s.png'%(galaxy))
+						# fig.savefig('%s.png'%(galaxy))
 					radius = -1
 				else: # Repeat but calculate uncert
 					reps = max_reps
@@ -171,32 +183,11 @@ def whole_image(galaxy, verbose=False):
 						(Hb_flux_uncert/Hb_flux)**2), 2))
 					bulmer[i_gal] = '<'+str(round(b, 2))
 			else:
-				if radius == max_radius:
-					Mass = get_Mass(Ha_flux, D, instrument='muse')
-					e_Mass = get_Mass(Ha_flux_uncert, D, instrument='muse')
+				Mass_sav = max(Mass, Mass2, Mass_sav)
+				if Mass_sav == Mass2: e_Mass = np.nan
 
-					mass[i_gal] = '<'+str(round(np.log10(Mass),4))
-					e_mass[i_gal] =  str(round(np.abs(e_Mass/Mass/
-						np.log(10)), 4))
-					b = Ha_flux/Hb_flux
-					e_bulmer[i_gal] = str(round(b * np.sqrt(
-						(Ha_flux_uncert/Ha_flux)**2 + 
-						(Hb_flux_uncert/Hb_flux)**2), 2))
-					bulmer[i_gal] = '<'+str(round(b, 2))
-					if verbose:
-						print '<%.2f +/- %.2f log10(Solar Masses)' % (
-						mass[i_gal], e_mass[i_gal])
-
-				radius -= 1
-				reps = 0
-
-
-		else:
-			if radius == max_radius:
-				Mass = get_Mass(Ha_flux, D, instrument='muse')
-				e_Mass = get_Mass(Ha_flux_uncert, D, instrument='muse')
-
-				mass[i_gal] = '<'+str(round(np.log10(Mass),4))
+				# if radius == max_radius:
+				mass[i_gal] = '<'+str(round(np.log10(Mass_sav),4))
 				e_mass[i_gal] =  str(round(np.abs(e_Mass/Mass/
 					np.log(10)), 4))
 				b = Ha_flux/Hb_flux
@@ -205,10 +196,30 @@ def whole_image(galaxy, verbose=False):
 					(Hb_flux_uncert/Hb_flux)**2), 2))
 				bulmer[i_gal] = '<'+str(round(b, 2))
 				if verbose:
-					print '<%.2f +/- %.2f log10(Solar Masses)' % (
-					mass[i_gal], e_mass[i_gal])
-			radius -= 1
-			reps = 0
+					print '%s +/- %s log10(Solar Masses)' % (
+						mass[i_gal], e_mass[i_gal])
+
+				radius -= 5
+				reps = 0
+
+
+		else:
+			Mass_sav = max(Mass, Mass2, Mass_sav)
+			if Mass_sav == Mass2: e_Mass = np.nan
+			# if radius == max_radius:
+			mass[i_gal] = '<'+str(round(np.log10(Mass_sav),4))
+			e_mass[i_gal] =  str(round(np.abs(e_Mass/Mass/
+				np.log(10)), 4))
+			b = Ha_flux/Hb_flux
+			e_bulmer[i_gal] = str(round(b * np.sqrt(
+				(Ha_flux_uncert/Ha_flux)**2 + 
+				(Hb_flux_uncert/Hb_flux)**2), 2))
+			bulmer[i_gal] = '<'+str(round(b, 2))
+			if verbose:
+				print '%s +/- %s log10(Solar Masses)' % (
+				mass[i_gal], e_mass[i_gal])
+		radius -= 5
+		reps = 0
 
 		params = set_params(opt='pop', reps=reps, temp_mismatch=True, 
 			produce_plot=False)
@@ -223,5 +234,6 @@ def whole_image(galaxy, verbose=False):
 
 if __name__=='__main__':
 	galaxies = ['ic1459', 'ic4296', 'ngc1316', 'ngc1399']
+	galaxies = ['ic4296']#, 'ngc1399']
 	for g in galaxies:
-		whole_image(g)
+		whole_image(g, verbose=True)

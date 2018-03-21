@@ -156,7 +156,7 @@ def use_kinemetry(gal, opt='pop'):
 
 	# f = '%s/%s/%s/kinemetry/kinemetry_stellar_vel_2Dmodel.txt' % (out_dir, gal, 
 	# 	opt)
-	f = '%s/%s/%s/kinemetry/kinemetry_gas_vel_2Dmodel.txt' % (out_dir, gal, 
+	f = '%s/%s/%s/kinemetry/kinemetry_stellar_vel_2Dmodel.txt' % (out_dir, gal, 
 		'pop')
 	xbin, ybin, velkin, velcirc  = np.loadtxt(f, unpack=True, skiprows=1)
 
@@ -185,9 +185,9 @@ def use_kinemetry(gal, opt='pop'):
 	velcirc[velcirc==max(velcirc)] = np.nan
 
 
-	f = '%s/%s/%s/kinemetry/stellar_vel.dat' % (out_dir, gal, opt)
-	velkin = np.loadtxt(f, usecols=(0,), unpack=True)
-	velkin[velkin==9999] = np.nan
+	# f = '%s/%s/%s/kinemetry/stellar_vel.dat' % (out_dir, gal, opt)
+	# velkin = np.loadtxt(f, usecols=(0,), unpack=True)
+	# velkin[velkin==9999] = np.nan
 
 
 	# norm = np.nanmean(vel/velkin)
