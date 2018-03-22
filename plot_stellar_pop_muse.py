@@ -286,8 +286,8 @@ def plot_stellar_pop(galaxy, method='median', opt='pop', D=None, overplot={},
 			for j in range(index.shape[1]):
 				index[i,j,:] = np.array([i,j]) - center
 
-		step_size = 2
-		annuli = np.arange(2, 26, step_size).astype(float)
+		step_size = 12
+		annuli = np.arange(step_size, 100, step_size).astype(float)
 
 		age_rad = np.zeros(len(annuli))
 		met_rad = np.zeros(len(annuli))
@@ -315,7 +315,7 @@ def plot_stellar_pop(galaxy, method='median', opt='pop', D=None, overplot={},
 			pp = run_ppxf(galaxy, spec, noise, lamRange, header['CD3_3'], 
 				params)
 
-			pop = population(pp=pp, instrument='muse')
+			pop = population(pp=pp, instrument='muse', method=method)
 
 			for i in ['age', 'met', 'alp']:
 				if i=='met': i2='metallicity'
@@ -324,7 +324,7 @@ def plot_stellar_pop(galaxy, method='median', opt='pop', D=None, overplot={},
 				rad[i].append(getattr(pop, i2))
 				rad_err[i].append(getattr(pop, 'unc_'+i))
 
-		annuli *= header['CD1_1']*60**2
+		annuli *= abs(header['CD1_1'])*(60**2)
 
 
 		gradient_file = '%s/galaxies_pop_gradients.txt' % (out_dir)
@@ -402,5 +402,6 @@ def plot_stellar_pop(galaxy, method='median', opt='pop', D=None, overplot={},
 # Use of plot_stellar_pop.py
 
 if __name__ == '__main__':
-	plot_stellar_pop('ic1459', gradient='only')
+	for g in ['ic1459','ic4296', 'ngc1316','ngc1399']:
+		plot_stellar_pop(g, gradient='only', method='mostlikely')
 
