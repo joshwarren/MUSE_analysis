@@ -46,7 +46,8 @@ class set_params(object):
 		start 			= 	None,
 		library 		=	'Miles',
 		use_all_temp 	= 	False,
-		res 			= 	None
+		res 			= 	None,
+		save 			=	True
 		):
 		self.quiet = quiet # True
 		self.gas = gas # 0   No gas emission lines
@@ -69,6 +70,7 @@ class set_params(object):
 		self.library = library
 		self.use_all_temp = use_all_temp
 		self.res = res
+		self.save = save
 
 
 	@property
@@ -514,14 +516,14 @@ def get_dataCubeDirectory(galaxy, radio_band=None):
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
-def errors2(i_gal=None, opt=None, bin=None):
+def errors2(i_gal=None, opt=None, bin=None, params=None):
 	if i_gal is None: i_gal=int(sys.argv[1])
 	if opt is None: opt=sys.argv[2]
 	if bin is None: bin=int(sys.argv[3])
 ## ----------===============================================---------
 ## ----------============= Input parameters  ===============---------
 ## ----------===============================================---------
-	params = set_params(opt=opt)
+	if params is None: params = set_params(opt=opt)
 	
 	galaxies = ['ic1459', 'ic4296', 'ngc1316', 'ngc1399']
 	galaxy = galaxies[i_gal]
@@ -575,7 +577,8 @@ def errors2(i_gal=None, opt=None, bin=None):
 
 	self = run_ppxf(galaxy, bin_lin, bin_lin_noise, lamRange, CDELT_spec, params)
 ## ----------============ Write ouputs to file =============---------
-	saveAll(galaxy, bin, self, opt=opt)
+	if params.save:
+		saveAll(galaxy, bin, self, opt=opt)
 
 
 
