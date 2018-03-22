@@ -198,7 +198,6 @@ def whole_image(galaxy, verbose=False):
 				if verbose:
 					print '%s +/- %s log10(Solar Masses)' % (
 						mass[i_gal], e_mass[i_gal])
-
 				radius -= 5
 				reps = 0
 
@@ -217,6 +216,7 @@ def whole_image(galaxy, verbose=False):
 			bulmer[i_gal] = '<'+str(round(b, 2))
 			if verbose:
 				print '%s +/- %s log10(Solar Masses)' % (
+
 				mass[i_gal], e_mass[i_gal])
 		radius -= 5
 		reps = 0
