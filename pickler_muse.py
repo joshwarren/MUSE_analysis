@@ -124,7 +124,8 @@ def pickler(galaxy, discard=0, norm='', opt="kin", override=False):
 		ndmin=2)
 # ------------=========== Read kinematics results ==============----------
 	componants = [d for d in os.listdir(vin_dir_gasMC + "/gas") if \
-		os.path.isdir(os.path.join(vin_dir_gasMC + "/gas", d))]
+		os.path.isdir(os.path.join(vin_dir_gasMC + "/gas", d))] if \
+		os.path.exists(vin_dir_gasMC + "/gas") else []
 
 	if len(componants) == 0: gas =0
 	elif 'gas' in componants: D.gas = 1

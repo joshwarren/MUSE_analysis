@@ -36,7 +36,7 @@ class set_params(object):
 		reps 			= 	1000, 
 		quiet	 		= 	True, 
 		gas 			= 	1, 
-		set_range 		= 	np.array([2000,7410]), 
+		set_range 		= 	np.array([2000,5800]),#7410]), 
 		stellar_moments = 	2, 
 		gas_moments 	=	2, 
 		narrow_broad 	=	False, 
@@ -412,6 +412,7 @@ def get_dataCubeDirectory(galaxy, radio_band=None):
 			self.radio = mystring2('')
 			self.CO = mystring2('')
 			self.xray = mystring2('')
+			self.hst = mystring2('')
 
 	if cc.device == 'uni' or 'home' in cc.device:
 		dir = '%s/Data/muse' % (cc.base_dir)
@@ -420,7 +421,7 @@ def get_dataCubeDirectory(galaxy, radio_band=None):
 		dir = '%s/muse_cubes' % (cc.base_dir)
 		offsets_file = '%s/offsets.txt' % (cc.base_dir)
 
-	if cc.device == 'uni':
+	if cc.device == 'uni' or cc.device == 'glamdring':
 		dataCubeDirectory = mystring('%s/%s/%s.clipped.fits' %  (dir, galaxy, 
 			galaxy))
 	elif 'home' in cc.device:
@@ -440,11 +441,15 @@ def get_dataCubeDirectory(galaxy, radio_band=None):
 			dir, galaxy)
 		# dataCubeDirectory.xray = '%s/Data/Chandra/IC1459_full.fits' % (
 		# 	cc.base_dir)
+		dataCubeDirectory.hst = '%s/Data/hst/%s' % (cc.base_dir, galaxy) +\
+			'/hst_05454_01_wfpc2_f555w_pc_drz.fits'
 	elif galaxy == 'ic4296':
 		dataCubeDirectory.original = '%s/%s/ADP.2016-06-14T14:10:28.175.fits' % (
 			dir, galaxy)
 		# dataCubeDirectory.xray = '%s/Data/Chandra/IC4296_full.fits' % (
 		# 	cc.base_dir)
+		dataCubeDirectory.hst = '%s/Data/hst/%s' % (cc.base_dir, galaxy) +\
+			'/hst_05910_03_wfpc2_f814w_pc_drz.fits'
 
 		if radio_band is None or radio_band == 'L':
 			dataCubeDirectory.radio = mystring2('%s/Data/VLA/' % (cc.base_dir) +
@@ -459,6 +464,8 @@ def get_dataCubeDirectory(galaxy, radio_band=None):
 	elif galaxy == 'ngc1316':
 		dataCubeDirectory.original = '%s/%s/ADP.2016-06-20T15:14:47.831.fits' % (
 			dir, galaxy)
+		dataCubeDirectory.hst = '%s/Data/hst/%s' % (cc.base_dir, galaxy) +\
+			'/hst_05990_01_wfpc2_f450w_pc_drz.fits'
 
 		if radio_band == 'L':
 			# Very low resolution and very large FoV
@@ -478,6 +485,8 @@ def get_dataCubeDirectory(galaxy, radio_band=None):
 	elif galaxy == 'ngc1399':
 		dataCubeDirectory.original = '%s/%s/ADP.2016-06-21T08:50:02.757.fits' % (
 			dir, galaxy)
+		dataCubeDirectory.hst = '%s/Data/hst/%s' % (cc.base_dir, galaxy) +\
+			'/hst_05990_02_wfpc2_f450w_pc_drz.fits'
 		# dataCubeDirectory.xray = '%s/Data/Chandra/N1399_full.fits' % (cc.base_dir)
 		if radio_band is None or radio_band == 'C' or radio_band == 'CI':
 			dataCubeDirectory.radio = mystring2('%s/Data/VLA/ngc1399/NGC1399.CBAND.ANB.I.1.25.fits' % (
@@ -743,7 +752,8 @@ class run_ppxf(ppxf):
 				self.templates = self.stellar_templates.templates
 			self.component = [0]*len(self.stellar_templates.templatesToUse
 				) + self.e_templates.component
-			self.templatesToUse = np.append(self.stellar_templates.templatesToUse, 
+			self.templatesToUse = np.append(
+				self.stellar_templates.templatesToUse.astype(int).astype(str), 
 				self.e_templates.templatesToUse)
 			self.element = ['stellar'] + self.e_templates.element
 		else:
