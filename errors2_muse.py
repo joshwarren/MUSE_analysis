@@ -36,7 +36,8 @@ class set_params(object):
 		reps 			= 	1000, 
 		quiet	 		= 	True, 
 		gas 			= 	1, 
-		set_range 		= 	np.array([2000,5800]),#7410]), 
+		set_range 		= 	np.array([2000, 7410]),
+		set_range_star	= 	None,
 		stellar_moments = 	2, 
 		gas_moments 	=	2, 
 		narrow_broad 	=	False, 
@@ -58,6 +59,7 @@ class set_params(object):
 		self.reps = reps ## number of monte carlo reps per bin.
 		self.FWHM_gal = 2.3 # MUSE documentation
 		self.set_range = set_range # [2000,7410]
+		self.set_range_star = set_range_star # [2000,7410]
 		self.stellar_moments = stellar_moments # 2
 		self.gas_moments = gas_moments # 2
 		self.narrow_broad = narrow_broad # False; Find 2 components to each gas 
@@ -72,6 +74,15 @@ class set_params(object):
 		self.res = res
 		self.save = save
 
+	@property
+	def set_range_star(self):
+		if self._set_range_star is None:
+			return self.set_range
+		else:
+			return self._set_range_star
+	@opt.setter
+	def set_range_star(self, value):
+		self._set_range_star = value
 
 	@property
 	def opt(self):
@@ -532,10 +543,14 @@ def errors2(i_gal=None, opt=None, bin=None, params=None):
 ## ----------===============================================---------
 ## ----------============= Input parameters  ===============---------
 ## ----------===============================================---------
-	if params is None: params = set_params(opt=opt)
-	
 	galaxies = ['ic1459', 'ic4296', 'ngc1316', 'ngc1399']
 	galaxy = galaxies[i_gal]
+
+	if params is None: 
+		if galaxy == 'ngc1316':
+			params = set_params(opt=opt, set_range_star=np.array([2000, 5800]))	
+		else:
+			params = set_params(opt=opt)
 
 	if cc.device == 'glamdring':
 		dir = cc.base_dir
@@ -576,15 +591,9 @@ def errors2(i_gal=None, opt=None, bin=None, params=None):
 	bin_lin_noise = np.nansum(galaxy_noise[:,x[spaxels_in_bin],
 		y[spaxels_in_bin]]**2, axis=1)
 	bin_lin_noise = np.sqrt(bin_lin_noise)/n_spaxels_in_bin
-## ----------========= Calibrating the spectrum  ===========---------
-	lam = np.arange(s[0])*CDELT_spec + CRVAL_spec
-	bin_lin, lam, cut = apply_range(bin_lin,lam=lam, return_cuts=True, 
-		set_range=params.set_range)
-	lamRange = np.array([lam[0],lam[-1]])
-	bin_lin_noise = bin_lin_noise[cut]
 
-
-	self = run_ppxf(galaxy, bin_lin, bin_lin_noise, lamRange, CDELT_spec, params)
+	self = run_ppxf(galaxy, bin_lin, bin_lin_noise, lamRange, CDELT_spec, 
+		CRVAL_spec, params)
 ## ----------============ Write ouputs to file =============---------
 	if params.save:
 		saveAll(galaxy, bin, self, opt=opt)
@@ -595,15 +604,37 @@ def errors2(i_gal=None, opt=None, bin=None, params=None):
 ## ----------=============== Run analysis  =================---------
 ## ----------===============================================---------
 class run_ppxf(ppxf):
-	def __init__(self, galaxy_name, bin_lin, bin_lin_noise, lamRange, CDELT, params, 
-		z=0.):
-
+	def __init__(self, galaxy_name, bin_lin, bin_lin_noise, lamRange, CDELT, CRVAL,
+		params, z=0.):
 		self.galaxy_name = galaxy_name
+		self.CDELT = CDELT
+		self.params = params
+
+		## ----------========= Calibrating the spectrum  ===========---------
+		lam = np.arange(s[0])*CDELT + CRVAL
+		bin_lin, lam, cut = apply_range(bin_lin,lam=lam, return_cuts=True, 
+			set_range=params.set_range)
+		lamRange = np.array([lam[0],lam[-1]])
+		bin_lin_noise = bin_lin_noise[cut]
+
 		self.bin_lin = bin_lin
 		self.bin_lin_noise = bin_lin_noise
 		self.lamRange = lamRange
-		self.CDELT = CDELT
-		self.params = params
+
+		if self.params.set_range != self.params.set_range_star:
+			self.bin_lin_sav = np.copy(bin_lin)
+			self.bin_lin_noise_sav = np.copy(bin_lin_noise)
+			self.lamRange_sav = np.copy(lamRange)
+
+			lam = np.arange(s[0])*CDELT + CRVAL
+			bin_lin, lam, cut = apply_range(bin_lin,lam=lam, return_cuts=True, 
+				set_range=params.set_range_star)
+			lamRange = np.array([lam[0],lam[-1]])
+			bin_lin_noise = bin_lin_noise[cut]
+			
+			self.bin_lin = bin_lin
+			self.bin_lin_noise = bin_lin_noise
+			self.lamRange = lamRange
 
 
 		if galaxy_name is not None:
@@ -658,6 +689,16 @@ class run_ppxf(ppxf):
 			MCstellar_kin = np.array(self.MCstellar_kin)
 			MCstellar_kin_err = np.array(self.MCstellar_kin_err)
 
+			if self.params.set_range == self.params.set_range_star:
+				self.bin_log = np.copy(save_bin_log)
+				self.bin_log_noise = np.copy(save_bin_log_noise)
+				self.lamRange = np.copy(save_lamRange)
+			else:
+				self.bin_lin = np.copy(self.bin_lin_sav)
+				self.bin_lin_noise = np.copy(self.bin_lin_noise_sav)
+				self.lamRange = np.copy(self.lamRange_sav)
+				self.rebin()
+				self.load_stellar_templates()
 
 			# Find [OIII] kinematics and amplitude, enforce stellar kinematics
 			self.params.stellar_moments *= -1
@@ -665,10 +706,6 @@ class run_ppxf(ppxf):
 			self.params.gas = params_sav.gas
 			self.params.lines = ['[OIII]5007d']
 			self.load_emission_templates()
-
-			self.bin_log = np.copy(save_bin_log)
-			self.bin_lin_noise = np.copy(save_bin_log_noise)
-			self.lamRange = np.copy(save_lamRange)
 
 			self.run()
 
@@ -709,8 +746,8 @@ class run_ppxf(ppxf):
 			sigma = self.stellar_templates.FWHM_dif/2.355/self.CDELT # Change in px
 			self.bin_lin = ndimage.gaussian_filter1d(self.bin_lin, sigma)
 			self.bin_lin_noise = np.sqrt(ndimage.gaussian_filter1d(
-				self.bin_lin_noise**2, sigma))
-		
+				self.bin_lin_noise**2, sigma))				
+			
 		## rebin spectrum logarthmically
 		self.bin_log, self.logLam_bin, self.velscale = util.log_rebin(self.lamRange, 
 			self.bin_lin)
@@ -718,6 +755,24 @@ class run_ppxf(ppxf):
 			self.bin_lin_noise**2)
 		self.bin_log_noise = np.sqrt(bin_log_noise)
 		self.lambdaq = np.exp(self.logLam_bin)
+		
+		# # If different range for stellar
+		# if self.params.set_range != self.params.set_range_star:
+		# 	if self.FWHM_gal < self.stellar_templates.FWHM_tem:
+		# 		sigma = self.stellar_templates.FWHM_dif/2.355/self.CDELT # Change in px
+		# 		self.bin_lin_sav = ndimage.gaussian_filter1d(self.bin_lin_sav, 
+		# 			sigma)
+		# 		self.bin_lin_noise_sav = np.sqrt(ndimage.gaussian_filter1d(
+		# 			self.bin_lin_noise_sav**2, sigma))
+				
+		# 	## rebin spectrum logarthmically
+		# 	self.bin_log_sav, self.logLam_bin_sav, self.velscale = util.log_rebin(
+		# 		self.lamRange_sav, self.bin_lin_sav)
+		# 	bin_log_noise_sav, logLam_bin_sav, _ = util.log_rebin(self.lamRange_sav, 
+		# 		self.bin_lin_noise_sav**2)
+		# 	self.bin_log_noise_sav = np.sqrt(bin_log_noise_sav)
+		# 	self.lambdaq_sav = np.exp(self.logLam_bin_sav)
+
 
 	## ----------============= Stellar templates ===============---------
 	def load_stellar_templates(self):
