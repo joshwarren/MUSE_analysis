@@ -26,6 +26,8 @@ from rolling_stats import *
 from ppxf import ppxf
 from errors2 import determine_goodpixels, get_emission_templates, apply_range
 from ppxf import create_plot
+from tools import moving_weighted_average
+
 
 c = 299792.458 # speed of light in km/s
 
@@ -80,7 +82,7 @@ class set_params(object):
 			return self.set_range
 		else:
 			return self._set_range_star
-	@opt.setter
+	@set_range_star.setter
 	def set_range_star(self, value):
 		self._set_range_star = value
 
@@ -581,7 +583,6 @@ def errors2(i_gal=None, opt=None, bin=None, params=None):
 	## write key parameters from header - can then be altered in future	
 	CRVAL_spec = header['CRVAL3']
 	CDELT_spec = header['CD3_3']
-	s = galaxy_data.shape
 ## ----------============= Spatially Binning ===============---------
 	spaxels_in_bin = np.where(bin_num == bin)[0]
 	n_spaxels_in_bin = len(spaxels_in_bin)
@@ -592,7 +593,7 @@ def errors2(i_gal=None, opt=None, bin=None, params=None):
 		y[spaxels_in_bin]]**2, axis=1)
 	bin_lin_noise = np.sqrt(bin_lin_noise)/n_spaxels_in_bin
 
-	self = run_ppxf(galaxy, bin_lin, bin_lin_noise, lamRange, CDELT_spec, 
+	self = run_ppxf(galaxy, bin_lin, bin_lin_noise, CDELT_spec, 
 		CRVAL_spec, params)
 ## ----------============ Write ouputs to file =============---------
 	if params.save:
@@ -604,33 +605,36 @@ def errors2(i_gal=None, opt=None, bin=None, params=None):
 ## ----------=============== Run analysis  =================---------
 ## ----------===============================================---------
 class run_ppxf(ppxf):
-	def __init__(self, galaxy_name, bin_lin, bin_lin_noise, lamRange, CDELT, CRVAL,
+	def __init__(self, galaxy_name, bin_lin_in, bin_lin_noise_in, CDELT, CRVAL, 
 		params, z=0.):
+
 		self.galaxy_name = galaxy_name
 		self.CDELT = CDELT
 		self.params = params
 
 		## ----------========= Calibrating the spectrum  ===========---------
-		lam = np.arange(s[0])*CDELT + CRVAL
-		bin_lin, lam, cut = apply_range(bin_lin,lam=lam, return_cuts=True, 
+		lam = np.arange(len(bin_lin_in))*CDELT + CRVAL
+		bin_lin, lam, cut = apply_range(bin_lin_in, lam=lam, return_cuts=True, 
 			set_range=params.set_range)
 		lamRange = np.array([lam[0],lam[-1]])
-		bin_lin_noise = bin_lin_noise[cut]
+		bin_lin_noise = bin_lin_noise_in[cut]
 
 		self.bin_lin = bin_lin
 		self.bin_lin_noise = bin_lin_noise
 		self.lamRange = lamRange
 
-		if self.params.set_range != self.params.set_range_star:
+		if self.params.set_range[0] != self.params.set_range_star[0] or \
+			self.params.set_range[1] != self.params.set_range_star[1]:
+
 			self.bin_lin_sav = np.copy(bin_lin)
 			self.bin_lin_noise_sav = np.copy(bin_lin_noise)
 			self.lamRange_sav = np.copy(lamRange)
 
-			lam = np.arange(s[0])*CDELT + CRVAL
-			bin_lin, lam, cut = apply_range(bin_lin,lam=lam, return_cuts=True, 
+			lam = np.arange(len(bin_lin_in))*CDELT + CRVAL
+			bin_lin, lam, cut = apply_range(bin_lin_in, lam=lam, return_cuts=True, 
 				set_range=params.set_range_star)
 			lamRange = np.array([lam[0],lam[-1]])
-			bin_lin_noise = bin_lin_noise[cut]
+			bin_lin_noise = bin_lin_noise_in[cut]
 			
 			self.bin_lin = bin_lin
 			self.bin_lin_noise = bin_lin_noise
@@ -689,7 +693,8 @@ class run_ppxf(ppxf):
 			MCstellar_kin = np.array(self.MCstellar_kin)
 			MCstellar_kin_err = np.array(self.MCstellar_kin_err)
 
-			if self.params.set_range == self.params.set_range_star:
+			if self.params.set_range[0] == self.params.set_range_star[0] and \
+				self.params.set_range[1] == self.params.set_range_star[1]:
 				self.bin_log = np.copy(save_bin_log)
 				self.bin_log_noise = np.copy(save_bin_log_noise)
 				self.lamRange = np.copy(save_lamRange)
@@ -699,6 +704,10 @@ class run_ppxf(ppxf):
 				self.lamRange = np.copy(self.lamRange_sav)
 				self.rebin()
 				self.load_stellar_templates()
+
+				save_bin_log = np.array(self.bin_log)
+				save_bin_log_noise = np.array(self.bin_log_noise)
+				save_lamRange = np.array(self.lamRange)
 
 			# Find [OIII] kinematics and amplitude, enforce stellar kinematics
 			self.params.stellar_moments *= -1
@@ -882,8 +891,11 @@ class run_ppxf(ppxf):
 
 
 		for rep in range(self.params.reps):
+			_, residuals, _ = moving_weighted_average(self.lam, 
+				self.bestfit - self.bin_lin, step_size=3., interp=True)
+
 			random = np.random.randn(len(self.bin_log_noise))
-			add_noise = random*np.abs(self.bin_log_noise)
+			add_noise = random*np.sqrt(self.bin_log_noise**2 + residuals**2)
 			self.bin_log = self.bestfit + add_noise
 
 			ppMC = ppxf(self.templates, self.bin_log, self.bin_log_noise, 
