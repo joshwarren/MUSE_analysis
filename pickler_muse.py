@@ -200,7 +200,7 @@ def pickler(galaxy, discard=0, norm='', opt="kin", override=False):
 						except IndexError:
 							pass
 				else:
-					dynamics_uncert = dynamics*np.nan
+					pass # uncert array is already nan
 
 		for kine in dynamics.keys():
 			if np.isnan(dynamics[kine]).all():
