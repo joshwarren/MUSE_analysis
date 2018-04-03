@@ -220,6 +220,8 @@ def pickler(galaxy, discard=0, norm='', opt="kin", override=False):
 	pickle.dump(D,pickleFile)
 	pickleFile.close()
 
+	return D
+
 ##############################################################################
 
 # Use of pickler.py
