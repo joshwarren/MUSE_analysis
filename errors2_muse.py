@@ -611,9 +611,9 @@ class run_ppxf(ppxf):
 		try:
 			len(CDELT)
 		except TypeError:
-			raise("The routine that has called run_ppxf has not been updated"
-				+ "since lamRange was removed as keyword. CRVAL is now proveided "
-				+ "instead.")
+			raise "The routine that has called run_ppxf has not been updated" \
+				+ "since lamRange was removed as keyword. CRVAL is now proveided " \
+				+ "instead."
 
 		self.galaxy_name = galaxy_name
 		self.CDELT = CDELT
@@ -654,8 +654,8 @@ class run_ppxf(ppxf):
 			else:
 				data_file = "%s/Data/vimos/analysis/galaxies.txt" % (cc.base_dir)
 			# different data types need to be read separetly
-			z_gals, vel_gals, sig_gals = np.loadtxt(data_file, unpack=True, skiprows=1, 
-				usecols=(1,2,3))
+			z_gals, vel_gals, sig_gals = np.loadtxt(data_file, unpack=True, 
+				skiprows=1, usecols=(1,2,3))
 			galaxy_gals = np.loadtxt(data_file, skiprows=1, usecols=(0,),dtype=str)
 			i_gal = np.where(galaxy_gals==galaxy_name)[0][0]
 			self.vel = vel_gals[i_gal]
