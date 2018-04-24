@@ -608,9 +608,7 @@ class run_ppxf(ppxf):
 	def __init__(self, galaxy_name, bin_lin_in, bin_lin_noise_in, CDELT, CRVAL, 
 		params, z=0.):
 
-		try:
-			len(CDELT)
-		except TypeError:
+		if hasattr(CDELT, '__iter__'):
 			raise ValueError("The routine that has called run_ppxf has not been "
 				+ "updated since lamRange was removed as keyword. CRVAL is now "
 				+ "provided instead.")
