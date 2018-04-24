@@ -454,14 +454,14 @@ def get_dataCubeDirectory(galaxy, radio_band=None):
 			dir, galaxy)
 		# dataCubeDirectory.xray = '%s/Data/Chandra/IC1459_full.fits' % (
 		# 	cc.base_dir)
-		dataCubeDirectory.hst = '%s/Data/hst/%s' % (cc.base_dir, galaxy) +\
+		dataCubeDirectory.hst = '%s/Data/HST/%s' % (cc.base_dir, galaxy) +\
 			'/hst_05454_01_wfpc2_f555w_pc_drz.fits'
 	elif galaxy == 'ic4296':
 		dataCubeDirectory.original = '%s/%s/ADP.2016-06-14T14:10:28.175.fits' % (
 			dir, galaxy)
 		# dataCubeDirectory.xray = '%s/Data/Chandra/IC4296_full.fits' % (
 		# 	cc.base_dir)
-		dataCubeDirectory.hst = '%s/Data/hst/%s' % (cc.base_dir, galaxy) +\
+		dataCubeDirectory.hst = '%s/Data/HST/%s' % (cc.base_dir, galaxy) +\
 			'/hst_05910_03_wfpc2_f814w_pc_drz.fits'
 
 		if radio_band is None or radio_band == 'L':
@@ -477,7 +477,7 @@ def get_dataCubeDirectory(galaxy, radio_band=None):
 	elif galaxy == 'ngc1316':
 		dataCubeDirectory.original = '%s/%s/ADP.2016-06-20T15:14:47.831.fits' % (
 			dir, galaxy)
-		dataCubeDirectory.hst = '%s/Data/hst/%s' % (cc.base_dir, galaxy) +\
+		dataCubeDirectory.hst = '%s/Data/HST/%s' % (cc.base_dir, galaxy) +\
 			'/hst_05990_01_wfpc2_f450w_pc_drz.fits'
 
 		if radio_band == 'L':
@@ -498,7 +498,7 @@ def get_dataCubeDirectory(galaxy, radio_band=None):
 	elif galaxy == 'ngc1399':
 		dataCubeDirectory.original = '%s/%s/ADP.2016-06-21T08:50:02.757.fits' % (
 			dir, galaxy)
-		dataCubeDirectory.hst = '%s/Data/hst/%s' % (cc.base_dir, galaxy) +\
+		dataCubeDirectory.hst = '%s/Data/HST/%s' % (cc.base_dir, galaxy) +\
 			'/hst_05990_02_wfpc2_f450w_pc_drz.fits'
 		# dataCubeDirectory.xray = '%s/Data/Chandra/N1399_full.fits' % (cc.base_dir)
 		if radio_band is None or radio_band == 'C' or radio_band == 'CI':
@@ -607,6 +607,13 @@ def errors2(i_gal=None, opt=None, bin=None, params=None):
 class run_ppxf(ppxf):
 	def __init__(self, galaxy_name, bin_lin_in, bin_lin_noise_in, CDELT, CRVAL, 
 		params, z=0.):
+
+		try:
+			len(CDELT)
+		except TypeError:
+			raise("The routine that has called run_ppxf has not been updated"
+				+ "since lamRange was removed as keyword. CRVAL is now proveided "
+				+ "instead.")
 
 		self.galaxy_name = galaxy_name
 		self.CDELT = CDELT
