@@ -611,9 +611,9 @@ class run_ppxf(ppxf):
 		try:
 			len(CDELT)
 		except TypeError:
-			raise "The routine that has called run_ppxf has not been updated" \
-				+ "since lamRange was removed as keyword. CRVAL is now proveided " \
-				+ "instead."
+			raise ValueError("The routine that has called run_ppxf has not been " \
+				+ "updated since lamRange was removed as keyword. CRVAL is now " \
+				+ "provided instead."
 
 		self.galaxy_name = galaxy_name
 		self.CDELT = CDELT
