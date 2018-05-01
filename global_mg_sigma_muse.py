@@ -23,7 +23,8 @@ def mg_sigma(galaxy, aperture=1.0):
 ## ----------===============================================---------
 ## ----------============= Input parameters  ===============---------
 ## ----------===============================================---------
-	params = set_params(reps=10, produce_plot=False, opt='pop', res=8.4)
+	params = set_params(reps=10, produce_plot=False, opt='pop', res=8.4,
+		use_residuals=True)
 	
 	if cc.device == 'glamdring':
 		dir = cc.base_dir

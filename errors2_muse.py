@@ -50,7 +50,8 @@ class set_params(object):
 		library 		=	'Miles',
 		use_all_temp 	= 	False,
 		res 			= 	None,
-		save 			=	True
+		save 			=	True,
+		use_residuals	=	True
 		):
 		self.quiet = quiet # True
 		self.gas = gas # 0   No gas emission lines
@@ -75,6 +76,7 @@ class set_params(object):
 		self.use_all_temp = use_all_temp
 		self.res = res
 		self.save = save
+		self.use_residuals = use_residuals
 
 	@property
 	def set_range_star(self):
@@ -896,11 +898,17 @@ class run_ppxf(ppxf):
 
 
 		for rep in range(self.params.reps):
-			_, residuals, _ = moving_weighted_average(self.lam, 
-				self.bestfit - self.bin_lin, step_size=3., interp=True)
-
 			random = np.random.randn(len(self.bin_log_noise))
-			add_noise = random*np.sqrt(self.bin_log_noise**2 + residuals**2)
+			if self.params.use_residuals and rep == 0:
+				_, residuals, _ = moving_weighted_average(self.lam, 
+					self.bestfit - self.bin_lin, step_size=3., interp=True)
+				add_noise = random * np.sqrt(self.bin_log_noise**2 + residuals**2)
+			elif self.params.use_residuals:
+				_, residuals, _ = moving_weighted_average(self.lam, 
+					ppMC.bestfit - self.bin_lin, step_size=3., interp=True)
+				add_noise = random * np.sqrt(self.bin_log_noise**2 + residuals**2)
+			else:
+				add_noise = random * np.abs(self.bin_log_noise)
 			self.bin_log = self.bestfit + add_noise
 
 			ppMC = ppxf(self.templates, self.bin_log, self.bin_log_noise, 
