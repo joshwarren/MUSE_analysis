@@ -1025,8 +1025,8 @@ def compare_atlas3d(too_many_FR=True, thesis=False, paper=False):
 		if g.name in gals_vimos2:
 			i = np.where(gals_vimos2 == g.name)[0][0]
 			if size_vimos[i] !='-':
-				g.KDC_size = angle_to_pc(g.name, float(size_vimos[i]))
-				g.KDC_size_uncert = angle_to_pc(g.name, 0.5)
+				g.KDC_size = angle_to_pc(g.name, float(size_vimos[i]))/1000
+				g.KDC_size_uncert = angle_to_pc(g.name, 0.5)/1000
 			else: 
 				g.KDC_size = np.nan
 				g.KDC_size_uncert = np.nan
@@ -1144,28 +1144,31 @@ def compare_atlas3d(too_many_FR=True, thesis=False, paper=False):
 
 	p = lts(np.log10(sigma)[mask], Mg[mask], 
 		(e_sigma/sigma/np.log(10))[mask], e_Mg[mask], frac=7./9,
-		pivot=np.nanmean(np.log10(sigma)[mask]))
+		pivot=np.nanmean(np.log10(sigma)[mask]), verbose=False)
 
 	print '   Grad: %.3f +/- %.3f' % (p.ab[1], p.ab_err[1])
 	print '   Intrinsic scatter:', p.sig_int, '+/-', p.sig_int_err
+	print '   RMS:', p.rms
 	
 	lims = np.array(ax.get_xlim())
 
 	ax.plot(lims, np.poly1d(p.ab[::-1])(lims) 
-		- p.ab[1]*np.nanmean(np.log10(sigma)[mask]), 'k')
+		- p.ab[1]*np.nanmean(np.log10(sigma)[mask]), 'k', label='Best-fitting')
 
-	# mask *= rm_ngc1316
-	# p = lts(np.log10(sigma)[mask], Mg[mask], 
-	# 	(e_sigma/sigma/np.log(10))[mask], e_Mg[mask],
-	# 	pivot=np.nanmean(np.log10(sigma)[mask]))
+	mask *= rm_ngc1316
+	p = lts(np.log10(sigma)[mask], Mg[mask], 
+		(e_sigma/sigma/np.log(10))[mask], e_Mg[mask], frac=7./9,
+		pivot=np.nanmean(np.log10(sigma)[mask]), verbose=False)
 
-	# print ''
-	# print '   Without NGC 1316:'
-	# print '   Grad: %.3f +/- %.3f' % (p.ab[1], p.ab_err[1])
-	# print '   Intrinsic scatter:', p.sig_int, '+/-', p.sig_int_err
+	print ''
+	print '   Without NGC 1316:'
+	print '   Grad: %.3f +/- %.3f' % (p.ab[1], p.ab_err[1])
+	print '   Intrinsic scatter:', p.sig_int, '+/-', p.sig_int_err
+	print '   RMS:', p.rms
 
-	# ax.plot(lims, np.poly1d(p.ab[::-1])(lims) 
-	# 	- p.ab[1]*np.nanmean(np.log10(sigma)[mask]), 'g--')
+	ax.plot(lims, np.poly1d(p.ab[::-1])(lims) 
+		- p.ab[1]*np.nanmean(np.log10(sigma)[mask]), 'g--', 
+		label='Fit excluding NGC 1316')
 
 
 	x = np.linspace(lims[0], lims[1], 100)
