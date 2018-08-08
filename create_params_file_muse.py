@@ -2,12 +2,12 @@ import numpy as np
 from checkcomp import checkcomp
 cc = checkcomp()
 
-opt = 'pop_no_Na' 	# must contain kin or pop
+opt = 'pop_test' 	# must contain kin or pop
 
 galaxies = ['ic1459', 'ic4296', 'ngc1316', 'ngc1399']
 gals=[2]
 
-output_file = "%s/MUSE/analysis/params_muse.txt" % (cc.home_dir)
+output_file = "%s/MUSE_project/analysis/params_muse.txt" % (cc.home_dir)
 f = open(output_file, 'w')
 for gal in gals:
 	galaxy = galaxies[gal]

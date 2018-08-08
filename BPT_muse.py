@@ -3,7 +3,8 @@ cc = checkcomp()
 if 'home' not in cc.device:
 	import matplotlib # 20160202 JP to stop lack-of X-windows error
 	matplotlib.use('Agg') # 20160202 JP to stop lack-of X-windows error
-import cPickle as pickle
+# import cPickle as pickle
+from Bin2 import Data
 import matplotlib.pyplot as plt
 import numpy as np
 from plot_velfield_nointerp import plot_velfield_nointerp
@@ -31,13 +32,14 @@ def BPT(galaxy, D=None, opt='pop', norm="lwv"):
 	i_gal = np.where(galaxy_gals==galaxy)[0][0]
 	center = (x_cent_gals[i_gal], y_cent_gals[i_gal])
 
-	output = '%s/%s/%s' % (analysis_dir, galaxy, opt)
-
-
+	# output = '%s/%s/%s' % (analysis_dir, galaxy, opt)
 	if D is None:
-		pickleFile = open('%s/pickled/dataObj.pkl' % (output))
-		D = pickle.load(pickleFile)
-		pickleFile.close()
+		# pickleFile = open('%s/pickled/dataObj.pkl' % (output))
+		# D = pickle.load(pickleFile)
+		# pickleFile.close()
+		D = Data(galaxy, instrument='muse', opt=opt)
+
+	output = '%s/%s/%s' % (analysis_dir, galaxy, D.opt)
 
 	if D.norm_method != norm:
 		D.norm_method = norm
@@ -409,5 +411,5 @@ def BPT(galaxy, D=None, opt='pop', norm="lwv"):
 if __name__=='__main__':
 	# global_MEx(instrument='muse')
 	# for gal in ['ic1459','ic4296','ngc1316','ngc1399']:
-	for gal in ['ic4296','ngc1316','ngc1399']:
+	for gal in ['ngc1316','ic4296','ngc1399']:
 		D = BPT(gal)

@@ -14,17 +14,21 @@ import numpy as np
 import glob
 from astropy.io import fits
 import os
-import cPickle as pickle
+# import cPickle as pickle
 import warnings
 from Bin import Data, emission_line
 from checkcomp import checkcomp
 cc = checkcomp()
 from errors2_muse import get_dataCubeDirectory
+from save_to_fits import save
 
 
-
-vin_dir = '%s/Data/muse/analysis' % (cc.base_dir)
-out_dir = '%s/Data/muse/analysis' % (cc.base_dir)
+if cc.device == 'glamdring':
+	vin_dir = '%s/analysis_muse' % (cc.home_dir)
+	out_dir = vin_dir
+else:
+	vin_dir = '%s/Data/muse/analysis' % (cc.base_dir)
+	out_dir = vin_dir
 
 
 
@@ -39,7 +43,7 @@ def pickler(galaxy, discard=0, norm='', opt="kin", override=False):
 	dataCubeDirectory = get_dataCubeDirectory(galaxy)
 	output = "%s/%s/%s" % (out_dir, galaxy, opt)
 	vin_dir_gasMC = "%s/%s/%s/MC" % (vin_dir, galaxy, opt)
-	out_pickle = '%s/pickled' % (output)
+	# out_pickle = '%s/pickled' % (output)
 
 	# Check tessellation file is older than pPXF outputs (checks 
 	# vin_dir_gasMC/0.dat only).
@@ -76,7 +80,7 @@ def pickler(galaxy, discard=0, norm='', opt="kin", override=False):
 	D.unbinned_flux = np.nansum(galaxy_data, axis=0)
 
 	for i in range(D.number_of_bins):
-		D.bin[i].spectrum = np.loadtxt("%s/input/%d.dat" % (vin_dir_gasMC,i), 
+		D.bin[i].spectrum = np.loadtxt("%s/input/%d.dat" % (vin_dir_gasMC, i), 
 			unpack=True)
 		D.bin[i].noise = np.loadtxt("%s/noise_input/%d.dat" % 
 			(vin_dir_gasMC,i), unpack=True)
@@ -214,11 +218,22 @@ def pickler(galaxy, discard=0, norm='', opt="kin", override=False):
 	D.find_restFrame()
 # ------------================ Pickling =================----------
 	print "    Pickling D"
-	if not os.path.exists(out_pickle):
-		os.makedirs(out_pickle) 
-	pickleFile = open("%s/dataObj.pkl" % (out_pickle), 'wb')
-	pickle.dump(D,pickleFile)
-	pickleFile.close()
+	# if not os.path.exists(out_pickle):
+	# 	os.makedirs(out_pickle) 
+	# pickleFile = open("%s/dataObj.pkl" % (out_pickle), 'wb')
+	# pickle.dump(D,pickleFile)
+	# pickleFile.close()
+	# if 'kin' in opt:
+	# 	save(galaxy, instrument='muse', stellar=True, emission=False,
+	# 		absorption=False, absorption_nomask=False, population=False, 
+	# 		kin_opt=opt, pop_opt='pop', D=D, D2=D)
+	# if 'pop' in opt:
+	# 	save(galaxy, instrument='muse', stellar=False, emission=True,
+	# 		absorption=True, absorption_nomask=True, population=True, 
+	# 		kin_opt='kin', pop_opt=opt, D=D, D2=D)
+	save(galaxy, instrument='muse', stellar=True, emission=True,
+		absorption=True, absorption_nomask=True, population=True, 
+		kin_opt=opt, pop_opt=opt, D=D, D2=D)
 
 	return D
 

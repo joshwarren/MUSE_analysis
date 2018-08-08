@@ -51,7 +51,8 @@ class set_params(object):
 		use_all_temp 	= 	False,
 		res 			= 	None,
 		save 			=	True,
-		use_residuals	=	True
+		use_residuals	=	True,
+		NaD 			= 	False
 		):
 		self.quiet = quiet # True
 		self.gas = gas # 0   No gas emission lines
@@ -77,6 +78,7 @@ class set_params(object):
 		self.res = res
 		self.save = save
 		self.use_residuals = use_residuals
+		self.NaD = NaD # Overides gas = 0
 
 	@property
 	def set_range_star(self):
@@ -120,6 +122,10 @@ class set_params(object):
 			self.gas = 0
 		else:
 			self._lines = list(value)
+		# if self.NaD:
+		# 	self._lines.append['NaD']
+		# 	if self.gas == 0:
+		# 		self.gas = 1
 # -----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
@@ -429,8 +435,14 @@ def get_dataCubeDirectory(galaxy, radio_band=None):
 			self.xray = mystring2('')
 			self.hst = mystring2('')
 
-	if cc.device == 'uni' or 'home' in cc.device:
+	if cc.device == 'uni': # or 'home' in cc.device:
 		dir = '%s/Data/muse' % (cc.base_dir)
+		offsets_file = '%s/Data/offsets.txt' % (cc.base_dir)
+	elif 'home' in cc.device:
+		dir = '%s/muse' % (cc.external_drive)
+		external = os.path.exists(dir)
+		if not external:
+			dir = '%s/Data/muse' % (cc.base_dir)
 		offsets_file = '%s/Data/offsets.txt' % (cc.base_dir)
 	elif cc.device == 'glamdring':
 		dir = '%s/muse_cubes' % (cc.base_dir)
@@ -440,8 +452,12 @@ def get_dataCubeDirectory(galaxy, radio_band=None):
 		dataCubeDirectory = mystring('%s/%s/%s.clipped.fits' %  (dir, galaxy, 
 			galaxy))
 	elif 'home' in cc.device:
-		dataCubeDirectory = mystring('%s/%s/%s.clipped_home.fits' %  (dir, galaxy, 
-			galaxy))
+		if galaxy == 'ngc1316' and external:
+			dataCubeDirectory = mystring('%s/%s/%s.clipped.fits' %  (dir, 
+				galaxy, galaxy))
+		else:
+			dataCubeDirectory = mystring('%s/%s/%s.clipped_home.fits' %  (dir, 
+				galaxy, galaxy))
 
 	dataCubeDirectory.CO = mystring2("%s/Data/alma/%s-mom0.fits" % (cc.base_dir, 
 		galaxy))
@@ -696,6 +712,8 @@ class run_ppxf(ppxf):
 			save_lamRange = np.array(self.lamRange)
 
 			self.run()
+			# fig, ax = create_plot(self).produce
+			# fig.savefig('analysis_muse/ngc1316/pop_no_Na/MC/bestfit/plots/23b.png')
 
 			MCstellar_kin = np.array(self.MCstellar_kin)
 			MCstellar_kin_err = np.array(self.MCstellar_kin_err)
@@ -804,7 +822,8 @@ class run_ppxf(ppxf):
 	def set_goodPix(self):
 		self.goodPixels = determine_goodpixels(self.logLam_bin,
 			self.stellar_templates.lamRange_template, self.vel, self.z, 
-			lines=self.params.lines, invert=self.params.use_all_temp is None)
+			lines=self.params.lines, invert=self.params.use_all_temp is None,
+			NaD=self.params.NaD)
 		self.goodPixels = np.array([g for g in self.goodPixels if 
 			(~np.isnan(self.bin_log[g]))])
 
@@ -812,7 +831,7 @@ class run_ppxf(ppxf):
 		self.set_goodPix()
 		self.e_templates = get_emission_templates(self.params.gas, self.lamRange, 
 			self.stellar_templates.logLam_template, self.FWHM_gal, 
-			goodWav=self.lambdaq[self.goodPixels], 
+			goodWav=self.lambdaq[self.goodPixels], #NaD=self.params.NaD,
 			narrow_broad=self.params.narrow_broad, lines=self.params.lines)
 
 		if self.params.use_all_temp is not None:
