@@ -646,12 +646,13 @@ class run_ppxf(ppxf):
 		self.bin_lin_noise = bin_lin_noise
 		self.lamRange = lamRange
 
+		# if set_range_star is set
 		if self.params.set_range[0] != self.params.set_range_star[0] or \
 			self.params.set_range[1] != self.params.set_range_star[1]:
 
-			self.bin_lin_sav = np.copy(bin_lin)
-			self.bin_lin_noise_sav = np.copy(bin_lin_noise)
-			self.lamRange_sav = np.copy(lamRange)
+			bin_lin_untruncated = np.copy(bin_lin)
+			bin_lin_noise_untruncated = np.copy(bin_lin_noise)
+			lamRange_untruncated = np.copy(lamRange)
 
 			lam = np.arange(len(bin_lin_in))*CDELT + CRVAL
 			bin_lin, lam, cut = apply_range(bin_lin_in, lam=lam, return_cuts=True, 
@@ -699,7 +700,7 @@ class run_ppxf(ppxf):
 		if not self.params.temp_mismatch or self.params.gas==0:
 			self.load_emission_templates()
 			self.run()
-		else:
+		elif self.params.temp_mismatch and self.params.gas==1:
 			from copy import copy
 			# Fit stellar component only.
 			params_sav = copy(params)
@@ -712,21 +713,31 @@ class run_ppxf(ppxf):
 			save_lamRange = np.array(self.lamRange)
 
 			self.run()
-			# fig, ax = create_plot(self).produce
-			# fig.savefig('analysis_muse/ngc1316/pop_no_Na/MC/bestfit/plots/23b.png')
 
 			MCstellar_kin = np.array(self.MCstellar_kin)
 			MCstellar_kin_err = np.array(self.MCstellar_kin_err)
 
+			# if set_range_star is NOT set
 			if self.params.set_range[0] == self.params.set_range_star[0] and \
 				self.params.set_range[1] == self.params.set_range_star[1]:
 				self.bin_log = np.copy(save_bin_log)
 				self.bin_log_noise = np.copy(save_bin_log_noise)
 				self.lamRange = np.copy(save_lamRange)
-			else:
-				self.bin_lin = np.copy(self.bin_lin_sav)
-				self.bin_lin_noise = np.copy(self.bin_lin_noise_sav)
-				self.lamRange = np.copy(self.lamRange_sav)
+			else: # set_range_star IS set
+				self.bin_lin = np.copy(bin_lin_untruncated)
+				self.bin_lin_noise = np.copy(bin_lin_noise_untruncated)
+				self.lamRange = np.copy(lamRange_untruncated)/(1 + self.z)
+
+				if self.params.res is not None:
+					res = self.params.res/(1 + self.z)
+					FWHM_dif = res - self.FWHM_gal
+					sigma = FWHM_dif/2.355/self.CDELT # Change in px
+					self.bin_lin = ndimage.gaussian_filter1d(self.bin_lin, 
+						sigma)
+					self.bin_lin_noise = np.sqrt(ndimage.gaussian_filter1d(
+						self.bin_lin_noise**2, sigma))
+					self.FWHM_gal = res
+
 				self.rebin()
 				self.load_stellar_templates()
 
@@ -736,7 +747,8 @@ class run_ppxf(ppxf):
 
 			# Find [OIII] kinematics and amplitude, enforce stellar kinematics
 			self.params.stellar_moments *= -1
-			self.params.start = [self.sol[0].tolist(), [None]*self.params.gas_moments]
+			self.params.start = [self.sol[0].tolist(), 
+				[None]*self.params.gas_moments]
 			self.params.gas = params_sav.gas
 			self.params.lines = ['[OIII]5007d']
 			self.load_emission_templates()
@@ -747,7 +759,8 @@ class run_ppxf(ppxf):
 			MCgas_kin_err = np.array(self.MCgas_kin_err)
 			OIII_uncert_spec = np.array(self.MCgas_uncert_spec)
 
-			# Find all other gas amplitudes enforcing [OIII] and stellar kinematics
+			# Find all other gas amplitudes enforcing [OIII] and stellar 
+			# kinematics
 			self.params.gas_moments *= -1
 			self.params.start = [i.tolist() for i in self.sol]
 			self.params.lines = params_sav.lines
@@ -766,6 +779,64 @@ class run_ppxf(ppxf):
 			self.MCgas_uncert_spec[
 				self.templatesToUse[self.component!=0]=='[OIII]5007d', :] = \
 				OIII_uncert_spec.flatten()
+	
+			if params_sav.produce_plot:
+				self.fig, self.ax = create_plot(self).produce
+
+		else: # gas == 2 or gas == 3
+			from copy import copy
+			# Fit stellar component only.
+			params_sav = copy(params)
+			self.params.gas = 0
+			self.params.produce_plot = False
+			self.load_emission_templates()
+
+			save_bin_log = np.array(self.bin_log)
+			save_bin_log_noise = np.array(self.bin_log_noise)
+			save_lamRange = np.array(self.lamRange)
+
+			self.run()
+
+			MCstellar_kin = np.array(self.MCstellar_kin)
+			MCstellar_kin_err = np.array(self.MCstellar_kin_err)
+
+			# set_range_star is NOT set
+			if self.params.set_range[0] == self.params.set_range_star[0] and \
+				self.params.set_range[1] == self.params.set_range_star[1]:
+				self.bin_log = np.copy(save_bin_log)
+				self.bin_log_noise = np.copy(save_bin_log_noise)
+				self.lamRange = np.copy(save_lamRange)
+			else: # set_range_star IS set
+				self.bin_lin = np.copy(bin_lin_untruncated)
+				self.bin_lin_noise = np.copy(bin_lin_noise_untruncated)
+				self.lamRange = np.copy(lamRange_untruncated)/(1 + self.z)
+
+				if self.params.res is not None:
+					res = self.params.res/(1 + self.z)
+					FWHM_dif = res - self.FWHM_gal
+					sigma = FWHM_dif/2.355/self.CDELT # Change in px
+					self.bin_lin = ndimage.gaussian_filter1d(self.bin_lin, 
+						sigma)
+					self.bin_lin_noise = np.sqrt(ndimage.gaussian_filter1d(
+						self.bin_lin_noise**2, sigma))
+					self.FWHM_gal = res
+
+				self.rebin()
+				self.load_stellar_templates()
+
+			# Find gas kinematics and amplitude, enforce stellar kinematics
+			self.params.stellar_moments *= -1
+			self.params.gas = params_sav.gas
+			self.params.lines = params_sav.lines
+			self.load_emission_templates()
+			self.params.start = [self.sol[0].tolist()]
+			self.params.start.extend([[None]*self.params.gas_moments]\
+				* (len(self.element) - 1))
+
+			self.run()
+
+			self.MCstellar_kin = MCstellar_kin
+			self.MCstellar_kin_err = MCstellar_kin_err
 	
 			if params_sav.produce_plot:
 				self.fig, self.ax = create_plot(self).produce
@@ -789,25 +860,6 @@ class run_ppxf(ppxf):
 			self.bin_lin_noise**2)
 		self.bin_log_noise = np.sqrt(bin_log_noise)
 		self.lambdaq = np.exp(self.logLam_bin)
-		
-		# # If different range for stellar
-		# if self.params.set_range != self.params.set_range_star:
-		# 	if self.FWHM_gal < self.stellar_templates.FWHM_tem:
-		# 		sigma = self.stellar_templates.FWHM_dif/2.355/self.CDELT # Change in px
-		# 		self.bin_lin_sav = ndimage.gaussian_filter1d(self.bin_lin_sav, 
-		# 			sigma)
-		# 		self.bin_lin_noise_sav = np.sqrt(ndimage.gaussian_filter1d(
-		# 			self.bin_lin_noise_sav**2, sigma))
-				
-		# 	## rebin spectrum logarthmically
-		# 	self.bin_log_sav, self.logLam_bin_sav, self.velscale = util.log_rebin(
-		# 		self.lamRange_sav, self.bin_lin_sav)
-		# 	bin_log_noise_sav, logLam_bin_sav, _ = util.log_rebin(self.lamRange_sav, 
-		# 		self.bin_lin_noise_sav**2)
-		# 	self.bin_log_noise_sav = np.sqrt(bin_log_noise_sav)
-		# 	self.lambdaq_sav = np.exp(self.logLam_bin_sav)
-
-
 	## ----------============= Stellar templates ===============---------
 	def load_stellar_templates(self):
 		if self.params.use_all_temp is None and self.params.gas == 0:
