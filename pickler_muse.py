@@ -33,13 +33,14 @@ else:
 
 
 #-----------------------------------------------------------------------------
-def pickler(galaxy, discard=0, norm='', opt="kin", override=False):
+def pickler(galaxy, discard=0, norm='', opt="kin", override=False, 
+	save_fits=True):
 	print "    Loading D"
 
-	tessellation_File = "%s/%s/%s/setup/voronoi_2d_binning_output.txt" % (vin_dir, 
-		galaxy, opt)
-	tessellation_File2 = "%s/%s/%s/setup/voronoi_2d_binning_output2.txt" %(vin_dir, 
-		galaxy, opt)
+	tessellation_File = "%s/%s/%s/setup/voronoi_2d_binning_output.txt" % (
+		vin_dir, galaxy, opt)
+	tessellation_File2 = "%s/%s/%s/setup/voronoi_2d_binning_output2.txt" %(
+		vin_dir, galaxy, opt)
 	dataCubeDirectory = get_dataCubeDirectory(galaxy)
 	output = "%s/%s/%s" % (out_dir, galaxy, opt)
 	vin_dir_gasMC = "%s/%s/%s/MC" % (vin_dir, galaxy, opt)
@@ -231,9 +232,10 @@ def pickler(galaxy, discard=0, norm='', opt="kin", override=False):
 	# 	save(galaxy, instrument='muse', stellar=False, emission=True,
 	# 		absorption=True, absorption_nomask=True, population=True, 
 	# 		kin_opt='kin', pop_opt=opt, D=D, D2=D)
-	save(galaxy, instrument='muse', stellar=True, emission=True,
-		absorption=True, absorption_nomask=True, population=True, 
-		kin_opt=opt, pop_opt=opt, D=D, D2=D)
+	if save_fits:
+		save(galaxy, instrument='muse', stellar=True, emission=True,
+			absorption=True, absorption_nomask=True, population=True, 
+			kin_opt=opt, pop_opt=opt, D=D, D2=D)
 
 	return D
 
