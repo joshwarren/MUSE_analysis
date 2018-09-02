@@ -520,17 +520,17 @@ def get_dataCubeDirectory(galaxy, radio_band=None):
 			'/hst_05990_02_wfpc2_f450w_pc_drz.fits'
 		# dataCubeDirectory.xray = '%s/Data/Chandra/N1399_full.fits' % (cc.base_dir)
 		if radio_band is None or radio_band == 'C' or radio_band == 'CI':
-			dataCubeDirectory.radio = mystring2('%s/Data/VLA/ngc1399/NGC1399.CBAND.ANB.I.1.25.fits' % (
+			dataCubeDirectory.radio = mystring2('%s/Data/VLA/ngc1399/NGC1399.CBAND.ANB.I.1.25.FITS' % (
 				cc.base_dir))
 			dataCubeDirectory.radio.band = 'C band (4.86 GHz)'
 			col = np.where(file_headings=='MUSE-VLA_C')[0][0]
 		elif radio_band == 'CQ':
-			dataCubeDirectory.radio = mystring2('%s/Data/VLA/ngc1399/NGC1399.CBAND.ANB.Q.1.25.fits' % (
+			dataCubeDirectory.radio = mystring2('%s/Data/VLA/ngc1399/NGC1399.CBAND.ANB.Q.1.25.FITS' % (
 				cc.base_dir))
 			dataCubeDirectory.radio.band = 'C band (4.86 GHz)'
 			col = np.where(file_headings=='MUSE-VLA_C')[0][0]
 		elif radio_band == 'CU':
-			dataCubeDirectory.radio = mystring2('%s/Data/VLA/ngc1399/NGC1399.CBAND.ANB.U.1.25.fits' % (
+			dataCubeDirectory.radio = mystring2('%s/Data/VLA/ngc1399/NGC1399.CBAND.ANB.U.1.25.FITS' % (
 				cc.base_dir))
 			dataCubeDirectory.radio.band = 'C band (4.86 GHz)'
 			col = np.where(file_headings=='MUSE-VLA_C')[0][0]

@@ -12,10 +12,9 @@ from errors2_muse import get_dataCubeDirectory
 from classify import get_R_e
 from prefig import Prefig
 Prefig()
+from Bin2 import Data
+import disk_fit_functions_binned as dfn
 
-import cPickle as pickle
-
-opt = 'pop'
 for galaxy in [
 			'ic1459',
 			'ic4296',
@@ -31,17 +30,31 @@ for galaxy in [
 	i_gal = np.where(galaxy_gals==galaxy)[0][0]
 	center = (x_cent_gals[i_gal], y_cent_gals[i_gal])
 
-	pickleFile = open('/Data/muse/analysis/%s/%s/pickled/dataObj.pkl' % (
-		galaxy,opt), 'rb')
-	D = pickle.load(pickleFile)
-	pickleFile.close()
+	D = Data(galaxy, instrument='muse', opt='kin')
+	opt = D.opt
+
+	galaxy_gals, pa_gals = np.loadtxt('%s/Data/muse/analysis/galaxies2.txt' % 
+		(cc.base_dir), usecols=(0,3), skiprows=1, unpack=True, dtype=str)
+	i_gal = np.where(galaxy_gals == galaxy)[0][0]
+	pa = float(pa_gals[i_gal])
+
+	vel = D.components['stellar'].plot['vel']
+
+	disk,pars=dfn.disk_fit_exp(D.xBar,D.yBar, vel, vel.uncert, verbose=False,
+		grid_length=150)#,
+	# 	, leeway=5., sigclip=None, grid_length=150, pa=pa)
+
+	max_vel = np.nanmax(np.abs(disk))
 
 	r = np.sqrt((D.xBar-center[0])**2 + (D.yBar-center[1])**2)
+	m = ((vel > disk - max_vel) * (vel < disk + max_vel)) + r < max(r)/2
+	vel = vel[m]
+	r = r[m]
+
 	s = np.argsort(r)
-	lam_R = np.nancumsum((D.flux * r * 
-		np.abs(D.components['stellar'].plot['vel']))[s])/np.nancumsum(
-	    (D.flux * r * np.sqrt(D.components['stellar'].plot['vel']**2 + 
-	    D.components['stellar'].plot['sigma']**2))[s])
+	lam_R = np.nancumsum((D.flux[m] * r * np.abs(vel))[s])/np.nancumsum(
+	    (D.flux[m] * r * np.sqrt(vel**2 
+	    + D.components['stellar'].plot['sigma'][m]**2))[s])
 
 	R_e = get_R_e(galaxy)
 	r *= abs(f[1].header['CD1_1'])*60**2/R_e
