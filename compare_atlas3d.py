@@ -7,6 +7,7 @@ if 'home' not in cc.device:
 	matplotlib.use('Agg') 
 import numpy as np 
 import matplotlib.pyplot as plt
+from matplotlib import ticker
 from markers_atlas3d import marker_atlas3d
 from prefig import Prefig
 from astropy.io import fits
@@ -170,7 +171,7 @@ def compare_atlas3d(too_many_FR=True, thesis=False, paper=False):
 
 ## ----------============== Ellipticity vs lambda_Re ==============----------
 	print 'FR/SR'
-	Prefig(transparent=False, size=(14,9))
+	Prefig(transparent=False, size=(13,11))
 	
 	fig, ax = plt.subplots()
 
@@ -323,7 +324,7 @@ def compare_atlas3d(too_many_FR=True, thesis=False, paper=False):
 		sample_gals.add_galaxy(g)
 
 
-	for gals in [massive_gals, vimos_gals, muse_gals, atlas_gals]:
+	for gals in [massive_gals, atlas_gals]:
 		# Default size is 50
 		ax.scatter(gals.ellipticity[gals.a], gals.lambda_Re[gals.a], s=130, 
 			marker=marker_atlas3d(0), c=gals.color, lw=0, label=gals.label)
@@ -338,6 +339,26 @@ def compare_atlas3d(too_many_FR=True, thesis=False, paper=False):
 		# Default size is 
 		ax.plot(gals.ellipticity[gals.e], gals.lambda_Re[gals.e], ms=10,
 			marker=marker_atlas3d(4), c=gals.color, lw=0, markerfacecolor='none')
+
+	for gals in [vimos_gals, muse_gals]:
+		# Default size is 50
+		s = 200 if paper else 130
+		ax.scatter(gals.ellipticity[gals.a], gals.lambda_Re[gals.a], s=s, 
+			marker=marker_atlas3d(0), c=gals.color, lw=0, label=gals.label,
+			zorder=100)
+		ax.scatter(gals.ellipticity[gals.b], gals.lambda_Re[gals.b], s=s, 
+			marker=marker_atlas3d(1), c=gals.color, lw=0, zorder=100)
+		ax.scatter(gals.ellipticity[gals.f], gals.lambda_Re[gals.f], s=s, 
+			marker=marker_atlas3d(1), c=gals.color, lw=0, zorder=100)
+		ax.scatter(gals.ellipticity[gals.c], gals.lambda_Re[gals.c], s=s, 
+			marker=marker_atlas3d(2), c=gals.color, lw=0, zorder=100)
+		ax.scatter(gals.ellipticity[gals.d], gals.lambda_Re[gals.d], s=s, 
+			marker=marker_atlas3d(3), c=gals.color, lw=0, zorder=100)
+		# Default size is 
+		s = 18 if paper else 10
+		ax.plot(gals.ellipticity[gals.e], gals.lambda_Re[gals.e], ms=s,
+			marker=marker_atlas3d(4), c=gals.color, lw=0, markerfacecolor='none',
+			zorder=100)
 
 	# Join MUSE and VIMOS
 	label=True
@@ -362,8 +383,9 @@ def compare_atlas3d(too_many_FR=True, thesis=False, paper=False):
 	
 	# Plot Slow Rotator bounds
 	ax.plot([0,0.4,0.4], [0.08, 0.18, 0], 'k', label='FR/SR boundary')
-	leg = plt.legend(facecolor='w', bbox_to_anchor=(1, 0), loc='lower left')
-	ax.add_artist(leg)
+	# leg = plt.legend(facecolor='w', bbox_to_anchor=(1, 0), loc='lower left')
+	# leg.draw_frame(False) 
+	# ax.add_artist(leg)
 
 	# Proxy for kinematics legend
 	h1, = ax.plot(np.nan, marker=marker_atlas3d(0), c='b', lw=0, 
@@ -375,13 +397,15 @@ def compare_atlas3d(too_many_FR=True, thesis=False, paper=False):
 	h4, = ax.plot(np.nan, marker=marker_atlas3d(3), c='b', lw=0,
 		label='Counter-rotating\n   discs')
 	h5, = ax.plot(np.nan, marker=marker_atlas3d(4), c='b', lw=0,
-		label='Regular Rotator',  markerfacecolor='none')
+		label='Regular rotator',  markerfacecolor='none')
 
 	box = ax.get_position()
-	ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])	
-	ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
-	plt.legend(handles=[h1,h2,h3,h4,h5], facecolor='w', bbox_to_anchor=(1, 0.7), 
-		loc='center left')#, loc=5)
+	ax.set_position([box.x0, box.y0, box.width, box.height * 0.8])	
+	leg = plt.legend(#handles=[h1,h2,h3,h4,h5], 
+		facecolor='w', 
+		bbox_to_anchor=(0., 1.02, 1., .102),
+		loc='lower left', ncol=3, mode="expand", borderaxespad=0.)#, loc=5)
+	leg.draw_frame(False) 
 
 	if too_many_FR:
 		# Show fraction of Slow Rotators in background of plot per ellipticity bin with 
@@ -441,13 +465,19 @@ def compare_atlas3d(too_many_FR=True, thesis=False, paper=False):
 	ax.set_xlim([0, 0.9])
 	ax.set_ylim([0, 0.8])
 
+	ax.minorticks_on()
+
 	# Save plot
 	fig.savefig('%s/Data/muse/analysis/lambda_R_ellipticity.png' % (
 		cc.base_dir))
 	if thesis:
 		fig.savefig('%s/Documents/thesis/chapter4/lambda_R_ellipticity.png' % (
 			cc.home_dir), dpi=240)
+	if paper:
+		fig.savefig('%s/Documents/paper/lambda_R_ellipticity.png' % (cc.home_dir),
+			dpi=240)
 	plt.close()	
+
 ## ----------============ K-band magnitude vs lambda_R ===========----------
 	print 'K-band magnitude vs lambda_Re'
 	Prefig(size=(16,12*1.7), transparent=False)
@@ -650,8 +680,6 @@ def compare_atlas3d(too_many_FR=True, thesis=False, paper=False):
 	ax[1].set_ylabel('Number of galaxies in \n bin (abitary units)')
 	ax[1].set_yticklabels([])
 
-
-
 	fig.suptitle('K-band magnitude distribution for F/S rotators')
 	fig.savefig('%s/Data/muse/analysis/lambda_R_M_k.png' % (cc.base_dir),
 		dpi=240)
@@ -736,10 +764,17 @@ def compare_atlas3d(too_many_FR=True, thesis=False, paper=False):
 				'%i/%i'%(n_in_bin_sample[i-1] * SRfraction_sample[i], 
 				n_in_bin_sample[i-1]), color='r', va='top', ha='center')
 	for i, s in enumerate(steps):
-		if s != min(steps) and SRfraction_atlas[i] != 0:
+		if s != min(steps) and SRfraction_atlas[i] != 0 \
+			and SRfraction_atlas[i] != 1.:
+
 			ax[1].text(np.mean([steps[i],steps[i-1]]), SRfraction_atlas[i], 
 				'%i/%i'%(n_in_bin_atlas[i-1] * SRfraction_atlas[i], 
 				n_in_bin_atlas[i-1]), color='k', va='bottom', ha='center')
+		elif s != min(steps) and SRfraction_atlas[i] != 0:
+			ax[1].text(np.mean([steps[i],steps[i-1]]), SRfraction_atlas[i]-0.02, 
+				'%i/%i'%(n_in_bin_atlas[i-1] * SRfraction_atlas[i], 
+				n_in_bin_atlas[i-1]), color='k', va='top', ha='center')
+
 	ax[1].set_ylim([-0.05,1.05])
 	if too_many_FR:
 		ax[1].text(-21,0.75, 
@@ -770,15 +805,25 @@ def compare_atlas3d(too_many_FR=True, thesis=False, paper=False):
 	ax2.tick_params(axis='y', colors='r')
 	ax[0].set_ylabel(r'A+M sample'+
 		'\nmass distribution')
-	ax2.set_ylabel('Southern sample\nmass distribution', color='r', 
+	ax2.set_ylabel('Southern Sample\nmass distribution', color='r', 
 		labelpad=60, rotation=270)
 	ax[1].set_ylabel('Fraction of SR per bin')
 
 	ax[1].invert_xaxis()
 	ax[1].set_xlabel(r'$M_k \, \mathrm{(mag)}$')
 
+	ax[0].minorticks_on()
+	ax[1].minorticks_on()
+	ax2.minorticks_on()
+
 	fig.savefig('%s/Data/muse/analysis/M_k_binned.png' % (cc.base_dir),
 		dpi=240)
+	if thesis:
+		fig.savefig('%s/Documents/thesis/chapter4/M_k_binned.png' % (cc.home_dir),
+			dpi=240)
+	if paper:
+		fig.savefig('%s/Documents/paper/M_k_binned.png' % (cc.home_dir),
+			dpi=240)
 	plt.close()
 	Prefig(transparent=False)
 ## ----------============== ellipticity vs M_k ===============----------
@@ -832,6 +877,7 @@ def compare_atlas3d(too_many_FR=True, thesis=False, paper=False):
 	plt.legend(facecolor='w')
 	fig.savefig('%s/Data/muse/analysis/ellipticity_M_k.png' % (cc.base_dir),
 		dpi=240)
+	plt.close()
 
 # ## ----------============== Radio power vs M_k ===============----------
 # 	print 'M_k vs Radio power'
@@ -963,12 +1009,12 @@ def compare_atlas3d(too_many_FR=True, thesis=False, paper=False):
 		sauron_gals.age[sauron_gals.FR], fmt='.', 
 		xerr=sauron_gals.KDC_size_uncert[sauron_gals.FR], 
 		yerr=sauron_gals.age_uncert[sauron_gals.FR], color='k',
-		label='Fast rotating SAURON')
+		label='Fast-rotating SAURON')
 	ax.errorbar(sauron_gals.KDC_size[~sauron_gals.FR], 
 		sauron_gals.age[~sauron_gals.FR], fmt='.', 
 		xerr=sauron_gals.KDC_size_uncert[~sauron_gals.FR], 
 		yerr=sauron_gals.age_uncert[~sauron_gals.FR],
-		color='lightgrey', label='Slow rotating SAURON')
+		color='lightgrey', label='Slow-rotating SAURON')
 
 	# MUSE
 	age_muse, age_unc_muse, OIII_eqw_muse, OIII_eqw_unc_muse= np.loadtxt(
@@ -1047,7 +1093,7 @@ def compare_atlas3d(too_many_FR=True, thesis=False, paper=False):
 			if label: # add just one label to legend
 				ax.plot([muse_gals.KDC_size[i_muse], vimos_gals.KDC_size[i_vimos]], 
 					[muse_gals.age[i_muse],vimos_gals.age[i_vimos]], 
-					'k--', zorder=1, label='same galaxy in MUSE and VIMOS')
+					'k--', zorder=1, label='Same galaxy in MUSE and VIMOS')
 				label = False
 			else:
 				ax.plot([muse_gals.KDC_size[i_muse], vimos_gals.KDC_size[i_vimos]], 
@@ -1074,9 +1120,10 @@ def compare_atlas3d(too_many_FR=True, thesis=False, paper=False):
 	ax.legend(facecolor='w')
 	ax.set_yscale('log')#, nonposy='clip', subsy=[1,2,3,4,5,6,7,8,9])
 	ax.set_xlabel('KDC size (kpc)')
-	ax.set_ylabel('Age of central 1 arcsec (Gyrs)')
+	ax.set_ylabel('Age of central 1 arcsec (Gyr)')
 	# ax.set_title('Age and size of KDCs')
-
+	ax.minorticks_on()
+	ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda y, _: '{:g}'.format(y)))
 
 	fig.savefig('%s/Data/muse/analysis/KDC_size_age.png' % (cc.base_dir),
 		dpi=240)
@@ -1119,13 +1166,16 @@ def compare_atlas3d(too_many_FR=True, thesis=False, paper=False):
 				ax.plot(np.log10([muse_gals.sigma[i_muse], 
 					vimos_gals.sigma[i_vimos]]), 
 					[muse_gals.Mg[i_muse],vimos_gals.Mg[i_vimos]], 
-					'k--', zorder=1, label='same galaxy in MUSE and VIMOS')
+					'k--', zorder=1, label='Same galaxy in MUSE and VIMOS')
 				label = False
 			else:
 				ax.plot(np.log10([muse_gals.sigma[i_muse], 
 					vimos_gals.sigma[i_vimos]]), 
 					[muse_gals.Mg[i_muse],vimos_gals.Mg[i_vimos]], 
 					'k--', zorder=1)
+	# label NGC 1316
+	NGC1316 = np.array(muse_gals)[muse_gals.name=='ngc1316'][0]
+	ax.text(np.log10(NGC1316.sigma)+0.005, NGC1316.Mg+0.03, 'NGC 1316')
 
 	Mg, e_Mg, sigma, e_sigma = muse_gals.Mg, muse_gals.e_Mg, \
 		muse_gals.sigma, muse_gals.e_sigma
@@ -1168,19 +1218,21 @@ def compare_atlas3d(too_many_FR=True, thesis=False, paper=False):
 
 	ax.plot(lims, np.poly1d(p.ab[::-1])(lims) 
 		- p.ab[1]*np.nanmean(np.log10(sigma)[mask]), 'g--', 
-		label='Fit excluding NGC 1316')
-
+		label='Best-fitting excluding excluding\nNGC 1316')
 
 	x = np.linspace(lims[0], lims[1], 100)
 
 	ax.plot(x, Lick_to_LIS('Mgb', 2.7*x - 1.65, res=8.4), ':', 
-		c='steelblue', label='Ziegler1997')
+		c='steelblue', label='Ziegler & Bender (1997)')
 	ax.set_xlim(lims)
 
-	ax.legend(facecolor='w')
+	leg = ax.legend(facecolor='w', bbox_to_anchor=(0, 1), loc='upper left')
+	leg.draw_frame(False)
 
-	ax.set_xlabel(r'$\log \sigma \, \mathrm{[km s^{-1}]}$')
-	ax.set_ylabel(r'Mg$\,b (\AA)$')
+	ax.set_xlabel(r'$\log(\sigma_0/\mathrm{km s^{-1}})$')
+	ax.set_ylabel(r'Mg$\,b\,(\AA)$')
+
+	ax.minorticks_on()
 
 	fig.savefig('%s/Data/muse/analysis/Mg_sigma.png' % (cc.base_dir), 
 		dpi=240)
@@ -1193,7 +1245,7 @@ def compare_atlas3d(too_many_FR=True, thesis=False, paper=False):
 	plt.close()
 ## ----------================= Nuclear MEx ==================----------
 	print 'Nuclear MEx diagram'
-	Prefig(size=(13.3, 10))
+	Prefig(size=(11, 8))
 	fig, ax = plt.subplots()
 	for gals in [vimos_gals, muse_gals]:
 		file = "%s/Data/%s/analysis/global_MEx.txt" % (cc.base_dir, 
@@ -1281,15 +1333,17 @@ def compare_atlas3d(too_many_FR=True, thesis=False, paper=False):
 
 	ylim = ax.get_ylim()
 	yrange = ylim[1] - ylim[0]
-	ax.text(50, ylim[0] +0.96 * yrange, 'SF')
+	ax.text(20, ylim[0] +0.76 * yrange, 'Star-forming', rotation=90)
 	ax.text(75, 0.55, 'Seyfert 2')
 	ax.text(75, 0.15, 'LINER')
 	ax.text(75, -0.23, 'Transition')
 	ax.text(75, -0.5, 'Passive')
 
-	ax.set_xlabel(r'$\sigma_\ast$')
+	ax.set_xlabel(r'$\sigma_\ast\,\mathrm{(km\,s^{-1})}$')
 	ax.set_ylabel(
 		r'$\log \left(\frac{\mathrm{[OIII]}\lambda5007}{H\,\beta}\right)$')
+	ax.minorticks_on()
+
 	fig.savefig('%s/Data/muse/analysis/nuclear_MEx.png'%(cc.base_dir),
 		dpi=240)
 	if thesis:
@@ -1297,7 +1351,7 @@ def compare_atlas3d(too_many_FR=True, thesis=False, paper=False):
 			dpi=240)
 	if paper:
 		fig.savefig('%s/Documents/paper/nuclear_MEx.png'%(cc.home_dir),
-			dpi=240)
+			dpi=240, bbox_inches='tight')
 
 ## ----------=========== Core OIII vs radio power ============----------
 	print '[OIII] vs radio power'
